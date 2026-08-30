@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ImageWell } from "@/components/site/ImageWell";
-import { productImage, productPath, usd, type Product } from "@/data/products";
+import { productImage, productPath, aud, type Product } from "@/data/products";
 import { PieceSlug } from "./PieceSlug";
 import { StatusPill } from "./StatusPill";
 
@@ -48,7 +48,7 @@ export function StillTile({ product, ratio = "4/5", priority = false, className 
             <PieceSlug product={product} className="mt-1.5" />
           </div>
           <p className="shrink-0 font-sans text-[12px] tracking-[0.08em] text-charcoal/80">
-            {usd.format(product.priceUsd)}
+            {aud.format(product.priceAud)}
           </p>
         </div>
       </Link>

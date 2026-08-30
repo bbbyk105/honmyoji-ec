@@ -311,7 +311,7 @@ export const legal = {
   addressJa: "静岡県富士市中里1254-2",
   phone: "+81 80-3470-1863",
   responsible: "Emi Kashiwazake（柏酒 英美）",
-  price: "From USD 150. All prices are shown in US dollars and include Japanese consumption tax.",
+  price: "From A$150. All prices are shown in Australian dollars (AUD) and include Japanese consumption tax.",
   shipping:
     "Standard international shipping is included in the price. If you need express delivery, contact us before ordering; the difference will be invoiced separately.",
   payment: "Credit card via Stripe. Payment is taken in full at checkout.",

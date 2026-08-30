@@ -24,7 +24,7 @@ export default function CollectionPage() {
           </div>
           <p className="max-w-[38ch] font-sans text-[14px] leading-[1.85] text-charcoal/85 md:col-span-4 md:col-start-9 md:pb-2">
             An exhibition, not a catalogue. Each bag is woven once from the ber-i on the table that
-            week. Prices in USD, shipping included.
+            week. Prices in Australian dollars, shipping included.
           </p>
         </header>
 

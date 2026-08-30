@@ -17,7 +17,7 @@ import {
   productImage,
   productPath,
   products,
-  usd,
+  aud,
   type Product,
 } from "@/data/products";
 
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const product = getProduct(slug);
   if (!product) return {};
   return {
-    title: `${product.name} ${product.kanji} — ${usd.format(product.priceUsd)}`,
+    title: `${product.name} ${product.kanji} — ${aud.format(product.priceAud)}`,
     description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
     openGraph: { images: [{ url: productImage(product.slug, 1) }] },
   };
@@ -125,9 +125,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               style={{ "--delay": "240ms" } as React.CSSProperties}
             >
               <span className="font-display text-[32px] font-light leading-none text-ink">
-                {usd.format(product.priceUsd)}
+                {aud.format(product.priceAud)}
               </span>
-              <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-mist">USD · shipping included</span>
+              <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-mist">Shipping included</span>
             </div>
             <div className="hero-settle mt-3" style={{ "--delay": "260ms" } as React.CSSProperties}>
               <StatusPill status={product.status} />

@@ -13,7 +13,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 概要
 
 静岡県富士市・本妙寺で作られる「畳の縁バッグ」の EC サイト（Next.js 16 App Router + Tailwind v4）。
-販売者名は **MIROKU**、英語メイン・日本語サブ（日本語版ページは後日フェーズ）。価格は USD 固定表示。
+販売者名は **MIROKU**、英語メイン・日本語サブ（日本語版ページは後日フェーズ）。価格は AUD（オーストラリアドル）固定表示。
 クライアント資料の原典は `内容.txt`（SKU 体系・FAQ・創業者略歴・特商法・ブランドコピー）。
 
 ## 構成
@@ -32,6 +32,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `components/motion/` — Lenis + GSAP 登録。`SmoothScroll` がルートを包む。メニュー／カート中は `stopLenis()`。
 - `components/site/ImageWell.tsx` — 写真の「開き方」。`Frame` / `StillTile` の井戸はこれ。`wipe`（下端から開く・既定）と `band`（中央から左右へ・ヒーローのみ）。マスクは井戸ではなく内側の層に掛かるので、上に載せた見出しは開いている間も動かない。
 - `components/site/DriftBand.tsx` — 縦スクロールに紐付けて横に流れる写真の帯。自走マーキーにはしない。**並べるのはバッグが主役の写真だけ**（風景・堂内のカットは入れない）。
+- 価格の表記は `data/products.ts` の `aud` ひとつ（`A$220`）。ロケールを `en-AU` にすると記号が素の `$` に戻り、どの国のドルか分からなくなる。値段の隣に通貨名を書き足さない（記号が言っている）。
 - 商品 URL は読みやすい複合 slug（`sakura-cherry`）。画像フォルダは `folder`（`sakura`）。旧 URL は `next.config.ts` で恒久リダイレクト。
 
 ## 画像パイプライン（重要）

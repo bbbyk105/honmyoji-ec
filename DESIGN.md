@@ -144,7 +144,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 
 - English first. Japanese as atmosphere (one line), not a subtitle under every sentence.
 - Short, material, specific. No “we are passionate,” no “curated luxury,” no “journey.”
-- Product voice: texture, structure, use. Prices in USD, quietly.
+- Product voice: texture, structure, use. Prices in Australian dollars, quietly — `A$220`, never a bare `$`.
 
 ## Why this is not a template
 
@@ -193,3 +193,6 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-08-31 | Home featured is a swipe strip below `sm` | Three 4∶5 plinths stacked is 1,400px of mostly empty floor on a phone. Sideways, same as the PDP gallery: 9,942px → 8,296px |
 | 2026-08-31 | `self-start` on the featured grid items | `FloatingBag`'s `h-full` stretched to the grid row, opening 56px of dead space under the caption and pushing the note out of its own row |
 | 2026-08-31 | Selecting a menu item closes it instantly | `tl.reverse()` replayed the whole 1.19s entrance backwards, and a view transition froze the header 61ms in — so the menu sat on top of the page you had just navigated to for over a second. Selecting is now 16ms; X and Escape keep the choreography at 2× |
+| 2026-08-31 | Prices are Australian dollars, written `A$220` | The site formatted with `en-US` + USD, so every price was a bare `$` that named no country, and the PDP then repeated the currency beside it as a separate `USD` tag — the same fact in two notations. One formatter now, `A$` (CLDR's standard symbol; `en-AU` would put the ambiguous bare `$` back), and the duplicate label is gone |
+| 2026-08-31 | Journal splits into title column + list above `xl` | The list is capped at 1040px so it stays one column of meaning, which left a 344px void at the right of a 1384px page column. Above `xl` the section heading and “The archive” move into their own left column and the list runs to the page's right edge; below it, both stay stacked at 1040px |
+

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import type { CSSProperties } from "react";
-import { productCutout, productPath, usd, type Product } from "@/data/products";
+import { productCutout, productPath, aud, type Product } from "@/data/products";
 import { PieceSlug } from "./PieceSlug";
 import { StatusPill } from "./StatusPill";
 
@@ -37,7 +37,7 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
       <Link
         href={productPath(product)}
         className="block w-full no-underline outline-none focus-visible:ring-2 focus-visible:ring-ink/25"
-        aria-label={`${product.name} — ${usd.format(product.priceUsd)}`}
+        aria-label={`${product.name} — ${aud.format(product.priceAud)}`}
       >
         <div className="relative aspect-[4/5] w-full">
           <span
@@ -77,7 +77,7 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
             </h3>
           </Link>
           <p className="shrink-0 font-sans text-[12.5px] tracking-[0.08em] text-charcoal/85">
-            {usd.format(product.priceUsd)}
+            {aud.format(product.priceAud)}
           </p>
         </div>
         <PieceSlug product={product} className="mt-2" />

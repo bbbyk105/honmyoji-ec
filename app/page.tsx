@@ -259,34 +259,39 @@ export default function HomePage() {
 
       {/* 7. Journal as publication, not a blog widget */}
       <section className={`${SHELL} py-16 md:py-24`}>
-        {/* 見出し行と一覧は同じ幅で。1480px の右端に「The archive」、1040px の右端に罫、では右の端が二本になる。 */}
-        <div className="max-w-[1040px]">
-          <Reveal className="flex items-end justify-between gap-6">
+        {/*
+          一覧は 1040px で読める幅を保つ。ただし版面が 1384px まで開く xl 以上では
+          右に 344px の空白が残るので、そこで見出しを左の段へ出して版面を埋める
+          （Material セクションと同じ組み方）。xl 未満は版面が 1184px 以下で
+          穴が小さいため、見出し行と一覧を同じ 1040px で上下に積む。
+        */}
+        <div className="max-w-[1040px] xl:max-w-none xl:grid xl:grid-cols-12 xl:gap-8">
+          <Reveal className="flex items-end justify-between gap-6 xl:col-span-3 xl:flex-col xl:items-start xl:justify-start xl:gap-8">
             <div>
               <p className="eyebrow">Journal</p>
               <h2 data-split-lines className="mt-3 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-none text-ink">
                 Recent notes
               </h2>
             </div>
-            <Button href="/journal" variant="link" className="mb-1">
+            <Button href="/journal" variant="link" className="mb-1 xl:mb-0">
               The archive
             </Button>
           </Reveal>
 
-          <ol className="mt-12 divide-y divide-line border-y border-line">
+          <ol className="mt-12 divide-y divide-line border-y border-line xl:col-span-8 xl:col-start-5 xl:mt-0">
             {journal.slice(0, 3).map((entry, i) => (
               <Reveal key={entry.slug} as="li" delay={i * 60}>
                 <Link
                   href={`/journal/${entry.slug}`}
                   className="group grid gap-x-8 gap-y-2 py-7 no-underline md:grid-cols-12"
                 >
-                  <p className="font-sans text-[10px] uppercase leading-[1.9] tracking-[0.2em] text-mist md:col-span-2">
+                  <p className="font-sans text-[10px] uppercase leading-[1.9] tracking-[0.2em] text-mist md:col-span-3">
                     {entry.topic}
                     <span className="block text-mist/75">
                       {entry.season} · {entry.date.slice(0, 4)}
                     </span>
                   </p>
-                  <div className="md:col-span-9">
+                  <div className="md:col-span-8">
                     <h3 className="font-display text-[26px] font-light leading-[1.2] text-ink">{entry.title}</h3>
                     <p className="mt-1.5 max-w-[52ch] font-sans text-[13.5px] leading-[1.75] text-charcoal/80">
                       {entry.dek}

@@ -4,7 +4,7 @@
  * SKU 体系（内容.txt 11 より）: MI = MIROKU / BAG = バッグ / 001 = 作品番号
  *   MI-BAG-xxx 畳の縁バッグ, MI-KIM-xxx 着物リメイク, MI-PO 小物ポーチ, MI-ST ショルダー紐, MI-ZK 小物
  *
- * 価格は USD 固定表示。為替で日々動かさず、改定時にここを書き換える運用。
+ * 価格は AUD（オーストラリアドル）固定表示。為替で日々動かさず、改定時にここを書き換える運用。
  * 寸法・重量は「それぞれ測ってお送りします」のため暫定値 — 実測後に差し替えること。
  */
 
@@ -22,7 +22,7 @@ export type Product = {
   kanji: string;
   reading: string;
   line: ProductLine;
-  priceUsd: number;
+  priceAud: number;
   status: ProductStatus;
   /** バッグ一言。一覧カードとヒーローの副題 */
   note: string;
@@ -74,7 +74,7 @@ export const products: Product[] = [
     kanji: "桜",
     reading: "さくら",
     line: "tatami-beri",
-    priceUsd: 220,
+    priceAud: 220,
     status: "available",
     note: "Cherry-pink tatami-beri over a chestnut weave, with a fringed handle.",
     noteJa: "栗色の縁に桜色を重ね、持ち手には房飾りを。",
@@ -98,7 +98,7 @@ export const products: Product[] = [
     kanji: "藍",
     reading: "あい",
     line: "tatami-beri",
-    priceUsd: 260,
+    priceAud: 260,
     status: "available",
     note: "Indigo, moss and sky-blue bands beneath a hand-braided navy handle.",
     noteJa: "藍・苔・空色の縁に、紺の編み手。",
@@ -122,7 +122,7 @@ export const products: Product[] = [
     kanji: "松",
     reading: "まつ",
     line: "tatami-beri",
-    priceUsd: 240,
+    priceAud: 240,
     status: "reserved",
     note: "Pine-green diamond brocade with a woven paper handle.",
     noteJa: "松葉色の菱文に、紙バンドを編んだ持ち手。",
@@ -146,7 +146,7 @@ export const products: Product[] = [
     kanji: "若葉",
     reading: "わかば",
     line: "tatami-beri",
-    priceUsd: 220,
+    priceAud: 220,
     status: "available",
     note: "Pale mint and celadon — the quietest bag in the collection.",
     noteJa: "薄荷と青磁の淡い縁。いちばん静かな一本。",
@@ -170,7 +170,7 @@ export const products: Product[] = [
     kanji: "重",
     reading: "かさね",
     line: "kimono-remake",
-    priceUsd: 190,
+    priceAud: 190,
     status: "sold_out",
     note: "A slim tote of teal kimono silk and two bands of patterned tatami-beri.",
     noteJa: "青緑の着物地に、柄の縁を二本。細身のトート。",
@@ -194,7 +194,7 @@ export const products: Product[] = [
     kanji: "結",
     reading: "むすび",
     line: "kimono-remake",
-    priceUsd: 210,
+    priceAud: 210,
     status: "available",
     note: "Triangular patchwork of obi brocade with a tortoiseshell-look handle.",
     noteJa: "帯地の三角の継ぎ合わせに、鼈甲調の持ち手。",
@@ -218,7 +218,7 @@ export const products: Product[] = [
     kanji: "翡翠",
     reading: "ひすい",
     line: "kimono-remake",
-    priceUsd: 180,
+    priceAud: 180,
     status: "coming_soon",
     note: "Jade-green cotton tote with a row of gold-diamond tatami-beri windows.",
     noteJa: "翡翠色の木綿に、金の菱の縁を窓のように。",
@@ -242,7 +242,7 @@ export const products: Product[] = [
     kanji: "市松",
     reading: "いちまつ",
     line: "kimono-remake",
-    priceUsd: 180,
+    priceAud: 180,
     status: "coming_soon",
     note: "Green-on-green checkerboard of tatami-beri squares.",
     noteJa: "緑と緑の市松。縁を四角に切って並べました。",
@@ -266,7 +266,7 @@ export const products: Product[] = [
     kanji: "継",
     reading: "つぎ",
     line: "kimono-remake",
-    priceUsd: 150,
+    priceAud: 150,
     status: "sold_out",
     note: "Flat clutch of twelve tatami-beri squares in autumn browns.",
     noteJa: "秋の茶を十二枚。縁を継いだ平たいクラッチ。",
@@ -304,9 +304,16 @@ export function productPath(product: Product): string {
   return `/collection/${product.slug}`;
 }
 
-export const usd = new Intl.NumberFormat("en-US", {
+/**
+ * 価格の表記はここ一箇所。サイト中どこでも `A$220`。
+ *
+ * ロケールは en-AU にしない — AUD を en-AU で組むと記号が素の `$` になり、
+ * どの国のドルなのか分からない見た目に戻る。en-US（= CLDR の標準記号）で `A$`。
+ * `currencyDisplay: "code"` の `AUD 220` は、値札というより仕切書の書き方になる。
+ */
+export const aud = new Intl.NumberFormat("en-US", {
   style: "currency",
-  currency: "USD",
+  currency: "AUD",
   maximumFractionDigits: 0,
 });
 

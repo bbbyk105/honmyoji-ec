@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
-import { getProduct, productCutout, productPath, usd } from "@/data/products";
+import { getProduct, productCutout, productPath, aud } from "@/data/products";
 import { PieceSlug } from "@/components/collection/PieceSlug";
 import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
 import { Button } from "@/components/site/Button";
@@ -96,7 +96,7 @@ export function MiniCart() {
                     </Link>
                     <PieceSlug product={p} className="mt-2" />
                     <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-charcoal/80">
-                      {usd.format(p.priceUsd)}
+                      {aud.format(p.priceAud)}
                     </p>
                     <button
                       type="button"

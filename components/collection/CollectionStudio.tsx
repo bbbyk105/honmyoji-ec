@@ -19,8 +19,8 @@ export function CollectionStudio() {
   const list = useMemo(() => {
     let next = products.filter((p) => (line === "all" ? true : p.line === line));
     next = next.filter((p) => (status === "all" ? true : p.status === status));
-    if (sort === "price-asc") next = [...next].sort((a, b) => a.priceUsd - b.priceUsd);
-    if (sort === "price-desc") next = [...next].sort((a, b) => b.priceUsd - a.priceUsd);
+    if (sort === "price-asc") next = [...next].sort((a, b) => a.priceAud - b.priceAud);
+    if (sort === "price-desc") next = [...next].sort((a, b) => b.priceAud - a.priceAud);
     return next;
   }, [line, status, sort]);
 
