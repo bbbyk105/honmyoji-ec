@@ -39,3 +39,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# original photos (数百MB) — サイトは public/images/ の最適化済み WebP を使う
+/public/本妙寺*/
+
+# クライアント資料の原典（携帯番号などの個人情報を含む）— public repo には載せない
+/内容.txt

@@ -1,26 +1,329 @@
 @import "tailwindcss";
 
+/* ------------------------------------------------------------------
+   MIROKU — rooms, not storefronts.
+   Colour comes from the weave. The UI stays quiet so the object can speak.
+   ------------------------------------------------------------------ */
+@theme {
+  --color-ivory: #f3eee4;
+  --color-parchment: #e8e0d2;
+  --color-stone: #d4cbb8;
+  --color-sand: #c4b49a;
+  --color-paper: #f8f4ec;
+  --color-ink: #1a1714;
+  --color-charcoal: #352f29;
+  --color-mist: #6f675c;
+  --color-line: #d2c8b6;
+  --color-moss: #4a5340;
+  --color-indigo: #3a4554;
+  --color-clay: #7d5c45;
+  --color-rose: #a87268;
+
+  /* legacy aliases used by a few remaining utilities */
+  --color-washi: #f3eee4;
+  --color-washi-deep: #e8e0d2;
+  --color-sumi: #1a1714;
+  --color-gold: #4a5340;
+  --color-gold-light: #6b7560;
+
+  --font-display: var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
+    "Yu Mincho", serif;
+  --font-sans: var(--font-source), "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+
+  --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-morph: cubic-bezier(0.33, 1, 0.68, 1);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  /* Lenis owns smooth scrolling; native smooth fights the ticker. */
+  scroll-behavior: auto;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-ivory);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgba(74, 83, 64, 0.22);
+}
+
+/* Paper grain — never give this class a position; parents decide. */
+.washi-grain::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.28;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.39 0 0 0 0 0.32 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.tategaki {
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  letter-spacing: 0.32em;
+  font-feature-settings: "vpal" 1;
+}
+
+.beri-band {
+  background-repeat: repeat-x;
+  background-size: auto 100%;
+  background-position: center;
+}
+
+.eyebrow {
+  font-family: var(--font-sans);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+.link-line {
+  position: relative;
+  text-decoration: none;
+}
+
+.link-line::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -0.18em;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.5s var(--ease-soft);
+}
+
+.link-line:hover::after,
+.link-line:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+/* CTA の罫は常に見せる。hover で初めて出る罫は、押せることを触るまで伝えない。 */
+.link-cta {
+  position: relative;
+  padding-bottom: 0.6em;
+}
+
+.link-cta::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0.25em;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.4;
+  transition: opacity 0.4s var(--ease-soft);
+}
+
+.link-cta:hover::after,
+.link-cta:focus-visible::after {
+  opacity: 1;
+}
+
+.cta-arrow {
+  transition: transform 0.5s var(--ease-soft);
+}
+
+.cta:hover .cta-arrow,
+.cta:focus-visible .cta-arrow {
+  transform: translateX(4px);
+}
+
+/* Floating objects — collection as exhibition, not catalogue */
+@keyframes bag-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(36px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bag-drift {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shadow-drift {
+  0%,
+  100% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.28;
+  }
+  50% {
+    transform: translateX(-50%) scale(0.86);
+    opacity: 0.16;
+  }
+}
+
+.bag-shadow-owner {
+  filter: drop-shadow(0 24px 20px rgba(26, 23, 20, 0.12))
+    drop-shadow(0 4px 5px rgba(26, 23, 20, 0.08));
+}
+
+.bag-float {
+  animation:
+    bag-enter 1.1s var(--ease-soft) both,
+    bag-drift 8s ease-in-out 1.1s 3;
+  animation-delay: var(--delay, 0ms), calc(1.1s + var(--delay, 0ms));
+  will-change: transform, opacity;
+}
+
+.bag-ground {
+  animation: shadow-drift 8s ease-in-out 1.1s 3;
+  animation-delay: calc(1.1s + var(--delay, 0ms));
+  /* both を付けないと 3 周終わった瞬間に影が素の濃さへ跳ねる */
+  animation-fill-mode: both;
+}
+
+/* 台の大きさは全点そろえてあるので、序列は hover で付ける。
+   原点は接地線（50% 100%）— 中心から拡大すると床にめり込む。 */
+.bag-lift {
+  transform-origin: 50% 100%;
+  transition: transform 0.7s var(--ease-soft);
+}
+
+.group:hover .bag-lift,
+.group:focus-within .bag-lift {
+  transform: translateY(-10px) scale(1.06);
+}
+
+@keyframes hero-settle {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-settle {
+  animation: hero-settle 1s var(--ease-soft) both;
+  animation-delay: var(--delay, 0ms);
+}
+
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition:
+    opacity 0.9s var(--ease-soft),
+    transform 0.9s var(--ease-soft);
+  transition-delay: var(--delay, 0ms);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+}
+
+/* View Transitions — listed object → detail hero */
+::view-transition {
+  pointer-events: none;
+}
+
+::view-transition-group(.morph) {
+  animation-duration: 720ms;
+  animation-timing-function: var(--ease-morph);
+}
+
+::view-transition-image-pair(.morph) {
+  animation: 720ms var(--ease-morph) both morph-blur;
+}
+
+::view-transition-old(.morph),
+::view-transition-new(.morph) {
+  animation-duration: 720ms;
+  animation-timing-function: var(--ease-morph);
+  mix-blend-mode: normal;
+}
+
+@keyframes morph-blur {
+  0% {
+    filter: blur(0);
+  }
+  40% {
+    filter: blur(4px);
+  }
+  100% {
+    filter: blur(0);
+  }
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 480ms;
+  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+::view-transition-group(site-header) {
+  animation: none;
+  z-index: 100;
+}
+
+::view-transition-old(site-header) {
+  display: none;
+}
+
+::view-transition-new(site-header) {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  ::view-transition-old(*),
+  ::view-transition-new(*),
+  ::view-transition-group(*) {
+    animation-duration: 0s !important;
+    animation-delay: 0s !important;
+  }
+  .bag-float,
+  .bag-ground,
+  .hero-settle {
+    animation: none;
+    opacity: 1;
+  }
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  /* 拡大は動きが大きいので落とす。触れたことが分かる分だけ残す */
+  .cta-arrow {
+    transition: none;
+  }
+  .bag-lift {
+    transition: none;
+  }
+  .group:hover .bag-lift,
+  .group:focus-within .bag-lift {
+    transform: translateY(-4px);
+  }
 }
