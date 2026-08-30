@@ -56,6 +56,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 見出しを行マスクで起こしたいときは `<Reveal>` の中の `h2` に `data-split-lines` を付けるだけ（`Reveal` が SplitText を張って cleanup で revert する）。
 - **動きの参照元は cellato.tokyo**。ただし借りるのは所作（マスクで開く／行マスク／スクロール連動の横帯）だけで、黒地・ピル型ボタン・中央CTAは DESIGN.md が明示的に否定しているので持ち込まない。
 - ハンバーガーは `xl:` 未満。2本線→X と clip-path ワイプは GSAP。CSS の rotate で代用しない。
+- **メニューの閉じ方は二種類**（`closeMode`）。行き先を選んだとき（ナビ項目 / ワードマーク / Cart / 戻る進む）は `instant`、閉じるだけのとき（X / Esc）は `reverse` を 2 倍速で。`tl.reverse()` を等速で回すと 1.19 秒かかり、61ms 後に始まる View Transition がヘッダーを固定するので、新しいページの上にメニューが乗ったまま止まって見える。
+- `SiteHeader` の GSAP effect の deps は `open` **だけ**。`closeMode` を足すと、カートを開くとき（`open` は false のまま）に閉じる側が再実行され、`MiniCart` が掛けた `stopLenis` / `body.overflow` を打ち消す。
 
 ## 落とし穴
 

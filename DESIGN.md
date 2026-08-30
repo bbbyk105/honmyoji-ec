@@ -105,6 +105,9 @@ ivory room; their black ground and pill buttons do not, and are not adopted.
 - **Hover:** Image scale 1.03. Cut-out objects lift 10px and scale 1.06 from the ground line (`transform-origin: 50% 100%`) — this is what carries hierarchy now that every plinth is the same size. No shadow bloom.
 - **View transition:** `bag-{folder}` morph, 720ms; header named `site-header` and frozen
 - **Menu:** GSAP clip-path wipe + staggered nav lines; icon lines rotate to an X. Tablet and down (`xl:hidden`).
+  **Choosing a destination is not the same gesture as closing.** Pick an item and the menu is gone on the next
+  frame — you asked to be somewhere else, and the page is already changing underneath. Press X or Escape and it
+  plays the opening backwards, at twice the speed it opened.
 - **Float:** 3 cycles then stop (WCAG 2.2.2)
 - **Respect:** `prefers-reduced-motion` — no Lenis, no SplitText, menu is instant
 - **Do not:** loud parallax, infinite float, CSS hamburger transforms that fight GSAP
@@ -189,3 +192,4 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-08-31 | A column stops where its content stops | The material essay (400px photo + 46ch) sat in a 6-column well and left a 200px hole; the intro paragraph was capped at 38ch inside a 440px column. Column and measure now agree |
 | 2026-08-31 | Home featured is a swipe strip below `sm` | Three 4∶5 plinths stacked is 1,400px of mostly empty floor on a phone. Sideways, same as the PDP gallery: 9,942px → 8,296px |
 | 2026-08-31 | `self-start` on the featured grid items | `FloatingBag`'s `h-full` stretched to the grid row, opening 56px of dead space under the caption and pushing the note out of its own row |
+| 2026-08-31 | Selecting a menu item closes it instantly | `tl.reverse()` replayed the whole 1.19s entrance backwards, and a view transition froze the header 61ms in — so the menu sat on top of the page you had just navigated to for over a second. Selecting is now 16ms; X and Escape keep the choreography at 2× |

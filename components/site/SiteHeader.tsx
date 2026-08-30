@@ -14,6 +14,15 @@ import "@/components/motion/register";
 export function SiteHeader() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
+  /**
+   * 閉じ方は二種類ある。
+   *  reverse — 「閉じる」だけの操作（X / Esc）。開いた所作をそのまま巻き戻す
+   *  instant — 行き先を選んだとき。ここで巻き戻すと 1.19 秒（リンクの stagger →
+   *            clip-path ワイプ）かかり、その間に View Transition がヘッダーを
+   *            固定するので、新しいページの上にメニューが乗ったまま止まって見える。
+   * open と同じコミットで決まるので、GSAP 側は open の変化だけ見ていればいい。
+   */
+  const [closeMode, setCloseMode] = useState<"reverse" | "instant">("reverse");
   const [pathWhenOpened, setPathWhenOpened] = useState(pathname);
   const [scrolled, setScrolled] = useState(false);
   const { slugs, setOpen: setCartOpen } = useCart();
@@ -33,16 +42,22 @@ export function SiteHeader() {
 
   if (pathname !== pathWhenOpened) {
     setPathWhenOpened(pathname);
+    setCloseMode("instant");
     setOpen(false);
   }
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key !== "Escape") return;
+      setCloseMode("reverse");
+      setOpen(false);
     };
     const mq = window.matchMedia("(min-width: 1280px)");
     const onWide = () => {
-      if (mq.matches) setOpen(false);
+      if (!mq.matches) return;
+      // 幅で消えるときに巻き戻しを見せる相手はいない
+      setCloseMode("instant");
+      setOpen(false);
     };
     window.addEventListener("keydown", onKey);
     mq.addEventListener("change", onWide);
@@ -85,6 +100,7 @@ export function SiteHeader() {
       if (open) {
         stopLenis();
         document.body.style.overflow = "hidden";
+        tl.current.timeScale(1);
         if (reduced) {
           gsap.set(overlay.current, { autoAlpha: 1, clipPath: "none", pointerEvents: "auto" });
           gsap.set(items.current?.querySelectorAll("li") ?? [], { y: 0, autoAlpha: 1 });
@@ -97,19 +113,38 @@ export function SiteHeader() {
       } else {
         startLenis();
         document.body.style.overflow = "";
-        if (reduced) {
+        const instant = reduced || closeMode === "instant";
+        if (instant) {
+          // pause(0) で中身は開く前の位置へ戻る。pointerEvents だけは 0 秒地点の
+          // set() が効いたままなので、明示的に落とす。
+          tl.current.pause(0);
           gsap.set(overlay.current, { autoAlpha: 0, pointerEvents: "none" });
         } else {
-          tl.current.reverse();
+          // 閉じるときは開くときの倍速。1.19 秒はメニューが居座って見える。
+          tl.current.timeScale(2).reverse();
         }
-        gsap.to(lineA.current, { y: 0, rotate: 0, duration: reduced ? 0 : 0.4, ease: "power3.inOut" });
-        gsap.to(lineB.current, { y: 0, rotate: 0, duration: reduced ? 0 : 0.4, ease: "power3.inOut" });
+        const iconDuration = instant ? 0 : 0.4;
+        gsap.to(lineA.current, { y: 0, rotate: 0, duration: iconDuration, ease: "power3.inOut" });
+        gsap.to(lineB.current, { y: 0, rotate: 0, duration: iconDuration, ease: "power3.inOut" });
       }
     },
+    // deps は open だけ。closeMode も入れると、カートを開くとき（open は false のまま
+    // closeMode だけ変わる）に閉じる側の処理が再実行され、MiniCart が掛けた
+    // stopLenis / body overflow を打ち消してしまう。値は同じコミットで確定するので読めている。
     { dependencies: [open] },
   );
 
-  const close = () => setOpen(false);
+  /** 閉じるだけ（X / Esc）。開いた所作を巻き戻す。 */
+  const dismiss = () => {
+    setCloseMode("reverse");
+    setOpen(false);
+  };
+
+  /** 行き先を選んだとき。メニューは即座に退く。 */
+  const leave = () => {
+    setCloseMode("instant");
+    setOpen(false);
+  };
 
   return (
     <header
@@ -123,7 +158,7 @@ export function SiteHeader() {
       <div className={`${SHELL} grid h-16 grid-cols-[1fr_auto_1fr] items-center sm:h-[72px] md:h-[80px]`}>
         <Link
           href="/"
-          onClick={close}
+          onClick={leave}
           className="z-[60] col-start-1 justify-self-start no-underline"
           aria-label={`${site.name} — home`}
         >
@@ -160,7 +195,7 @@ export function SiteHeader() {
           <button
             type="button"
             onClick={() => {
-              close();
+              leave();
               setCartOpen(true);
             }}
             className="link-line min-h-11 font-sans text-[10.5px] uppercase tracking-[0.22em] text-ink"
@@ -176,7 +211,8 @@ export function SiteHeader() {
             type="button"
             onClick={() => {
               setPathWhenOpened(pathname);
-              setOpen((v) => !v);
+              if (open) dismiss();
+              else setOpen(true);
             }}
             aria-expanded={open}
             aria-controls="site-menu"
@@ -206,7 +242,7 @@ export function SiteHeader() {
                 <li key={item.href}>
                   <Link
                     href={item.href}
-                    onClick={close}
+                    onClick={leave}
                     className="flex items-baseline justify-between gap-4 border-b border-line/70 py-4 no-underline sm:py-5"
                   >
                     <span className="flex items-baseline gap-4 sm:gap-6">
@@ -232,7 +268,7 @@ export function SiteHeader() {
             <button
               type="button"
               onClick={() => {
-                close();
+                leave();
                 setCartOpen(true);
               }}
               className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.22em] text-ink"
