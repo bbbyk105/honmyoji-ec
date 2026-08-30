@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { SplitText } from "gsap/SplitText";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
+import { SHELL } from "@/components/site/Shell";
 import "@/components/motion/register";
 
 export function HomeHero() {
@@ -56,7 +57,8 @@ export function HomeHero() {
 
   return (
     <section ref={root} className="pt-16 sm:pt-[72px] md:pt-[80px]">
-      <div className="px-3 sm:px-4 md:px-6 lg:px-8">
+      {/* ヒーローも本文と同じ版面に収める。写真だけ外へ出ると、下の全セクションと左右の端が合わない。 */}
+      <div className={SHELL}>
         <Frame
           src="/images/scenes/hero-tatami.webp"
           alt="Three tatami-beri bags on the tatami of Honmyoji’s main hall"
@@ -67,10 +69,10 @@ export function HomeHero() {
           reveal="band"
           wellClass="aspect-[4/5] sm:aspect-[5/4] md:aspect-[16/10]"
           priority
-          sizes="100vw"
+          sizes="(min-width: 1480px) 1384px, 100vw"
         >
           <div aria-hidden className="absolute inset-0 bg-gradient-to-t from-ink/50 via-ink/5 to-ink/15" />
-          <div className="absolute inset-x-0 bottom-0 p-4 text-ivory sm:p-6 md:p-12 lg:p-16">
+          <div className="absolute inset-x-0 bottom-0 p-5 text-ivory sm:p-8 md:p-12 lg:p-16">
             <p data-hero-meta className="eyebrow text-ivory/70">
               Honmyoji · Fuji City
             </p>

@@ -60,8 +60,15 @@ No gold. No near-black luxury footer.
 - **Base:** 8px
 - **Density:** Spacious, with uneven section height so the page does not read as stacked modules
 - **Page width:** 1480px. **Articles are 980px** — a note is read, not scanned.
-- **Horizontal pad:** 20 / 32 / 48
-- **Section gaps:** 80–160px, not a repeated 96px rhythm
+- **Horizontal pad:** 16 / 20 / 32 / 48 — and it is not retyped per section. `SHELL` in
+  `components/site/Shell.tsx` is the one page column; header, footer, hero and every home
+  section use it. Written by hand it drifts: the hero had no `max-w` at all and sat 236px
+  outside the column at 1920px, and half the sections said `px-4 sm:px-5` while the other
+  half said `px-5`.
+- **Section gaps:** 80–160px, not a repeated 96px rhythm. **Vertical space is carried on one
+  side only** — a section that also paints a background (Intro, Craft) owns its inner `py`;
+  everything else takes `pt` and nothing else. `mt-40` stacked on `py-24` is 256px, which no
+  one chose and which reads as the page coming apart.
 - **Measure:** body ~56ch (≈65 characters). Japanese is measured in `em`, never `ch` — `ch` is the width of “0”, so `42ch` of Shippori wraps at about 20 characters and becomes unreadable.
 - **A column is as wide as its text.** A 56ch paragraph parked in a `col-span-7` leaves a hole; either narrow the column or put something in the other half. A short block beside a tall photograph is centred, not bottom-pinned — a pinned block reads as a mistake, a centred one reads as margin.
 
@@ -176,3 +183,9 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-08-31 | One button system, hairlines always visible | Most CTAs were 10px uppercase text with a hover-only underline — invisible as actions — and three hand-rolled ink buttons disagreed on size and tracking. `Button` now owns all five variants; `.link-cta` keeps the rule drawn |
 | 2026-08-31 | Dropped the 縁 watermark | A 280px kanji at 4% behind the opening headline. It did not read as a mark, only as a smudge under the type |
 | 2026-08-31 | Killed every `border-l` quote bar | Pull quotes on Journal and About, plus two Contact panels, all carried the markdown blockquote rule. It reads as generated, not designed. Quotes now work on size and space; panels take a full hairline |
+| 2026-08-31 | One page column (`SHELL`), hero included | The hero had no `max-w` and a smaller gutter, so at 1920px the photograph ran 236px wider than every section under it, and at 1440px it missed the text edge by 16px. Not full bleed and not aligned — just off. Now the photograph's outer edge is the page's outer edge, and the H1 is inset 64px *inside* the picture, which is a decision anyone can read |
+| 2026-08-31 | Vertical space on one side only | Sections mixed `mt-*` with `py-*`, so the gaps ran 112 / 256 / 176 / 240px. Backgrounded sections keep their inner `py`; the rest carry `pt` alone. Gaps now 80–136px and still uneven |
+| 2026-08-31 | Journal header and list share one right edge | The list stopped at 1040px while “The archive” sat at the 1480px edge — two right edges, 300px apart, in one block |
+| 2026-08-31 | A column stops where its content stops | The material essay (400px photo + 46ch) sat in a 6-column well and left a 200px hole; the intro paragraph was capped at 38ch inside a 440px column. Column and measure now agree |
+| 2026-08-31 | Home featured is a swipe strip below `sm` | Three 4∶5 plinths stacked is 1,400px of mostly empty floor on a phone. Sideways, same as the PDP gallery: 9,942px → 8,296px |
+| 2026-08-31 | `self-start` on the featured grid items | `FloatingBag`'s `h-full` stretched to the grid row, opening 56px of dead space under the caption and pushing the note out of its own row |

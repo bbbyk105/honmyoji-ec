@@ -8,6 +8,7 @@ import { useGSAP } from "@gsap/react";
 import { useCart } from "@/components/cart/CartProvider";
 import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
 import { site } from "@/data/site";
+import { SHELL } from "./Shell";
 import "@/components/motion/register";
 
 export function SiteHeader() {
@@ -119,7 +120,7 @@ export function SiteHeader() {
       }`}
     >
       {/* 三分割グリッド。flex + justify-between だと nav が中途半端な位置に落ちる */}
-      <div className="mx-auto grid h-16 w-full max-w-[1480px] grid-cols-[1fr_auto_1fr] items-center px-4 sm:h-[72px] sm:px-5 md:h-[80px] md:px-8 lg:px-12">
+      <div className={`${SHELL} grid h-16 grid-cols-[1fr_auto_1fr] items-center sm:h-[72px] md:h-[80px]`}>
         <Link
           href="/"
           onClick={close}

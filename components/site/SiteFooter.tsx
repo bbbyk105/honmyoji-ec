@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { site } from "@/data/site";
+import { SHELL } from "./Shell";
 import { Newsletter } from "./Newsletter";
 
 const footerNav = [
@@ -10,8 +11,8 @@ const footerNav = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-28 border-t border-line md:mt-40">
-      <div className="mx-auto grid w-full max-w-[1480px] gap-14 px-5 py-16 md:grid-cols-[1.3fr_0.8fr_1.1fr] md:gap-16 md:px-8 md:py-20 lg:px-12">
+    <footer className="mt-20 border-t border-line md:mt-28">
+      <div className={`${SHELL} grid gap-14 py-16 md:grid-cols-[1.3fr_0.8fr_1.1fr] md:gap-16 md:py-20`}>
         <div>
           <p className="font-sans text-[13px] font-medium tracking-[0.42em] text-ink">MIROKU</p>
           <p className="mt-6 max-w-[28ch] font-display text-[26px] font-light leading-[1.3] text-ink">
@@ -52,7 +53,7 @@ export function SiteFooter() {
         </div>
       </div>
       <div className="border-t border-line">
-        <div className="mx-auto flex w-full max-w-[1480px] flex-col gap-2 px-5 py-5 font-sans text-[9.5px] uppercase tracking-[0.22em] text-mist md:flex-row md:items-center md:justify-between md:px-8 lg:px-12">
+        <div className={`${SHELL} flex flex-col gap-2 py-5 font-sans text-[9.5px] uppercase tracking-[0.22em] text-mist md:flex-row md:items-center md:justify-between`}>
           <span>© 2026 {site.name}</span>
           <span>Handmade in Fuji, Japan</span>
         </div>

@@ -57,7 +57,7 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
                     alt={`${product.name} — ${product.note}`}
                     fill
                     priority={priority}
-                    sizes="(min-width: 1280px) 30vw, (min-width: 640px) 46vw, 88vw"
+                    sizes="(min-width: 1280px) 30vw, (min-width: 640px) 46vw, 78vw"
                     className="object-contain object-bottom"
                   />
                 </ViewTransition>
