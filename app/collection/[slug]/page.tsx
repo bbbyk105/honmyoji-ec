@@ -10,6 +10,7 @@ import { StillTile } from "@/components/collection/StillTile";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
+import { blogHref } from "@/lib/microcms";
 import {
   LINE_LABEL,
   cm,
@@ -78,6 +79,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   const index = products.findIndex((p) => p.slug === product.slug);
   const related = products.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 3);
+  /* お手入れの記事へ。記事は microCMS 側で入れ替わるので slug を焼き込まない。 */
+  const careHref = await blogHref("holding-the-weave", "Care");
   const action = cta(product);
   const gallery = Array.from({ length: product.galleryCount }, (_, i) => i + 1);
   const extras = gallery.slice(1);
@@ -213,7 +216,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
                 <p>Spot clean. No machine.</p>
                 <p>Dry, standing or hung.</p>
-                <Link href="/journal/holding-the-weave" className="link-line text-ink">
+                <Link href={careHref} className="link-line text-ink">
                   Care note
                 </Link>
               </dd>

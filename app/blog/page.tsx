@@ -3,16 +3,16 @@ import Link from "next/link";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
-import { formatJournalDate, journalMeta } from "@/data/journal";
-import { getJournalEntries } from "@/lib/microcms";
+import { formatBlogDate, blogMeta } from "@/data/blog";
+import { getBlogPosts } from "@/lib/microcms";
 
 export const metadata: Metadata = {
-  title: "Journal",
+  title: "Blog",
   description: "Notes on material, making, care, and place — from Honmyoji Temple, Fuji.",
 };
 
-export default async function JournalIndexPage() {
-  const entries = await getJournalEntries();
+export default async function BlogIndexPage() {
+  const entries = await getBlogPosts();
   const [lead, ...rest] = entries;
 
   return (
@@ -20,7 +20,7 @@ export default async function JournalIndexPage() {
       <div className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
         <header className="grid gap-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
-            <p className="eyebrow">Journal</p>
+            <p className="eyebrow">Blog</p>
             <h1 className="mt-5 font-display text-[clamp(40px,11vw,92px)] font-light leading-[0.94] text-ink">
               Notes from
               <br />
@@ -38,7 +38,7 @@ export default async function JournalIndexPage() {
         {lead ? (
           <article className="mt-14 grid gap-8 border-t border-line pt-12 md:mt-16 md:grid-cols-12 md:gap-10">
             <Reveal className="md:col-span-6">
-              <Link href={`/journal/${lead.slug}`} className="block no-underline">
+              <Link href={`/blog/${lead.slug}`} className="block no-underline">
                 <Frame
                   src={lead.image}
                   alt={lead.imageAlt}
@@ -50,10 +50,10 @@ export default async function JournalIndexPage() {
             </Reveal>
             <Reveal delay={80} className="md:col-span-5 md:col-start-8">
               <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-mist">
-                {journalMeta(lead.topic, formatJournalDate(lead.date))}
+                {blogMeta(lead.topic, formatBlogDate(lead.date))}
               </p>
               <h2 className="mt-4 font-display text-[clamp(30px,3.2vw,40px)] font-light leading-[1.12] text-ink">
-                <Link href={`/journal/${lead.slug}`} className="no-underline">
+                <Link href={`/blog/${lead.slug}`} className="no-underline">
                   {lead.title}
                 </Link>
               </h2>
@@ -61,7 +61,7 @@ export default async function JournalIndexPage() {
                 <p className="mt-2 font-jp text-[12px] tracking-[0.16em] text-mist">{lead.titleJa}</p>
               ) : null}
               <p className="mt-5 max-w-[42ch] font-sans text-[15px] leading-[1.85] text-charcoal">{lead.dek}</p>
-              <Button href={`/journal/${lead.slug}`} variant="link" className="mt-7">
+              <Button href={`/blog/${lead.slug}`} variant="link" className="mt-7">
                 Read this note
               </Button>
             </Reveal>
@@ -72,12 +72,12 @@ export default async function JournalIndexPage() {
           {rest.map((entry, i) => (
             <Reveal key={entry.slug} as="li" delay={i * 50}>
               <Link
-                href={`/journal/${entry.slug}`}
+                href={`/blog/${entry.slug}`}
                 className="group grid gap-x-8 gap-y-3 py-8 no-underline md:grid-cols-12"
               >
                 <p className="font-sans text-[10px] uppercase leading-[1.9] tracking-[0.2em] text-mist md:col-span-2">
                   {entry.topic}
-                  <span className="block text-mist/75">{formatJournalDate(entry.date)}</span>
+                  <span className="block text-mist/75">{formatBlogDate(entry.date)}</span>
                 </p>
                 <div className="md:col-span-9">
                   <h2 className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-[1.2] text-ink">

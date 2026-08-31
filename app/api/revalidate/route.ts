@@ -1,10 +1,10 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { revalidateTag } from "next/cache";
-import { JOURNAL_TAG } from "@/lib/microcms";
+import { BLOG_TAG } from "@/lib/microcms";
 
 /* ------------------------------------------------------------------
    microCMS の Webhook 受け口。記事を公開／更新／削除すると叩かれ、
-   Journal のキャッシュを捨てる（次に誰かが開いたときに取り直す）。
+   Blog のキャッシュを捨てる（次に誰かが開いたときに取り直す）。
 
    microCMS 管理画面 → API 設定 → Webhook → カスタム通知
      URL    : https://<本番ドメイン>/api/revalidate
@@ -36,6 +36,6 @@ export async function POST(request: Request) {
     return Response.json({ revalidated: false, reason: "invalid signature" }, { status: 401 });
   }
 
-  revalidateTag(JOURNAL_TAG, "max");
-  return Response.json({ revalidated: true, tag: JOURNAL_TAG, now: Date.now() });
+  revalidateTag(BLOG_TAG, "max");
+  return Response.json({ revalidated: true, tag: BLOG_TAG, now: Date.now() });
 }

@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { JournalArticle } from "@/components/journal/JournalArticle";
-import { getJournalDraft } from "@/lib/microcms";
+import { BlogArticle } from "@/components/blog/BlogArticle";
+import { getBlogDraft } from "@/lib/microcms";
 
 /* microCMS の「画面プレビュー」用。管理画面 → API 設定 → 画面プレビューに
-   https://<本番ドメイン>/journal/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
+   https://<本番ドメイン>/blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
    を入れる。下書きは毎回取り直すので静的化しない。 */
 export const dynamic = "force-dynamic";
 
@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 
 type Search = { slug?: string; draftKey?: string };
 
-export default async function JournalPreviewPage({
+export default async function BlogPreviewPage({
   searchParams,
 }: {
   searchParams: Promise<Search>;
@@ -24,7 +24,7 @@ export default async function JournalPreviewPage({
   const { slug, draftKey } = await searchParams;
   if (!slug || !draftKey) notFound();
 
-  const entry = await getJournalDraft(slug, draftKey);
+  const entry = await getBlogDraft(slug, draftKey);
   if (!entry) notFound();
 
   return (
@@ -35,12 +35,12 @@ export default async function JournalPreviewPage({
           <p className="font-sans text-[10px] uppercase tracking-[0.24em] text-clay">
             Draft preview · not published
           </p>
-          <Link href="/journal" className="link-line font-sans text-[12px] text-mist">
+          <Link href="/blog" className="link-line font-sans text-[12px] text-mist">
             Leave preview
           </Link>
         </div>
       </div>
-      <JournalArticle entry={entry} />
+      <BlogArticle entry={entry} />
     </>
   );
 }

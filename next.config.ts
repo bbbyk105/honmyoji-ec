@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    // microCMS のメディア。Journal の写真だけがここから来る。
+    // microCMS のメディア。Blog の写真だけがここから来る。
     remotePatterns: [{ protocol: "https", hostname: "images.microcms-assets.io" }],
   },
   async redirects() {
@@ -16,6 +16,9 @@ const nextConfig: NextConfig = {
       { source: "/collection/hisui", destination: "/collection/hisui-jade", permanent: true },
       { source: "/collection/ichimatsu", destination: "/collection/ichimatsu-check", permanent: true },
       { source: "/collection/tsugi", destination: "/collection/tsugi-autumn", permanent: true },
+      // Journal → Blog（2026-08-31）。既に配ったリンクと検索結果を切らさない。
+      { source: "/journal", destination: "/blog", permanent: true },
+      { source: "/journal/:slug", destination: "/blog/:slug", permanent: true },
     ];
   },
 };

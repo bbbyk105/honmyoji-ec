@@ -18,10 +18,10 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Environment
 
-Copy `.env.example` to `.env.local`. The Journal (`/journal`) reads its articles from
+Copy `.env.example` to `.env.local`. The blog (`/blog`) reads its articles from
 **microCMS** — see [`docs/microcms.md`](docs/microcms.md) for the API schema, draft preview,
 and the revalidation webhook. Without microCMS credentials the site still builds and runs;
-it falls back to the seed articles in `data/journal.ts`.
+it falls back to the seed articles in `data/blog.ts`.
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 

@@ -147,36 +147,36 @@ body {
 }
 
 /* ------------------------------------------------------------------
-   Journal 本文 — microCMS のリッチエディタから来る HTML の組み。
-   手書き記事（data/journal.ts の seed）の段組みと同じ寸法に合わせてある：
+   Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
+   手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
    本文 17px / 1.9、行長は 62ch、見出しは Newsreader。
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
-.journal-prose {
+.blog-prose {
   color: var(--color-charcoal);
 }
 
-.journal-prose > * + * {
+.blog-prose > * + * {
   margin-top: 1.7em;
 }
 
-.journal-prose p,
-.journal-prose ul,
-.journal-prose ol {
+.blog-prose p,
+.blog-prose ul,
+.blog-prose ol {
   max-width: 62ch;
   font-family: var(--font-sans);
   font-size: 17px;
   line-height: 1.9;
 }
 
-.journal-prose :lang(ja) {
+.blog-prose :lang(ja) {
   font-family: var(--font-jp);
   line-height: 2;
 }
 
-.journal-prose h1,
-.journal-prose h2,
-.journal-prose h3 {
+.blog-prose h1,
+.blog-prose h2,
+.blog-prose h3 {
   max-width: 24ch;
   margin-top: 2.6em;
   font-family: var(--font-display);
@@ -185,18 +185,18 @@ body {
   color: var(--color-ink);
 }
 
-.journal-prose h1,
-.journal-prose h2 {
+.blog-prose h1,
+.blog-prose h2 {
   font-size: clamp(24px, 2.6vw, 31px);
 }
 
-.journal-prose h3 {
+.blog-prose h3 {
   font-size: clamp(20px, 2vw, 24px);
 }
 
-.journal-prose h4,
-.journal-prose h5,
-.journal-prose h6 {
+.blog-prose h4,
+.blog-prose h5,
+.blog-prose h6 {
   margin-top: 2.4em;
   font-family: var(--font-sans);
   font-size: 11px;
@@ -207,7 +207,7 @@ body {
 }
 
 /* 引用は罫ではなく、大きさと余白で立てる */
-.journal-prose blockquote {
+.blog-prose blockquote {
   max-width: 24ch;
   margin-top: 2.4em;
   margin-bottom: 2.4em;
@@ -219,21 +219,21 @@ body {
   color: var(--color-ink);
 }
 
-.journal-prose blockquote p {
+.blog-prose blockquote p {
   max-width: none;
   font: inherit;
 }
 
-.journal-prose ul,
-.journal-prose ol {
+.blog-prose ul,
+.blog-prose ol {
   padding-left: 1.4em;
 }
 
-.journal-prose ul {
+.blog-prose ul {
   list-style: none;
 }
 
-.journal-prose ul > li::before {
+.blog-prose ul > li::before {
   content: "—";
   display: inline-block;
   width: 1.4em;
@@ -241,15 +241,15 @@ body {
   color: var(--color-mist);
 }
 
-.journal-prose ol {
+.blog-prose ol {
   list-style: decimal;
 }
 
-.journal-prose li + li {
+.blog-prose li + li {
   margin-top: 0.5em;
 }
 
-.journal-prose a {
+.blog-prose a {
   color: var(--color-ink);
   text-decoration: underline;
   text-decoration-thickness: 1px;
@@ -258,21 +258,21 @@ body {
   transition: text-decoration-color 0.4s var(--ease-soft);
 }
 
-.journal-prose a:hover,
-.journal-prose a:focus-visible {
+.blog-prose a:hover,
+.blog-prose a:focus-visible {
   text-decoration-color: currentColor;
 }
 
-.journal-prose strong {
+.blog-prose strong {
   font-weight: 600;
 }
 
-.journal-prose em {
+.blog-prose em {
   font-family: var(--font-display);
   font-style: italic;
 }
 
-.journal-prose img {
+.blog-prose img {
   display: block;
   width: 100%;
   height: auto;
@@ -281,7 +281,7 @@ body {
   background: var(--color-parchment);
 }
 
-.journal-prose figcaption {
+.blog-prose figcaption {
   margin-top: -1.6em;
   font-family: var(--font-sans);
   font-size: 10px;
@@ -290,7 +290,7 @@ body {
   color: var(--color-mist);
 }
 
-.journal-prose hr {
+.blog-prose hr {
   max-width: 62ch;
   margin-top: 3em;
   margin-bottom: 3em;
@@ -298,7 +298,7 @@ body {
   border-top: 1px solid var(--color-line);
 }
 
-.journal-prose table {
+.blog-prose table {
   width: 100%;
   max-width: 62ch;
   border-collapse: collapse;
@@ -306,15 +306,15 @@ body {
   font-size: 14px;
 }
 
-.journal-prose th,
-.journal-prose td {
+.blog-prose th,
+.blog-prose td {
   padding: 0.75em 1em 0.75em 0;
   border-bottom: 1px solid var(--color-line);
   text-align: left;
   vertical-align: top;
 }
 
-.journal-prose th {
+.blog-prose th {
   font-size: 10px;
   font-weight: 500;
   letter-spacing: 0.2em;
@@ -322,13 +322,13 @@ body {
   color: var(--color-mist);
 }
 
-.journal-prose code {
+.blog-prose code {
   font-size: 0.9em;
   background: var(--color-parchment);
   padding: 0.1em 0.35em;
 }
 
-.journal-prose pre {
+.blog-prose pre {
   max-width: 62ch;
   overflow-x: auto;
   background: var(--color-parchment);
@@ -337,7 +337,7 @@ body {
   line-height: 1.7;
 }
 
-.journal-prose pre code {
+.blog-prose pre code {
   background: none;
   padding: 0;
 }

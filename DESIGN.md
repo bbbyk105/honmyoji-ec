@@ -121,10 +121,10 @@ Every well is a `Frame` (or equivalent) carrying `data-image-role` and `data-ima
 | `hero-campaign` | 16∶10 | Home hero |
 | `product-still` | 4∶5 (sometimes 1∶1) | Collection tiles, PDP lead still |
 | `product-detail` | 4∶5, 1∶1 | PDP gallery mix |
-| `material-macro` | 4∶5 | Material essay, journal |
+| `material-macro` | 4∶5 | Material essay, blog |
 | `process` | 3∶4, 1∶1 | Making, temple hall |
 | `lifestyle` | 16∶10, 3∶4, 4∶5 | Campaign clusters |
-| `journal` | as article | Stories |
+| `blog` | as article | Blog posts |
 
 Empty state: parchment field + role label + ratio. Do not use grey “image coming soon” boxes.
 
@@ -151,7 +151,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 1. Hero is an inscribed photograph, not left-copy / right-image.
 2. Featured pieces are three cut-out objects on identical plinths sharing one ground line — no photograph backgrounds, no card chrome. The one you point at comes forward.
 3. Material is an essay with a sticky title, not icon pillars.
-4. Journal is a numbered publication list, not a blog widget.
+4. The blog is a publication — one column of meaning, an article set at 980px — not a widget of teaser cards.
 5. Collection is an exhibition — every piece cut out and floated on the same plinth, so nine different objects read as one show, not a merchandising grid of photographs.
 6. Footer stays ivory. The dark “luxury plinth” is gone.
 
@@ -195,6 +195,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-08-31 | Selecting a menu item closes it instantly | `tl.reverse()` replayed the whole 1.19s entrance backwards, and a view transition froze the header 61ms in — so the menu sat on top of the page you had just navigated to for over a second. Selecting is now 16ms; X and Escape keep the choreography at 2× |
 | 2026-08-31 | Prices are Australian dollars, written `A$220` | The site formatted with `en-US` + USD, so every price was a bare `$` that named no country, and the PDP then repeated the currency beside it as a separate `USD` tag — the same fact in two notations. One formatter now, `A$` (CLDR's standard symbol; `en-AU` would put the ambiguous bare `$` back), and the duplicate label is gone |
 | 2026-08-31 | Journal splits into title column + list above `xl` | The list is capped at 1040px so it stays one column of meaning, which left a 344px void at the right of a 1384px page column. Above `xl` the section heading and “The archive” move into their own left column and the list runs to the page's right edge; below it, both stay stacked at 1040px |
-| 2026-08-31 | CMS prose is set by us, not by the editor | Journal articles now come from microCMS as rich-editor HTML. `.journal-prose` holds them to the hand-built article's own measurements — 17px / 1.9 at 62ch, Newsreader headings, quotes on scale and air with no `border-l`, images ragging right of the measure, meta-cased `h4`. Nothing in the CMS sets colour or size |
+| 2026-08-31 | CMS prose is set by us, not by the editor | Journal articles now come from microCMS as rich-editor HTML. `.blog-prose` holds them to the hand-built article's own measurements — 17px / 1.9 at 62ch, Newsreader headings, quotes on scale and air with no `border-l`, images ragging right of the measure, meta-cased `h4`. Nothing in the CMS sets colour or size |
 | 2026-08-31 | Journal reads newest first | The index led with the oldest note and “Recent notes” on the home page listed the three oldest. Harmless with four fixed articles, wrong the moment someone publishes a fifth |
+| 2026-08-31 | “Journal” → “Blog” | The nav item has to be understood before it is clicked, and “Journal” asks the reader to work out whether it is a diary, a magazine, or a stockist list. “Blog” costs one moment of editorial tone and saves every visitor the guess. The writing does not change — inside, articles are still *notes*. `/journal/*` redirects permanently to `/blog/*` |
 
