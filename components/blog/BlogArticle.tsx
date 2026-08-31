@@ -14,8 +14,11 @@ type Props = {
 /**
  * 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。
  * 見出しも本文も同じ左端に揃える — 読み始めるたびに視線が横に飛ばないように。
+ * サムネは任意。無いときはプレースホルダを出さず、本文までの余白だけ詰める。
  */
 export function BlogArticle({ entry, next }: Props) {
+  const hasImage = Boolean(entry.image);
+
   return (
     <article className="pt-16 sm:pt-[72px] md:pt-[80px]">
       <header className="mx-auto w-full max-w-[980px] px-5 pt-12 sm:pt-14 md:pt-20">
@@ -23,37 +26,48 @@ export function BlogArticle({ entry, next }: Props) {
           Blog
         </Button>
         <p className="eyebrow mt-10">{blogMeta(entry.topic, entry.season)}</p>
-        <h1 className="mt-4 max-w-[16ch] font-display text-[clamp(38px,5.2vw,68px)] font-light leading-[1.02] text-ink">
+        <h1 className="mt-4 max-w-[22ch] font-display text-[clamp(38px,5.2vw,68px)] font-light leading-[1.02] text-ink">
           {entry.title}
         </h1>
         {entry.titleJa ? (
           <p className="mt-4 font-jp text-[14px] tracking-[0.22em] text-mist">{entry.titleJa}</p>
         ) : null}
         {entry.dek ? (
-          <p className="mt-8 max-w-[38ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-charcoal">
+          <p className="mt-8 max-w-[42ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-charcoal">
             {entry.dek}
           </p>
         ) : null}
-        <p className="mt-8 border-t border-line pt-5 font-sans text-[11px] uppercase tracking-[0.18em] text-mist">
+        <p
+          className={`mt-8 font-sans text-[11px] uppercase tracking-[0.18em] text-mist ${
+            hasImage ? "border-t border-line pt-5" : ""
+          }`}
+        >
           {formatBlogDate(entry.date)}
         </p>
-        <div className="mt-10">
-          <Frame
-            src={entry.image}
-            alt={entry.imageAlt}
-            role={entry.imageRole}
-            ratio="16/10"
-            caption={entry.imageAlt}
-            priority
-            sizes="(min-width: 980px) 980px, 100vw"
-          />
-        </div>
+        {hasImage ? (
+          <div className="mt-10">
+            <Frame
+              src={entry.image}
+              alt={entry.imageAlt}
+              role={entry.imageRole}
+              ratio="16/10"
+              caption={entry.imageAlt}
+              priority
+              sizes="(min-width: 980px) 980px, 100vw"
+            />
+          </div>
+        ) : null}
       </header>
 
-      <div className="mx-auto mt-16 w-full max-w-[980px] px-5">
+      {/* 写真があるときは写真の下、無いときは日付の下で本文を始める。空の井戸は出さない。 */}
+      <div
+        className={`mx-auto w-full max-w-[980px] px-5 ${
+          hasImage ? "mt-16" : "mt-12 border-t border-line pt-12"
+        }`}
+      >
         {entry.pull ? (
           <Reveal>
-            <p className="mb-20 max-w-[24ch] font-display text-[clamp(28px,3.4vw,40px)] font-light italic leading-[1.28] text-ink">
+            <p className="mb-16 max-w-[28ch] font-display text-[clamp(28px,3.4vw,40px)] font-light italic leading-[1.28] text-ink md:mb-20">
               {entry.pull}
             </p>
           </Reveal>
@@ -72,7 +86,7 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "h" && block.text) {
               return (
                 <Reveal key={i}>
-                  <h2 className="max-w-[24ch] pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ink">
+                  <h2 className="pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ink">
                     {block.text}
                   </h2>
                 </Reveal>
@@ -109,7 +123,7 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "p" && block.text) {
               return (
                 <Reveal key={i}>
-                  <p className="max-w-[62ch] font-sans text-[17px] leading-[1.9] text-charcoal">{block.text}</p>
+                  <p className="font-sans text-[17px] leading-[1.9] text-charcoal">{block.text}</p>
                 </Reveal>
               );
             }
@@ -129,9 +143,11 @@ export function BlogArticle({ entry, next }: Props) {
               <span className="mt-3 block font-display text-[clamp(26px,3.2vw,38px)] font-light leading-[1.15] text-ink">
                 {next.title}
               </span>
-              <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-charcoal/75">
-                {next.dek}
-              </span>
+              {next.dek ? (
+                <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-charcoal/75">
+                  {next.dek}
+                </span>
+              ) : null}
             </span>
             <span
               aria-hidden

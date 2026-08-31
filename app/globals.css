@@ -149,7 +149,8 @@ body {
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文 17px / 1.9、行長は 62ch、見出しは Newsreader。
+   本文 17px / 1.9、見出しは Newsreader。行長は親の 980px 版面に合わせる
+  （内側で 62ch / 24ch を切ると右が空洞になる — DESIGN.md「列は文字幅」）。
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
 .blog-prose {
@@ -163,7 +164,6 @@ body {
 .blog-prose p,
 .blog-prose ul,
 .blog-prose ol {
-  max-width: 62ch;
   font-family: var(--font-sans);
   font-size: 17px;
   line-height: 1.9;
@@ -177,7 +177,6 @@ body {
 .blog-prose h1,
 .blog-prose h2,
 .blog-prose h3 {
-  max-width: 24ch;
   margin-top: 2.6em;
   font-family: var(--font-display);
   font-weight: 300;
@@ -291,7 +290,6 @@ body {
 }
 
 .blog-prose hr {
-  max-width: 62ch;
   margin-top: 3em;
   margin-bottom: 3em;
   border: 0;
@@ -300,7 +298,6 @@ body {
 
 .blog-prose table {
   width: 100%;
-  max-width: 62ch;
   border-collapse: collapse;
   font-family: var(--font-sans);
   font-size: 14px;
@@ -329,7 +326,6 @@ body {
 }
 
 .blog-prose pre {
-  max-width: 62ch;
   overflow-x: auto;
   background: var(--color-parchment);
   padding: 1.2em;
