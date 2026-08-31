@@ -4,6 +4,7 @@ import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
+import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { HomeHero } from "@/components/home/HomeHero";
 import { FloatingBag } from "@/components/collection/FloatingBag";
 import { StillTile } from "@/components/collection/StillTile";
@@ -88,24 +89,22 @@ export default async function HomePage() {
             {/*
               三点とも同じ展示台。序列は大きさではなく hover（触れた一点が前に出る）で付ける。
               スマホでは縦積みにしない — 4:5 の台が三つで 1,400px、そのほとんどが空の床になる。
-              PDP のギャラリーと同じ所作で横へ送る（一点ずつ、次の端が覗く）。
-              self-start が要る — 既定の stretch だと FloatingBag の h-full が行の高さまで伸びて、
-              キャプションの下に 56px の空白ができ、説明文が行の外へこぼれる。
+              PDP のギャラリーと同じ所作で横へ送る（一点ずつ中央に立て、次の端が覗く）。
+              中央寄せと 01 / 03 は SwipeStrip が持つ（コマの入れ方の理由はそちらの註）。
             */}
-            <div className="-mx-4 mt-12 flex snap-x snap-mandatory gap-5 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:grid sm:grid-cols-3 sm:gap-8 sm:overflow-visible sm:px-0 md:gap-10 [&::-webkit-scrollbar]:hidden">
+            <SwipeStrip
+              className="mt-12"
+              trackClassName="-mx-4 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-8 sm:overflow-visible md:gap-10"
+            >
               {[sakura, ai, wakaba].map((piece, i) => (
-                <Reveal
-                  key={piece.slug}
-                  delay={i * 80}
-                  className="w-[78vw] max-w-[380px] shrink-0 snap-center self-start sm:w-auto sm:max-w-none sm:shrink"
-                >
+                <Reveal key={piece.slug} delay={i * 80}>
                   <FloatingBag product={piece} index={i} priority={i < 2} />
                   <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-charcoal/75">
                     {piece.note}
                   </p>
                 </Reveal>
               ))}
-            </div>
+            </SwipeStrip>
           </div>
         </section>
 
