@@ -21,8 +21,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `DESIGN.md` — 視覚言語の正本。UI を触る前に読む。
 - `data/products.ts` — **商品カタログはコード内**。価格・ステータス（available / reserved / sold_out / coming_soon）・寸法・素材はここを編集する。DB は無い。
 - `data/site.ts` — ブランドコピー・FAQ・創業者・特商法/返品ポリシー。
-- `data/journal.ts` — Journal / Stories。記事を足すときはここ。
-- `app/` — `/` `/collection` `/collection/[slug]` `/about` `/journal` `/journal/[slug]` `/faq` `/legal` `/contact`（Server Action）。
+- `data/journal.ts` — Journal の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Journal が空にならないようにするための seed で、記事を足す場所ではない。
+- `lib/microcms.ts` — **Journal の記事はここから来る**。入稿の手順・スキーマ・Webhook は `docs/microcms.md`。
+- `components/journal/JournalArticle.tsx` — 記事の組み。`/journal/[slug]`（公開）と `/journal/preview`（下書き）で共有する。
+- `app/` — `/` `/collection` `/collection/[slug]` `/about` `/journal` `/journal/[slug]` `/journal/preview` `/faq` `/legal` `/contact`（Server Action）`/api/revalidate`（microCMS Webhook）。
 - `components/collection/GalleryStrip.tsx` — **スマホのギャラリー**（`md:hidden`）。snap の横スワイプ + `01 / 05` カウンタ。写真1枚の作品は自動で普通の一枚に落ちる。md 以上は従来の編集グリッド（`hidden md:grid`）。
 - `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`PieceSlug.tsx` — `/sakura-cherry` のように URL slug を読む。
 - `components/site/Shell.tsx` — **版面の定数 `SHELL`**（`max-w-[1480px]` + 左右余白）。ヘッダー / フッター / ヒーロー / トップの全セクションがこれを使う。新しいセクションで `mx-auto max-w-... px-...` を手書きしない — 手書きに戻すと必ず 16px ずれる。
@@ -60,6 +62,16 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **メニューの閉じ方は二種類**（`closeMode`）。行き先を選んだとき（ナビ項目 / ワードマーク / Cart / 戻る進む）は `instant`、閉じるだけのとき（X / Esc）は `reverse` を 2 倍速で。`tl.reverse()` を等速で回すと 1.19 秒かかり、61ms 後に始まる View Transition がヘッダーを固定するので、新しいページの上にメニューが乗ったまま止まって見える。
 - `SiteHeader` の GSAP effect の deps は `open` **だけ**。`closeMode` を足すと、カートを開くとき（`open` は false のまま）に閉じる側が再実行され、`MiniCart` が掛けた `stopLenis` / `body.overflow` を打ち消す。
 
+## microCMS（Journal）
+
+- 記事は microCMS のリスト API `journals`。**コンテンツ ID がそのまま URL**（`/journal/<コンテンツID>`）。入稿・スキーマ・Webhook の手順は `docs/microcms.md`、環境変数は `.env.example`。
+- `MICROCMS_SERVICE_DOMAIN` / `MICROCMS_API_KEY` が無い環境（ローカル・プレビュー）と、API が落ちたときは `data/journal.ts` の seed に落ちる。**CMS 未設定でサイトが 500 になる作りにしない** — ログは `[microcms]` で出る。
+- 一覧は 1 リクエスト（最大 100 件）。詳細ページもその一覧から引く（記事ごとに叩かない）。並びは掲載日の新しい順。
+- 本文はリッチエディタの HTML を `.journal-prose`（`app/globals.css`）で組む。手書き記事のブロック（`p` / `h` / `image`）と同じ寸法に合わせてあるので、CMS 側で色や文字サイズを付けない。
+- 反映は Webhook（`/api/revalidate`、`X-MICROCMS-Signature` を検証して `revalidateTag("journal")`）＋ 10 分の定期再検証。
+- 下書きは `/journal/preview?slug=…&draftKey=…`（`force-dynamic`・noindex・画面下に帯）。**コンテンツ ID に `preview` は使えない**。
+- microCMS の画像は `next.config.ts` の `remotePatterns`（`images.microcms-assets.io`）を通る。
+
 ## 落とし穴
 
 - **`border-l` の引用バーを作らない**（markdown レンダラの既定＝AI感の元。引用は文字サイズと余白で立てる）。入力欄は罫線一本だけにしない（`bg-paper` + 全周ヘアライン）。`appearance-none` の `<select>` には矢印を自前で置く。エラー色は `clay`（`moss` は「購入可能」の色なので使わない）。
@@ -67,6 +79,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `"use server"` ファイルから非 async 値（定数）を export すると 500。定数は `app/contact/subjects.ts` のような別モジュールへ。
 - 浮遊アニメ（`.bag-float`）は WCAG 2.2.2 のため 3 周で止める設計。無限ループにしない。
 - お問い合わせは `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` があれば Telegram 送信、無ければサーバーログのみ。
+- microCMS の API キーに `NEXT_PUBLIC_` を付けない。`lib/microcms.ts` はサーバ専用 — `"use client"` から import しない。
 - `NEXT_PUBLIC_SITE_URL` が OG 画像の `metadataBase`。本番ドメイン確定時に設定。
 
 ## デザイン

@@ -8,7 +8,8 @@ import { HomeHero } from "@/components/home/HomeHero";
 import { FloatingBag } from "@/components/collection/FloatingBag";
 import { StillTile } from "@/components/collection/StillTile";
 import { productImage, products } from "@/data/products";
-import { journal } from "@/data/journal";
+import { journalMeta } from "@/data/journal";
+import { getJournalEntries } from "@/lib/microcms";
 import { founder, phrases } from "@/data/site";
 
 const sakura = products.find((p) => p.folder === "sakura")!;
@@ -23,7 +24,16 @@ const musubi = products.find((p) => p.folder === "musubi")!;
   自分の内側に上下の余白を持ち、それ以外は上だけ持つ。
 */
 
-export default function HomePage() {
+export default async function HomePage() {
+  const entries = await getJournalEntries();
+  const recentNotes = entries.slice(0, 3);
+  /* Material セクションの導線。記事は microCMS 側で入れ替わるので slug を焼き込まない —
+     素材の記事 → 無ければ最新 → それも無ければ一覧へ。 */
+  const materialNote =
+    entries.find((e) => e.slug === "the-edge-that-remains") ??
+    entries.find((e) => e.topic.toLowerCase() === "materials") ??
+    entries[0];
+
   return (
     <>
       <HomeHero />
@@ -131,7 +141,7 @@ export default function HomePage() {
                 <em className="font-display text-[18px] italic">en</em>: a meeting. The bag begins
                 there — leftover cloth, a city&apos;s recycled paper, a pair of hands at the temple.
               </p>
-              <Button href="/journal/the-edge-that-remains" variant="link">
+              <Button href={materialNote ? `/journal/${materialNote.slug}` : "/journal"} variant="link">
                 Read the material note
               </Button>
             </Reveal>
@@ -279,7 +289,7 @@ export default function HomePage() {
           </Reveal>
 
           <ol className="mt-12 divide-y divide-line border-y border-line xl:col-span-8 xl:col-start-5 xl:mt-0">
-            {journal.slice(0, 3).map((entry, i) => (
+            {recentNotes.map((entry, i) => (
               <Reveal key={entry.slug} as="li" delay={i * 60}>
                 <Link
                   href={`/journal/${entry.slug}`}
@@ -288,7 +298,7 @@ export default function HomePage() {
                   <p className="font-sans text-[10px] uppercase leading-[1.9] tracking-[0.2em] text-mist md:col-span-3">
                     {entry.topic}
                     <span className="block text-mist/75">
-                      {entry.season} · {entry.date.slice(0, 4)}
+                      {journalMeta(entry.season, entry.date.slice(0, 4))}
                     </span>
                   </p>
                   <div className="md:col-span-8">

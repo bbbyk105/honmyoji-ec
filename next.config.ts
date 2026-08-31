@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  images: {
+    // microCMS のメディア。Journal の写真だけがここから来る。
+    remotePatterns: [{ protocol: "https", hostname: "images.microcms-assets.io" }],
+  },
   async redirects() {
     return [
       { source: "/collection/sakura", destination: "/collection/sakura-cherry", permanent: true },
