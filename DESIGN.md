@@ -206,5 +206,5 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-08-31 | 拡大は掴んで動かせて初めて拡大 | 倍率だけ上げても端が見られないビューアは、拡大していないのと変わらない。ホイール / ピンチ / ＋− で 100–400%、拡大中はドラッグでパン、写真を送るとズームは 100% に戻る（前の一枚の拡大位置が次に持ち越されると迷子になる） |
 | 2026-08-31 | ホイールはカーソルの下を掴んだまま拡大する | 中心固定で拡大すると、見たかった場所が画面の外へ逃げていく。掴んだ一点が動かないよう位置を引き直す。同じ理由で、パンは「拡大で増えたぶんの半分」までに留める — 少し払っただけで写真が画面外へ消え、戻し方が分からなくなるのを防ぐ |
 | 2026-08-31 | ヒーローの像も拡大対象、通し番号は一本 | 商品ページで一番大きく写っているものが押せないのは、押せることの分かりにくさより悪い。0 番がヒーローの像、1 番から下のギャラリー。下のサムネイルで全体が何枚か分かり、直接飛べる |
-| 2026-08-31 | 送りの矢印は拡大中に引っ込める | 拡大中は画面全体が「掴んで動かす」面になる。そこに送りのボタンが残っていると、動かそうとして隣の写真へ飛ぶ |
+| 2026-08-31 | 送りは写真の上に浮かせず、下のバーに一本化 | 写真の両脇に矢印を置くと、拡大・移動のために stage が `setPointerCapture()` を取るので pointerup が奪われ、押しても click が来ない（実際に効かなかった）。閉じる・倍率・送りはすべて写真の外の帯に置き、ink の罫を常に引く — mist の 9.5〜11px に罫が無い状態は、そもそも操作に見えていなかった |
 | 2026-08-31 | Swipe strips stand their piece in the middle | `snap-center` alone never centres: at `scrollLeft: 0` there is nothing to scroll against, so the browser rests at the left edge — the piece sat 25px left of the screen's middle and the next one was sliced through its own name at the right edge. `SwipeStrip` pads both ends with a blank cell of `(100 − card) / 2`, so the first and last piece stand centred too, and adds the hairline the `01 / 05` counter runs along. Home, PDP gallery and “Alongside” now share one component |
