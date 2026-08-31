@@ -49,7 +49,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
     >
       <button
         type="button"
-        aria-label="Close inquiry"
+        aria-label="Close cart"
         onClick={() => setOpen(false)}
         className={`absolute inset-0 bg-ink/20 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
       />
@@ -79,8 +79,8 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
         <div className="flex-1 overflow-y-auto px-7 py-8">
           {pieces.length === 0 ? (
             <p className="max-w-[28ch] font-sans text-[13px] leading-[1.9] text-charcoal/80">
-              Your cart is empty. Add a piece here, then take it to checkout — or write to us first
-              if you would rather ask.
+              Your cart is empty. Add a piece from the collection, then take it to checkout — or
+              write to us first if you would rather ask.
             </p>
           ) : (
             <ul className="space-y-8">
@@ -144,7 +144,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
           <p className="font-sans text-[11px] leading-[1.8] text-mist">
             {canCheckout
               ? "Shipping is added at the next step. Payment is handled by Stripe — we never see your card."
-              : "No card is charged here. Send your cart and a person writes back with payment details."}
+              : "Nothing is charged here. Send us your cart and a person writes back with payment details."}
           </p>
 
           {state.error ? (

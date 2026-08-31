@@ -43,8 +43,9 @@ export default async function ContactPage({
             <p className="mt-4 font-jp text-[12px] tracking-[0.28em] text-mist">お問い合わせ</p>
           </div>
           <p className="max-w-[44ch] font-sans text-[15px] leading-[1.85] text-charcoal md:col-span-5 md:col-start-8 md:pb-2">
-            To hold a piece, ask about one, or commission a bag — shape, size, use, colours. A person
-            answers. Reserved pieces wait a few days while payment is arranged.
+            To reserve a piece, ask about one, or commission a bag — tell us the shape, size, use and
+            colours you have in mind. A person reads every message. A reserved piece is held for a few
+            days while payment is arranged.
           </p>
         </header>
 

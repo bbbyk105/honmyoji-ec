@@ -52,10 +52,10 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
           <div className="flex flex-nowrap items-center gap-1 sm:flex-wrap sm:gap-x-5 sm:gap-y-2">
             {(
               [
-                ["all", "Any state"],
+                ["all", "Any status"],
                 ["available", "Available"],
                 ["reserved", "Reserved"],
-                ["coming_soon", "Coming"],
+                ["coming_soon", "Coming soon"],
                 ["sold_out", "Sold"],
               ] as const
             ).map(([key, label]) => (
@@ -106,7 +106,7 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
       </div>
 
       {list.length === 0 ? (
-        <p className="py-20 font-display text-[28px] font-light text-ink">Nothing in this view.</p>
+        <p className="py-20 font-display text-[28px] font-light text-ink">Nothing matches that yet.</p>
       ) : null}
     </div>
   );

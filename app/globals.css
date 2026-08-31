@@ -147,6 +147,61 @@ body {
 }
 
 /* ------------------------------------------------------------------
+   Home hero — 暗い地に置く第一画面だけの層。ほかの節では使わない。
+   washi-grain は multiply なので暗い地の上では消える。ここは明るい粒子を
+   overlay で薄く重ねる。独自クラスに position は書かない（親が決める）。
+   ------------------------------------------------------------------ */
+.hero-veil {
+  /* スマホ：写真は下半分。足元の罫は写真の上に出たので、ここは接地の影だけ。
+     以前の 0.92 / 38% は帯のほとんどを覆っていて、作品が沈んで見えなかった */
+  background-image: linear-gradient(
+    to top,
+    rgba(21, 17, 11, 0.44) 0%,
+    rgba(21, 17, 11, 0.14) 7%,
+    rgba(21, 17, 11, 0) 17%
+  );
+}
+
+@media (min-width: 768px) {
+  .hero-veil {
+    /* 左の余白だけを沈める。66% から先は素のまま — 作品には一切かけない */
+    background-image:
+      linear-gradient(
+        100deg,
+        rgba(21, 17, 11, 0.86) 0%,
+        rgba(21, 17, 11, 0.66) 24%,
+        rgba(21, 17, 11, 0.3) 46%,
+        rgba(21, 17, 11, 0) 66%
+      ),
+      linear-gradient(
+        to top,
+        rgba(21, 17, 11, 0.72) 0%,
+        rgba(21, 17, 11, 0.22) 18%,
+        rgba(21, 17, 11, 0) 36%
+      );
+  }
+}
+
+/* スマホで写真の上端を地ににじませる継ぎ目。切り口を見せない。
+   長さは提げ手が溶ける分だけ（112px）— これ以上伸ばすと織りの上端まで曇る */
+.hero-seam {
+  background-image: linear-gradient(
+    to bottom,
+    #1b1710 0%,
+    rgba(27, 23, 16, 0.78) 26%,
+    rgba(27, 23, 16, 0.24) 62%,
+    rgba(27, 23, 16, 0) 100%
+  );
+}
+
+.hero-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.9 0 0 0 0 0.82 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-size: 180px 180px;
+  mix-blend-mode: overlay;
+  opacity: 0.13;
+}
+
+/* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
    本文 17px / 1.9、見出しは Newsreader。行長は親の 980px 版面に合わせる
