@@ -23,8 +23,8 @@ export default function CollectionPage() {
             <p className="mt-4 font-jp text-[13px] tracking-[0.2em] text-mist">{phrases.noTwo.ja}</p>
           </div>
           <p className="max-w-[38ch] font-sans text-[14px] leading-[1.85] text-charcoal/85 md:col-span-4 md:col-start-9 md:pb-2">
-            An exhibition, not a catalogue. Each bag is woven once from the ber-i on the table that
-            week. Prices in Australian dollars, shipping included.
+            An exhibition, not a catalogue. Each bag is woven once, from whatever tatami-beri is on
+            the table that week. Prices are in Australian dollars, and shipping is included.
           </p>
         </header>
 
@@ -35,11 +35,11 @@ export default function CollectionPage() {
         <dl className="mt-20 grid gap-6 border-t border-line pt-8 font-sans text-[12px] leading-[1.8] text-charcoal/75 md:grid-cols-4">
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-moss">Available</dt>
-            <dd className="mt-2">Ready. One of a kind. Add it to your cart and we write with payment.</dd>
+            <dd className="mt-2">Ready now, and one of a kind. Add it to your cart and we write back with payment details.</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-ink">Reserved</dt>
-            <dd className="mt-2">Held for someone who has written. Returns if unpaid.</dd>
+            <dd className="mt-2">Held for someone who has already written. If payment is not completed, it comes back here.</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-indigo">Coming soon</dt>
@@ -47,7 +47,7 @@ export default function CollectionPage() {
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-mist">Sold</dt>
-            <dd className="mt-2">Gone. We can work in a similar spirit, not a copy.</dd>
+            <dd className="mt-2">Gone for good. We can make something in the same spirit, but never a copy.</dd>
           </div>
         </dl>
       </div>

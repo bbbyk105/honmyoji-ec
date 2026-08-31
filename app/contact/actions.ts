@@ -24,7 +24,7 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
   const errors: NonNullable<Extract<ContactState, { status: "error" }>["errors"]> = {};
   if (name.length < 1) errors.name = "Please tell us your name.";
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Please enter a valid email address.";
-  if (message.length < 10) errors.message = "A few more words would help us answer well.";
+  if (message.length < 10) errors.message = "A few more words would help us answer properly.";
   if (Object.keys(errors).length) {
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }

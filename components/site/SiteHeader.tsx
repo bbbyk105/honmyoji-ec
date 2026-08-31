@@ -25,6 +25,12 @@ export function SiteHeader() {
   const [closeMode, setCloseMode] = useState<"reverse" | "instant">("reverse");
   const [pathWhenOpened, setPathWhenOpened] = useState(pathname);
   const [scrolled, setScrolled] = useState(false);
+  /**
+   * 暗いヒーロー（home の第一画面）に重なっている間だけ、ヘッダーを ivory の文字にする。
+   * 判定は DOM の [data-dark-hero] の高さ — ページ側が暗い節を置いたときだけ効く。
+   * 初期値はパスから決める。最初の描画は必ず先頭なので、effect を待たずに正しい色で出る。
+   */
+  const [onDarkHero, setOnDarkHero] = useState(pathname === "/");
   const { slugs, setOpen: setCartOpen } = useCart();
   const root = useRef<HTMLElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
@@ -34,16 +40,28 @@ export function SiteHeader() {
   const tl = useRef<gsap.core.Timeline | null>(null);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    const hero = document.querySelector<HTMLElement>("[data-dark-hero]");
+    const read = () => {
+      const y = window.scrollY;
+      setScrolled(y > 20);
+      // ヘッダーの下端が暗い節を抜けるまでは暗い地の上。抜けた瞬間に ivory の帯へ戻る。
+      setOnDarkHero(!!hero && y < hero.offsetHeight - 88);
+    };
+    read();
+    window.addEventListener("scroll", read, { passive: true });
+    window.addEventListener("resize", read);
+    return () => {
+      window.removeEventListener("scroll", read);
+      window.removeEventListener("resize", read);
+    };
+  }, [pathname]);
 
   if (pathname !== pathWhenOpened) {
     setPathWhenOpened(pathname);
     setCloseMode("instant");
     setOpen(false);
+    // 遷移直後の一フレームだけ前のページの色が残るのを防ぐ（effect は描画後に走る）
+    setOnDarkHero(pathname === "/");
   }
 
   useEffect(() => {
@@ -146,12 +164,19 @@ export function SiteHeader() {
     setOpen(false);
   };
 
+  /* 暗い地の上（＝ヒーローの中）。メニューは ivory の面なので、開いている間は通常の色に戻す。 */
+  const dark = onDarkHero && !open;
+  const tone = dark ? "text-ivory" : "text-ink";
+  const toneMuted = dark ? "text-ivory/60" : "text-mist";
+
   return (
     <header
       ref={root}
       style={{ viewTransitionName: "site-header" }}
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-500 ${
-        scrolled && !open ? "border-b border-line/80 bg-ivory/92" : "border-b border-transparent bg-transparent"
+        scrolled && !open && !dark
+          ? "border-b border-line/80 bg-ivory/92"
+          : "border-b border-transparent bg-transparent"
       }`}
     >
       {/* 三分割グリッド。flex + justify-between だと nav が中途半端な位置に落ちる */}
@@ -162,10 +187,14 @@ export function SiteHeader() {
           className="z-[60] col-start-1 justify-self-start no-underline"
           aria-label={`${site.name} — home`}
         >
-          <span className="block font-display text-[20px] font-light leading-none tracking-[0.18em] text-ink sm:text-[23px]">
+          <span
+            className={`block font-display text-[20px] font-light leading-none tracking-[0.18em] transition-colors duration-500 sm:text-[23px] ${tone}`}
+          >
             MIROKU
           </span>
-          <span className="mt-[7px] block font-sans text-[8px] uppercase tracking-[0.3em] text-mist">
+          <span
+            className={`mt-[7px] block font-sans text-[8px] uppercase tracking-[0.3em] transition-colors duration-500 ${toneMuted}`}
+          >
             Honmyoji · Fuji
           </span>
         </Link>
@@ -178,13 +207,20 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-300 ${
-                  active ? "text-ink" : "link-line text-charcoal/65 hover:text-ink"
+                className={`relative font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${
+                  active
+                    ? tone
+                    : dark
+                      ? "link-line text-ivory/65 hover:text-ivory"
+                      : "link-line text-charcoal/65 hover:text-ink"
                 }`}
               >
                 {item.label}
                 {active ? (
-                  <span aria-hidden className="absolute -bottom-[5px] left-0 right-0 h-px bg-ink" />
+                  <span
+                    aria-hidden
+                    className={`absolute -bottom-[5px] left-0 right-0 h-px ${dark ? "bg-ivory" : "bg-ink"}`}
+                  />
                 ) : null}
               </Link>
             );
@@ -198,12 +234,14 @@ export function SiteHeader() {
               leave();
               setCartOpen(true);
             }}
-            className="link-line min-h-11 font-sans text-[10.5px] uppercase tracking-[0.22em] text-ink"
+            className={`link-line min-h-11 font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${tone}`}
             aria-label={`Cart, ${slugs.length} ${slugs.length === 1 ? "piece" : "pieces"}`}
           >
             Cart
             {slugs.length > 0 ? (
-              <span className="ml-1.5 tabular-nums text-mist">({slugs.length})</span>
+              <span className={`ml-1.5 tabular-nums ${dark ? "text-ivory/60" : "text-mist"}`}>
+                ({slugs.length})
+              </span>
             ) : null}
           </button>
 
@@ -216,12 +254,18 @@ export function SiteHeader() {
             }}
             aria-expanded={open}
             aria-controls="site-menu"
-            className="flex min-h-11 min-w-11 items-center justify-end gap-2.5 font-sans text-[10.5px] uppercase tracking-[0.22em] text-ink xl:hidden"
+            className={`flex min-h-11 min-w-11 items-center justify-end gap-2.5 font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 xl:hidden ${tone}`}
           >
             <span className="hidden sm:inline">{open ? "Close" : "Menu"}</span>
             <span aria-hidden className="relative block h-[10px] w-6">
-              <span ref={lineA} className="absolute left-0 top-0 h-px w-full bg-ink" />
-              <span ref={lineB} className="absolute bottom-0 left-0 h-px w-full bg-ink" />
+              <span
+                ref={lineA}
+                className={`absolute left-0 top-0 h-px w-full transition-colors duration-500 ${dark ? "bg-ivory" : "bg-ink"}`}
+              />
+              <span
+                ref={lineB}
+                className={`absolute bottom-0 left-0 h-px w-full transition-colors duration-500 ${dark ? "bg-ivory" : "bg-ink"}`}
+              />
             </span>
           </button>
         </div>

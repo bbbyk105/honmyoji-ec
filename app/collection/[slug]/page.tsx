@@ -46,25 +46,25 @@ function cta(product: Product) {
       return {
         primary: { href: `/contact${q}&subject=reserve`, label: "Reserve this piece" },
         secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
-        note: "Add it to your cart and send it to us. We reply with a private checkout. Card, via Stripe, when arranged.",
+        note: "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
       };
     case "reserved":
       return {
         primary: { href: `/contact${q}&subject=waitlist`, label: "Join the waitlist" },
         secondary: null,
-        note: "Someone has asked for this piece. If it is not completed, it returns here — we will write.",
+        note: "Someone has already asked for this piece. If the payment is not completed, it comes back here — and we will write to you.",
       };
     case "coming_soon":
       return {
         primary: { href: `/contact${q}&subject=notify`, label: "Notify me" },
         secondary: null,
-        note: "Finished and photographed. Leave an address; we write the day it is released.",
+        note: "Finished and photographed, but not released yet. Leave us your email and we write the day it goes on sale.",
       };
     case "sold_out":
       return {
         primary: { href: `/contact${q}&subject=custom`, label: "A piece in this spirit" },
         secondary: null,
-        note: "This bag has gone. We will not make it again. We can work from a similar height, handle, and colour family.",
+        note: "This bag has gone, and we will not make it again. We can make you a new one in a similar height, handle and family of colours.",
       };
   }
 }
@@ -207,15 +207,15 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <dt className="eyebrow">Origin</dt>
               <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
                 <p>Honmyoji Temple, Fuji City, Japan</p>
-                <p>Weight — {product.weightG ? `${product.weightG} g` : "noted before shipping"}</p>
-                <p>One of a kind · not reprinted</p>
+                <p>Weight — {product.weightG ? `${product.weightG} g` : "measured before shipping"}</p>
+                <p>One of a kind · never remade</p>
               </dd>
             </div>
             <div>
               <dt className="eyebrow">Care</dt>
               <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
-                <p>Spot clean. No machine.</p>
-                <p>Dry, standing or hung.</p>
+                <p>Spot clean only. Never machine wash.</p>
+                <p>Dry it standing or hanging.</p>
                 <Link href={careHref} className="link-line text-ink">
                   Care note
                 </Link>
@@ -295,7 +295,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <Reveal>
             <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ink">Alongside</h2>
             <p className="mt-3 max-w-[40ch] font-display text-[24px] font-light text-ink">
-              Other pieces from the same table, not a recommendation engine.
+              Other pieces from the same table, chosen by hand.
             </p>
           </Reveal>
           <div className="-mx-5 mt-10 flex snap-x snap-mandatory gap-5 overflow-x-auto px-5 [scrollbar-width:none] sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-10 sm:overflow-visible sm:px-0 [&::-webkit-scrollbar]:hidden">

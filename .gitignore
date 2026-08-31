@@ -46,3 +46,6 @@ next-env.d.ts
 
 # クライアント資料の原典（携帯番号などの個人情報を含む）— public repo には載せない
 /内容.txt
+
+# ヒーローの原稿 PNG（1.9MB）— サイトが読むのは scenes/hero-weave.webp
+/public/images/*.png
