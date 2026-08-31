@@ -146,6 +146,202 @@ body {
   transform: translateX(4px);
 }
 
+/* ------------------------------------------------------------------
+   Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
+   手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
+   本文 17px / 1.9、行長は 62ch、見出しは Newsreader。
+   引用に border-l を付けない（DESIGN.md）。position も書かない。
+   ------------------------------------------------------------------ */
+.blog-prose {
+  color: var(--color-charcoal);
+}
+
+.blog-prose > * + * {
+  margin-top: 1.7em;
+}
+
+.blog-prose p,
+.blog-prose ul,
+.blog-prose ol {
+  max-width: 62ch;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.9;
+}
+
+.blog-prose :lang(ja) {
+  font-family: var(--font-jp);
+  line-height: 2;
+}
+
+.blog-prose h1,
+.blog-prose h2,
+.blog-prose h3 {
+  max-width: 24ch;
+  margin-top: 2.6em;
+  font-family: var(--font-display);
+  font-weight: 300;
+  line-height: 1.2;
+  color: var(--color-ink);
+}
+
+.blog-prose h1,
+.blog-prose h2 {
+  font-size: clamp(24px, 2.6vw, 31px);
+}
+
+.blog-prose h3 {
+  font-size: clamp(20px, 2vw, 24px);
+}
+
+.blog-prose h4,
+.blog-prose h5,
+.blog-prose h6 {
+  margin-top: 2.4em;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+/* 引用は罫ではなく、大きさと余白で立てる */
+.blog-prose blockquote {
+  max-width: 24ch;
+  margin-top: 2.4em;
+  margin-bottom: 2.4em;
+  font-family: var(--font-display);
+  font-size: clamp(22px, 2.6vw, 30px);
+  font-style: italic;
+  font-weight: 300;
+  line-height: 1.35;
+  color: var(--color-ink);
+}
+
+.blog-prose blockquote p {
+  max-width: none;
+  font: inherit;
+}
+
+.blog-prose ul,
+.blog-prose ol {
+  padding-left: 1.4em;
+}
+
+.blog-prose ul {
+  list-style: none;
+}
+
+.blog-prose ul > li::before {
+  content: "—";
+  display: inline-block;
+  width: 1.4em;
+  margin-left: -1.4em;
+  color: var(--color-mist);
+}
+
+.blog-prose ol {
+  list-style: decimal;
+}
+
+.blog-prose li + li {
+  margin-top: 0.5em;
+}
+
+.blog-prose a {
+  color: var(--color-ink);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.22em;
+  text-decoration-color: var(--color-line);
+  transition: text-decoration-color 0.4s var(--ease-soft);
+}
+
+.blog-prose a:hover,
+.blog-prose a:focus-visible {
+  text-decoration-color: currentColor;
+}
+
+.blog-prose strong {
+  font-weight: 600;
+}
+
+.blog-prose em {
+  font-family: var(--font-display);
+  font-style: italic;
+}
+
+.blog-prose img {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-top: 2.4em;
+  margin-bottom: 2.4em;
+  background: var(--color-parchment);
+}
+
+.blog-prose figcaption {
+  margin-top: -1.6em;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+.blog-prose hr {
+  max-width: 62ch;
+  margin-top: 3em;
+  margin-bottom: 3em;
+  border: 0;
+  border-top: 1px solid var(--color-line);
+}
+
+.blog-prose table {
+  width: 100%;
+  max-width: 62ch;
+  border-collapse: collapse;
+  font-family: var(--font-sans);
+  font-size: 14px;
+}
+
+.blog-prose th,
+.blog-prose td {
+  padding: 0.75em 1em 0.75em 0;
+  border-bottom: 1px solid var(--color-line);
+  text-align: left;
+  vertical-align: top;
+}
+
+.blog-prose th {
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--color-mist);
+}
+
+.blog-prose code {
+  font-size: 0.9em;
+  background: var(--color-parchment);
+  padding: 0.1em 0.35em;
+}
+
+.blog-prose pre {
+  max-width: 62ch;
+  overflow-x: auto;
+  background: var(--color-parchment);
+  padding: 1.2em;
+  font-size: 13px;
+  line-height: 1.7;
+}
+
+.blog-prose pre code {
+  background: none;
+  padding: 0;
+}
+
 /* Floating objects — collection as exhibition, not catalogue */
 @keyframes bag-enter {
   0% {

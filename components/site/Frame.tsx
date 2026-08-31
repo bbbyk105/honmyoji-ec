@@ -9,7 +9,7 @@ export type ImageRole =
   | "material-macro"
   | "process"
   | "lifestyle"
-  | "journal";
+  | "blog";
 
 export type ImageRatio = "16/10" | "4/3" | "3/4" | "4/5" | "1/1" | "16/9" | "5/4";
 
@@ -20,7 +20,7 @@ const ROLE_LABEL: Record<ImageRole, string> = {
   "material-macro": "Material macro",
   "process": "Process / making",
   "lifestyle": "Lifestyle / context",
-  "journal": "Journal",
+  "blog": "Blog",
 };
 
 const RATIO: Record<ImageRatio, string> = {

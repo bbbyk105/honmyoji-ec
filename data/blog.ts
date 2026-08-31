@@ -1,4 +1,22 @@
-export type JournalEntry = {
+export type BlogImageRole = "blog" | "material-macro" | "lifestyle" | "process";
+export type BlogImageRatio = "4/5" | "16/10" | "3/4" | "1/1";
+
+/**
+ * 本文のブロック。
+ * `p` / `h` / `image` は手書きの記事（下の seed）用。
+ * `html` は microCMS のリッチエディタから来る一塊の HTML — `.blog-prose` が組む。
+ */
+export type BlogBlock = {
+  type: "p" | "h" | "image" | "html";
+  text?: string;
+  src?: string;
+  alt?: string;
+  caption?: string;
+  ratio?: string;
+  html?: string;
+};
+
+export type BlogPost = {
   slug: string;
   title: string;
   titleJa: string;
@@ -6,15 +24,23 @@ export type JournalEntry = {
   date: string;
   season: string;
   topic: string;
-  image: string;
+  /** 未設定なら Frame が role / ratio のプレースホルダを出す */
+  image?: string;
   imageAlt: string;
-  imageRole: "journal" | "material-macro" | "lifestyle" | "process";
-  imageRatio: "4/5" | "16/10" | "3/4" | "1/1";
+  imageRole: BlogImageRole;
+  imageRatio: BlogImageRatio;
   pull?: string;
-  body: { type: "p" | "h" | "image"; text?: string; src?: string; alt?: string; caption?: string; ratio?: string }[];
+  body: BlogBlock[];
 };
 
-export const journal: JournalEntry[] = [
+/**
+ * 記事の本体は microCMS（`lib/microcms.ts`）にある。
+ * ここに残っているのは **フォールバックの種**：
+ * MICROCMS_SERVICE_DOMAIN / MICROCMS_API_KEY が無い環境（ローカル・プレビュー）や
+ * API が落ちたときに、Blog が空にならないように使う。
+ * 記事を足すのは microCMS の管理画面。ここは触らなくてよい。
+ */
+export const blogSeed: BlogPost[] = [
   {
     slug: "the-edge-that-remains",
     title: "The edge that remains",
@@ -195,10 +221,18 @@ export const journal: JournalEntry[] = [
   },
 ];
 
-export function getEntry(slug: string): JournalEntry | undefined {
-  return journal.find((e) => e.slug === slug);
+/** 新しい記事が先頭。microCMS 側も seed 側もこの順で並べる。 */
+export function byNewest(a: BlogPost, b: BlogPost): number {
+  return new Date(b.date).getTime() - new Date(a.date).getTime();
 }
 
-export function formatJournalDate(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(new Date(iso));
+export function formatBlogDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return new Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric" }).format(d);
+}
+
+/** 記事メタの一行（Topic · Season / Topic · 日付）。空の項目で「 · 」だけ残さない。 */
+export function blogMeta(...parts: (string | undefined)[]): string {
+  return parts.filter((p) => p && p.trim()).join(" · ");
 }

@@ -9,7 +9,12 @@ import { Frame } from "@/components/site/Frame";
 import { SHELL } from "@/components/site/Shell";
 import "@/components/motion/register";
 
-export function HomeHero() {
+type Props = {
+  /** 素材の記事への導線。記事は microCMS 側で入れ替わるので slug を焼き込まない。 */
+  materialHref?: string;
+};
+
+export function HomeHero({ materialHref = "/blog" }: Props) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
@@ -91,7 +96,7 @@ export function HomeHero() {
               <Button href="/collection" variant="outline-light" arrow>
                 Enter the collection
               </Button>
-              <Button href="/journal/the-edge-that-remains" variant="link-light">
+              <Button href={materialHref} variant="link-light">
                 On the material
               </Button>
             </div>

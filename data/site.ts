@@ -15,7 +15,7 @@ export const site = {
   nav: [
     { href: "/collection", label: "Collection", ja: "作品" },
     { href: "/about", label: "About", ja: "想い" },
-    { href: "/journal", label: "Journal", ja: "手記" },
+    { href: "/blog", label: "Blog", ja: "手記" },
     { href: "/contact", label: "Contact", ja: "便り" },
   ],
 } as const;

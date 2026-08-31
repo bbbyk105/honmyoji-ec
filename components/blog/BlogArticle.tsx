@@ -1,57 +1,41 @@
-import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
-import { formatJournalDate, getEntry, journal } from "@/data/journal";
+import { formatBlogDate, blogMeta, type BlogPost } from "@/data/blog";
 
-type Params = { slug: string };
+type Props = {
+  entry: BlogPost;
+  /** 記事末尾の「次の一本」。プレビューでは付けない。 */
+  next?: BlogPost;
+};
 
-export function generateStaticParams(): Params[] {
-  return journal.map((e) => ({ slug: e.slug }));
-}
-
-export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
-  const { slug } = await params;
-  const entry = getEntry(slug);
-  if (!entry) return {};
-  return {
-    title: entry.title,
-    description: entry.dek,
-    openGraph: { images: [{ url: entry.image }] },
-  };
-}
-
-export default async function JournalArticlePage({ params }: { params: Promise<Params> }) {
-  const { slug } = await params;
-  const entry = getEntry(slug);
-  if (!entry) notFound();
-
-  const index = journal.findIndex((e) => e.slug === entry.slug);
-  const next = journal[(index + 1) % journal.length];
-
+/**
+ * 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。
+ * 見出しも本文も同じ左端に揃える — 読み始めるたびに視線が横に飛ばないように。
+ */
+export function BlogArticle({ entry, next }: Props) {
   return (
     <article className="pt-16 sm:pt-[72px] md:pt-[80px]">
-      {/* 記事は最初から最後までひとつの左端に揃える。
-          見出しが左端、本文が中央寄せだと、読み始めるたびに視線が横に飛ぶ。 */}
       <header className="mx-auto w-full max-w-[980px] px-5 pt-12 sm:pt-14 md:pt-20">
-        <Button href="/journal" variant="link" arrow={false} className="text-mist hover:text-ink">
-          Journal
+        <Button href="/blog" variant="link" arrow={false} className="text-mist hover:text-ink">
+          Blog
         </Button>
-        <p className="eyebrow mt-10">
-          {entry.topic} · {entry.season}
-        </p>
+        <p className="eyebrow mt-10">{blogMeta(entry.topic, entry.season)}</p>
         <h1 className="mt-4 max-w-[16ch] font-display text-[clamp(38px,5.2vw,68px)] font-light leading-[1.02] text-ink">
           {entry.title}
         </h1>
-        <p className="mt-4 font-jp text-[14px] tracking-[0.22em] text-mist">{entry.titleJa}</p>
-        <p className="mt-8 max-w-[38ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-charcoal">
-          {entry.dek}
-        </p>
+        {entry.titleJa ? (
+          <p className="mt-4 font-jp text-[14px] tracking-[0.22em] text-mist">{entry.titleJa}</p>
+        ) : null}
+        {entry.dek ? (
+          <p className="mt-8 max-w-[38ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-charcoal">
+            {entry.dek}
+          </p>
+        ) : null}
         <p className="mt-8 border-t border-line pt-5 font-sans text-[11px] uppercase tracking-[0.18em] text-mist">
-          {formatJournalDate(entry.date)}
+          {formatBlogDate(entry.date)}
         </p>
         <div className="mt-10">
           <Frame
@@ -77,6 +61,14 @@ export default async function JournalArticlePage({ params }: { params: Promise<P
 
         <div className="space-y-7">
           {entry.body.map((block, i) => {
+            if (block.type === "html" && block.html) {
+              /* microCMS のリッチエディタ。組みは globals.css の .blog-prose。 */
+              return (
+                <Reveal key={i}>
+                  <div className="blog-prose" dangerouslySetInnerHTML={{ __html: block.html }} />
+                </Reveal>
+              );
+            }
             if (block.type === "h" && block.text) {
               return (
                 <Reveal key={i}>
@@ -99,7 +91,13 @@ export default async function JournalArticlePage({ params }: { params: Promise<P
                             : "aspect-[3/4]"
                       }`}
                     >
-                      <Image src={block.src} alt={block.alt ?? ""} fill sizes="(min-width: 980px) 980px, 100vw" className="object-cover" />
+                      <Image
+                        src={block.src}
+                        alt={block.alt ?? ""}
+                        fill
+                        sizes="(min-width: 980px) 980px, 100vw"
+                        className="object-cover"
+                      />
                     </div>
                     <figcaption className="mt-3 font-sans text-[10px] uppercase tracking-[0.2em] text-mist">
                       {block.caption}
@@ -120,28 +118,32 @@ export default async function JournalArticlePage({ params }: { params: Promise<P
         </div>
       </div>
 
-      <footer className="mx-auto mt-24 w-full max-w-[980px] px-5">
-        <Link
-          href={`/journal/${next.slug}`}
-          className="group flex items-end justify-between gap-8 border-t border-line py-10 no-underline"
-        >
-          <span>
-            <span className="block font-sans text-[10px] uppercase tracking-[0.24em] text-mist">Next note</span>
-            <span className="mt-3 block font-display text-[clamp(26px,3.2vw,38px)] font-light leading-[1.15] text-ink">
-              {next.title}
-            </span>
-            <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-charcoal/75">
-              {next.dek}
-            </span>
-          </span>
-          <span
-            aria-hidden
-            className="shrink-0 pb-1 font-sans text-[17px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ink"
+      {next ? (
+        <footer className="mx-auto mt-24 w-full max-w-[980px] px-5">
+          <Link
+            href={`/blog/${next.slug}`}
+            className="group flex items-end justify-between gap-8 border-t border-line py-10 no-underline"
           >
-            →
-          </span>
-        </Link>
-      </footer>
+            <span>
+              <span className="block font-sans text-[10px] uppercase tracking-[0.24em] text-mist">Next note</span>
+              <span className="mt-3 block font-display text-[clamp(26px,3.2vw,38px)] font-light leading-[1.15] text-ink">
+                {next.title}
+              </span>
+              <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-charcoal/75">
+                {next.dek}
+              </span>
+            </span>
+            <span
+              aria-hidden
+              className="shrink-0 pb-1 font-sans text-[17px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ink"
+            >
+              →
+            </span>
+          </Link>
+        </footer>
+      ) : (
+        <div className="mt-24" />
+      )}
     </article>
   );
 }
