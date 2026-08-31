@@ -65,8 +65,8 @@ export default async function BlogIndexPage() {
             <p className="mt-4 font-jp text-[13px] tracking-[0.22em] text-mist">手記</p>
           </div>
           <p className="max-w-[36ch] font-sans text-[14px] leading-[1.85] text-charcoal/85 md:col-span-4 md:col-start-9">
-            Materials, care, the precinct, and how a piece is made once. A small publication, not a
-            marketing feed.
+            Materials, care, the temple grounds, and how a piece is made once. A small publication,
+            not a marketing feed.
           </p>
         </header>
 

@@ -60,8 +60,8 @@ export default async function HomePage() {
             <Reveal delay={120} className="flex flex-col justify-end md:col-span-5 md:col-start-8 lg:col-span-4 lg:col-start-9">
               <p className="font-sans text-[15px] leading-[1.85] text-charcoal/90">
                 One-of-a-kind bags, made at a temple in Fuji City, from tatami-beri remnants and paper
-                band recycled in the same streets. Each piece is finished by hand, offered a prayer,
-                and not repeated.
+                band recycled in the same streets. Each piece is finished by hand, blessed at the temple,
+                and never made twice.
               </p>
               <p className="mt-6 font-jp text-[12.5px] leading-[2] tracking-[0.04em] text-mist">
                 {phrases.madeOnce.ja}
@@ -77,7 +77,7 @@ export default async function HomePage() {
               <div>
                 <p className="eyebrow">Exhibition · 2026</p>
                 <h2 data-split-lines className="mt-3 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-none text-ink">
-                  Present pieces
+                  Pieces on show
                 </h2>
               </div>
               <Button href="/collection" variant="link" className="mb-1">
@@ -177,7 +177,7 @@ export default async function HomePage() {
           <Reveal className="md:max-w-[36ch]">
             <p className="eyebrow">In place</p>
             <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.6vw,46px)] font-light leading-[1.1] text-ink">
-              How a piece sits in a day.
+              How a piece fits into a day.
             </h2>
           </Reveal>
           {/*
@@ -199,11 +199,12 @@ export default async function HomePage() {
             </Reveal>
             <Reveal delay={100} className="flex flex-col justify-center md:col-span-5 lg:col-span-4">
               <p className="font-display text-[clamp(24px,2.3vw,30px)] font-light leading-[1.3] text-ink">
-                Not styled for a season. Made to be carried to a tea room, a market, a hallway at home.
+                Not styled for a season. Made to be carried — to a tea room, to the market, to the
+                front door and back.
               </p>
               <p className="mt-6 font-sans text-[14px] leading-[1.85] text-charcoal/85">
-                The photographs here are from the precinct — hall, grove, corridor. Formal campaign
-                pictures will replace them without changing the crops.
+                Every photograph here was taken in the temple grounds — the hall, the bamboo grove,
+                the corridor. Nothing was shot in a studio.
               </p>
               <Button href="/collection" variant="outline" className="mt-8 w-fit">
                 See the nine
@@ -263,8 +264,8 @@ export default async function HomePage() {
                   {founder.handmade.en}
                 </p>
                 <p>
-                  A finished piece is set down in the hall before it leaves. Then it belongs to
-                  whoever found it.
+                  Every finished piece is set down in the hall before it leaves. After that, it
+                  belongs to the person who found it.
                 </p>
               </div>
               <Button href="/about" variant="outline" className="mt-8 w-fit">

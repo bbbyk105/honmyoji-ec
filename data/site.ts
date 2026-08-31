@@ -24,7 +24,7 @@ export const phrases = {
   madeOnce: { en: "Made Once. Made for You.", ja: "一度だけ作られる、あなたのためのバッグ" },
   noTwo: { en: "No Two Bags Are Alike.", ja: "同じバッグは、二つとありません" },
   shine: {
-    en: "People and feelings can shine once more.",
+    en: "People, things and feelings can all shine again.",
     ja: "人も、物も、想いも　もう一度輝ける",
   },
   fabric: {
@@ -250,29 +250,29 @@ export const faq: FaqItem[] = [
 export const founder = {
   name: "Emi Kashiwazake",
   nameJa: "柏酒 英美",
-  title: "Temple wife · Calligraphy artist · Japanese Culture & Craft Producer",
+  title: "Temple wife at Honmyoji · Calligrapher · Producer of Japanese craft and culture",
   titleJa: "寺庭婦人・書道クリエイター・和文化プロデューサー",
   timeline: [
     {
       years: "1995 –",
-      en: "Calligraphy. More than twenty years with the brush, drawn to expressive art calligraphy rather than the orthodox school. Published by Maar-sha; commissioned company mottos and naming scrolls.",
+      en: "Calligraphy. More than twenty years with the brush, closer to expressive art calligraphy than to the orthodox schools. Her work has appeared in a book from Maar-sha, and she is commissioned to write company mottos and naming scrolls.",
       ja: "書道歴20年以上。幼少期から筆を持ち、正統派よりアート書道で自己表現する書が得意。マール社 書籍掲載、企業の社訓・命名書の実績。",
     },
     {
       years: "2021 –",
-      en: "Kimono. Visited a kimono shop to understand the kimono sleeping in the family chest; learned to dress herself and others. Now proposes coordinates, plans events and produces kimono and accessories.",
+      en: "Kimono. She went to a kimono shop to understand the kimono that had sat unworn in the family chest, and learned to dress both herself and others. Now she puts together outfits, runs events, and produces kimono accessories.",
       ja: "着物歴5年。箪笥の肥やしになっていた着物を理解するため呉服屋へ。着付けを習得し自装・他装が可能に。コーディネート提案・イベント企画運営・和小物のプロデュースへ。",
     },
     {
       years: "2023 –",
-      en: "Married into a temple in Fuji City. Hosts kimono events and workshops at Honmyoji. In 2026, became a mother — and began producing the tatami-beri bags.",
+      en: "Temple. She married into a temple in Fuji City, and holds kimono events and workshops at Honmyoji. In 2026 she became a mother — and began producing the tatami-beri bags.",
       ja: "富士市のお寺へ嫁ぎ、お寺で着物イベントやワークショップを開催。2026年、一児の母となり、畳の縁バッグのプロデュースへ。",
     },
   ],
   origin: {
     en: [
-      "Once I started wearing kimono, I began to notice the small things that go with it — and the traditional crafts behind them. I have always loved bags, so I wanted to produce one that belonged with kimono: kind to the earth, well designed, a little out of the ordinary, something that lifts your mood when you carry it.",
-      "Then I learned that here in Fuji City, paper band is recycled from milk cartons and waste paper, and that tatami makers are left with offcuts of beautiful edging. Putting the two together, and producing every step myself, is how the tatami-beri bag was born.",
+      "Once I started wearing kimono, I began to notice the accessories that go with it — and the traditional crafts behind them. I have always loved bags, so I wanted to make one that belonged with kimono: kind to the earth, well designed, a little out of the ordinary, and the kind of thing that lifts your mood when you carry it.",
+      "Then I learned that here in Fuji City, paper band is made from recycled milk cartons and waste paper, and that tatami makers are left with offcuts of beautiful edging. I put the two together and oversaw every step myself — and that is how the tatami-beri bag was born.",
     ],
     ja: [
       "着物を着るようになってから、着物と親和性の高い小物や伝統工芸品に目が向くようになりました。特にバッグが好きだった私は、着物に合わせたバッグをプロデュースしたいと思い、環境に優しく、デザイン性があり、非日常も味わえて、持っていて気分が上がるようなバッグを探し求めていました。",
@@ -285,7 +285,7 @@ export const founder = {
     en: [
       "To give something back to Fuji City.",
       "The paper band is made from recycled milk cartons and waste paper — gentle on the environment.",
-      "Tatami-beri offcuts appear every time a tatami room is made. Instead of being thrown away, they can stay in the world as one of Japan's beautiful crafts.",
+      "Every time a tatami room is made, offcuts of edging are left over. Rather than being thrown away, they can go on living as part of a beautiful Japanese craft.",
     ],
     ja: [
       "富士市に貢献したいという想い。",
@@ -296,7 +296,7 @@ export const founder = {
   handmade: {
     title: "Ichigo ichie — one encounter, one chance",
     titleJa: "一期一会",
-    en: "Every bag is made entirely by hand in Japan, one at a time. Like the ties that bring each strip of tatami-beri to us, each finished bag has its own character — a slightly different colour, pattern, shape — that no machine could produce. Because it is handmade, it carries warmth, and becomes a bag you will meet only once.",
+    en: "Every bag is made entirely by hand in Japan, one at a time. Just as each strip of tatami-beri reaches us through some chance connection, every finished bag comes out with a character of its own — the colour, the pattern, the shape all a little different, in ways no machine could repeat. Because it is handmade it keeps that warmth, and becomes a bag you will meet only once.",
     ja: "日本で全て手作業で一本一本丁寧に作られ、畳の縁を紡ぐご縁と物語の始まりのように、完成したバッグはそれぞれ個性を持って息を吹き返します。色、柄、形、そのすべてに少しずつ違いがあり、機械では生み出せない、このバッグだけの個性です。ハンドメイドだからこそ温もりを感じ、またとして出会えない『一期一会』のバッグになります。",
   },
   message: {

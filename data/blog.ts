@@ -57,7 +57,7 @@ export const blogSeed: BlogPost[] = [
     body: [
       {
         type: "p",
-        text: "A tatami room is finished at its edge. The ber-i — a woven band, often brocaded — is sewn around the mat so the straw will not fray, and so the room will have a colour of its own. When a room is remade, those bands are cut away. Most are thrown out.",
+        text: "A tatami room is finished at its edge. The tatami-beri — a woven band, often brocaded — is sewn around the mat so the straw will not fray, and so the room will have a colour of its own. When a room is remade, those bands are cut away. Most are thrown out.",
       },
       {
         type: "p",
@@ -67,7 +67,7 @@ export const blogSeed: BlogPost[] = [
         type: "image",
         src: "/images/texture/beri-sakura.webp",
         alt: "Cherry-pink tatami-beri, close",
-        caption: "Sakura ber-i · remnant from a formal room in Fuji",
+        caption: "Sakura tatami-beri · remnant from a formal room in Fuji",
         ratio: "16/10",
       },
       {
@@ -111,7 +111,7 @@ export const blogSeed: BlogPost[] = [
       },
       {
         type: "p",
-        text: "The kimono remakes are softer. They sit under the arm or on a shoulder. Empty pockets of keys with sharp teeth; they will mark the silk.",
+        text: "The kimono remakes are softer. They sit under the arm or on a shoulder. Keep sharp-toothed keys out of the pockets; they will mark the silk.",
       },
       {
         type: "image",
@@ -126,11 +126,11 @@ export const blogSeed: BlogPost[] = [
       },
       {
         type: "p",
-        text: "Spot clean. A barely damp cloth, pressed, not rubbed. No machine, no soak, no sun-bleach. If something serious happens, write to us before you try to repair it. We know the join.",
+        text: "Spot clean. A barely damp cloth, pressed, not rubbed. No machine, no soaking, no bleaching in the sun. If something goes seriously wrong, write to us before you try to repair it — we know how the piece was put together.",
       },
       {
         type: "p",
-        text: "Store standing, or hanging by the handle, away from moth and direct light. The paper band likes dry air.",
+        text: "Store it standing, or hanging by the handle, away from moths and direct light. The paper band likes dry air.",
       },
     ],
   },
@@ -150,7 +150,7 @@ export const blogSeed: BlogPost[] = [
     body: [
       {
         type: "p",
-        text: "Honmyoji sits in Nakazato, Fuji City. Behind the main hall is a bamboo grove; in front, on a clear day, the mountain. The bags are made in this precinct — not as temple merchandise, but because this is where the maker lives, and where the materials already are.",
+        text: "Honmyoji sits in Nakazato, Fuji City. Behind the main hall is a bamboo grove; in front, on a clear day, the mountain. The bags are made inside these grounds — not as temple merchandise, but because this is where the maker lives, and where the materials already are.",
       },
       {
         type: "p",
@@ -169,7 +169,7 @@ export const blogSeed: BlogPost[] = [
       },
       {
         type: "p",
-        text: "Workshops and kimono gatherings happen in the same halls. A completed bag is placed before the altar and offered a prayer — not as theatre, as habit. Then it leaves.",
+        text: "Workshops and kimono gatherings happen in the same halls. A completed bag is placed before the altar and a prayer is said over it — not as theatre, but out of habit. Then it leaves.",
       },
       {
         type: "p",
@@ -201,8 +201,8 @@ export const blogSeed: BlogPost[] = [
       {
         type: "image",
         src: "/images/scenes/statue-mono.webp",
-        alt: "A quiet statue in the temple precinct",
-        caption: "Process / place · the precinct at dusk",
+        alt: "A quiet statue in the temple grounds",
+        caption: "Process / place · the grounds at dusk",
         ratio: "3/4",
       },
       {
@@ -211,11 +211,11 @@ export const blogSeed: BlogPost[] = [
       },
       {
         type: "p",
-        text: "Write. We can work in a similar spirit — a height, a handle, a family of colours — but we will not reprint the one that left. That meeting has already happened.",
+        text: "Write to us. We can work in a similar spirit — a height, a handle, a family of colours — but we will not remake the one that has gone. That meeting has already happened.",
       },
       {
         type: "p",
-        text: "Ichigo ichie is usually said of tea. It also describes a leftover of ber-i that will not come again, and the person who happens to need a bag that week.",
+        text: "Ichigo ichie is usually said of tea. It also describes an offcut of tatami-beri that will never come again, and the person who happens to need a bag that week.",
       },
     ],
   },

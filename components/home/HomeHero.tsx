@@ -197,9 +197,9 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
               data-hero-title
               className="mt-5 font-display text-[clamp(30px,3.3vw,50px)] font-light leading-[1.04] tracking-[-0.015em] text-ivory max-sm:text-[clamp(34px,9.2vw,42px)] sm:mt-6"
             >
-              Held in
+              Made to be
               <br />
-              the hand.
+              held.
             </h1>
 
             <div data-hero-cta className="mt-6 flex flex-wrap items-center gap-x-9 gap-y-3 sm:mt-8">

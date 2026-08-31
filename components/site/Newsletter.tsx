@@ -43,7 +43,7 @@ export function Newsletter() {
         </button>
       </div>
       {state.status === "error" ? (
-        <p className="font-sans text-[11px] text-moss">{state.message}</p>
+        <p className="font-sans text-[11px] text-clay">{state.message}</p>
       ) : (
         <p className="font-sans text-[11px] leading-[1.7] text-mist">
           A letter when a new piece is finished. Nothing else.

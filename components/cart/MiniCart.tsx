@@ -36,7 +36,7 @@ export function MiniCart() {
     >
       <button
         type="button"
-        aria-label="Close inquiry"
+        aria-label="Close cart"
         onClick={() => setOpen(false)}
         className={`absolute inset-0 bg-ink/20 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
       />
@@ -66,7 +66,7 @@ export function MiniCart() {
         <div className="flex-1 overflow-y-auto px-7 py-8">
           {pieces.length === 0 ? (
             <p className="max-w-[28ch] font-sans text-[13px] leading-[1.9] text-charcoal/80">
-              Your cart is empty. Add a piece here, then send it to the temple — we write back with payment details.
+              Your cart is empty. Add a piece from the collection, then send the cart to us — we write back with payment details.
             </p>
           ) : (
             <ul className="space-y-8">
@@ -114,7 +114,7 @@ export function MiniCart() {
 
         <div className="border-t border-line px-7 py-7">
           <p className="font-sans text-[11px] leading-[1.8] text-mist">
-            No card is charged here. Send your cart and a person writes back with payment details.
+            Nothing is charged here. Send us your cart and a person writes back with payment details.
           </p>
           {pieces.length > 0 ? (
             <div className="mt-5 flex flex-col gap-4">
