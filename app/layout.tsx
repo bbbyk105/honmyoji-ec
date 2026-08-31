@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
+import type { ReactNode } from "react";
 import { Newsreader, Source_Sans_3, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
-import { CartProvider } from "@/components/cart/CartProvider";
-import { MiniCart } from "@/components/cart/MiniCart";
-import { SmoothScroll } from "@/components/motion/SmoothScroll";
-import { SiteHeader } from "@/components/site/SiteHeader";
-import { SiteFooter } from "@/components/site/SiteFooter";
 import { site } from "@/data/site";
+
+/**
+ * html と body、そしてフォントだけ。
+ *
+ * ヘッダー・フッター・カート・Lenis は `app/(site)/layout.tsx` が持つ。
+ * ここに置くと `/studio` にもサイトの外枠が付いてきて、親 layout は子から外せない。
+ */
 
 const newsreader = Newsreader({
   variable: "--font-newsreader",
@@ -47,22 +50,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
       className={`${newsreader.variable} ${sourceSans.variable} ${shippori.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-ivory text-ink">
-        <CartProvider>
-          <SmoothScroll>
-            <SiteHeader />
-            <main className="flex-1">{children}</main>
-            <SiteFooter />
-            <MiniCart />
-          </SmoothScroll>
-        </CartProvider>
-      </body>
+      <body className="flex min-h-full flex-col bg-ivory text-ink">{children}</body>
     </html>
   );
 }

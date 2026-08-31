@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Frame } from "@/components/site/Frame";
-import { getProduct } from "@/data/products";
+import { getPieces } from "@/lib/catalog";
 import { site } from "@/data/site";
 import { subjectOptions } from "./subjects";
 import { ContactForm } from "./ContactForm";
@@ -17,7 +17,7 @@ export default async function ContactPage({
 }) {
   const { product: slug, subject } = await searchParams;
   const slugs = slug ? slug.split(",").filter(Boolean) : [];
-  const named = slugs.map((s) => getProduct(s)).filter((p): p is NonNullable<typeof p> => Boolean(p));
+  const named = await getPieces(slugs);
   const productLabel =
     named.length > 0
       ? {

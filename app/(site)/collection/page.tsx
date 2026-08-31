@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CollectionStudio } from "@/components/collection/CollectionStudio";
 import { phrases } from "@/data/site";
+import { getCatalog } from "@/lib/catalog";
 
 export const metadata: Metadata = {
   title: "Collection",
@@ -8,7 +9,9 @@ export const metadata: Metadata = {
     "Nine one-of-a-kind bags woven from tatami-beri remnants and recycled paper band at Honmyoji Temple, Fuji.",
 };
 
-export default function CollectionPage() {
+export default async function CollectionPage() {
+  const pieces = await getCatalog();
+
   return (
     <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
       <div className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
@@ -29,7 +32,7 @@ export default function CollectionPage() {
         </header>
 
         <div className="mt-14 md:mt-20">
-          <CollectionStudio />
+          <CollectionStudio pieces={pieces} />
         </div>
 
         <dl className="mt-20 grid gap-6 border-t border-line pt-8 font-sans text-[12px] leading-[1.8] text-charcoal/75 md:grid-cols-4">

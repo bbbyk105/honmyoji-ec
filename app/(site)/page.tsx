@@ -7,15 +7,11 @@ import { SHELL } from "@/components/site/Shell";
 import { HomeHero } from "@/components/home/HomeHero";
 import { FloatingBag } from "@/components/collection/FloatingBag";
 import { StillTile } from "@/components/collection/StillTile";
-import { productImage, products } from "@/data/products";
+import { productImage } from "@/data/products";
+import { getCatalog } from "@/lib/catalog";
 import { blogMeta } from "@/data/blog";
 import { blogHref, getBlogPosts } from "@/lib/microcms";
 import { founder, phrases } from "@/data/site";
-
-const sakura = products.find((p) => p.folder === "sakura")!;
-const ai = products.find((p) => p.folder === "ai")!;
-const wakaba = products.find((p) => p.folder === "wakaba")!;
-const musubi = products.find((p) => p.folder === "musubi")!;
 
 /*
   縦のリズム。DESIGN.md は 80–160px、ただし同じ数字の繰り返しにはしない。
@@ -25,6 +21,12 @@ const musubi = products.find((p) => p.folder === "musubi")!;
 */
 
 export default async function HomePage() {
+  /* トップに出す四点。カタログ経由で引くので、管理画面で直した価格と
+     ステータスがそのまま出る（folder 名は写真のフォルダなので変わらない）。 */
+  const catalog = await getCatalog();
+  const piece = (folder: string) => catalog.find((p) => p.folder === folder)!;
+  const [sakura, ai, wakaba, musubi] = [piece("sakura"), piece("ai"), piece("wakaba"), piece("musubi")];
+
   const recentNotes = (await getBlogPosts()).slice(0, 3);
   /* ヒーローと Material セクションの導線。slug は焼き込まない（`blogHref` の註を読む）。 */
   const materialHref = await blogHref("the-edge-that-remains", "Materials");

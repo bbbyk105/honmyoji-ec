@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { LINE_LABEL, products, type ProductLine, type ProductStatus } from "@/data/products";
+import { LINE_LABEL, type Product, type ProductLine, type ProductStatus } from "@/data/products";
 import { FloatingBag } from "./FloatingBag";
 
 type LineFilter = "all" | ProductLine;
@@ -11,18 +11,19 @@ type SortKey = "given" | "price-asc" | "price-desc";
 const chip =
   "min-h-11 shrink-0 px-2.5 font-sans text-[10.5px] uppercase tracking-[0.2em] sm:px-0";
 
-export function CollectionStudio() {
+/** カタログはサーバーから渡す — 管理画面で直した価格とステータスをそのまま映すため。 */
+export function CollectionStudio({ pieces }: { pieces: Product[] }) {
   const [line, setLine] = useState<LineFilter>("all");
   const [status, setStatus] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortKey>("given");
 
   const list = useMemo(() => {
-    let next = products.filter((p) => (line === "all" ? true : p.line === line));
+    let next = pieces.filter((p) => (line === "all" ? true : p.line === line));
     next = next.filter((p) => (status === "all" ? true : p.status === status));
     if (sort === "price-asc") next = [...next].sort((a, b) => a.priceAud - b.priceAud);
     if (sort === "price-desc") next = [...next].sort((a, b) => b.priceAud - a.priceAud);
     return next;
-  }, [line, status, sort]);
+  }, [pieces, line, status, sort]);
 
   return (
     <div>
