@@ -19,12 +19,19 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 構成
 
 - `DESIGN.md` — 視覚言語の正本。UI を触る前に読む。
-- `data/products.ts` — **商品カタログはコード内**。価格・ステータス（available / reserved / sold_out / coming_soon）・寸法・素材はここを編集する。DB は無い。
+- `data/products.ts` — **商品カタログの正本**。寸法・素材・写真の枚数・SKU はここを編集する。価格とステータスと文言は `/studio` から上書きできる（上書きが無ければここの値が出る）。読むときは `data/products.ts` ではなく `lib/catalog.ts` を通すこと。
 - `data/site.ts` — ブランドコピー・FAQ・創業者・特商法/返品ポリシー。
 - `data/blog.ts` — Blog の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Blog が空にならないようにするための seed で、記事を足す場所ではない。
 - `lib/microcms.ts` — **Blog の記事はここから来る**。入稿の手順・スキーマ・Webhook は `docs/microcms.md`。
 - `components/blog/BlogArticle.tsx` — 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。
-- `app/` — `/` `/collection` `/collection/[slug]` `/about` `/blog` `/blog/[slug]` `/blog/preview` `/faq` `/legal` `/contact`（Server Action）`/api/revalidate`（microCMS Webhook）。
+- `app/(site)/` — 公開サイト。`/` `/collection` `/collection/[slug]` `/about` `/blog` `/blog/[slug]` `/blog/preview` `/faq` `/legal` `/contact`（Server Action）`/checkout/thank-you`。**route group なので URL には `(site)` は出ない** — 外枠を `/studio` と分けるためだけの括り。
+- `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
+- `app/api/` — `revalidate`（microCMS Webhook）と `stripe/webhook`（決済の確定）。
+- `app/layout.tsx` は html / body / フォントだけ。**ヘッダーやフッターをここに戻さない** — 親 layout は子から外せないので、`/studio` にサイトの外枠が付いてくる。公開サイトの外枠は `components/site/SiteChrome.tsx`（`app/(site)/layout.tsx` と `app/not-found.tsx` が共有する。404 は route group の layout を通らない）。
+- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。
+- `proxy.ts` — Next 16 で `middleware.ts` から改名。`/studio/*` の `noindex` ヘッダーと、cookie の無い訪問者をログインへ返す処理。**認可の本体はここではない**（Edge に node:crypto が無い）— 検証は `lib/studio-session.ts` の `requireSession()` で、ページと Server Action が毎回通る。
+- `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。ヒーローは `useLightboxSafe()` を使う — Provider が無い場所に置かれても壊れないため。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地は ivory のまま — 一枚だけ暗室に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。`stopLenis()` はカートと同じ扱い。
+- **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
 - `components/collection/GalleryStrip.tsx` — **スマホのギャラリー**（`md:hidden`）。snap の横スワイプ + `01 / 05` カウンタ。写真1枚の作品は自動で普通の一枚に落ちる。md 以上は従来の編集グリッド（`hidden md:grid`）。
 - `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`PieceSlug.tsx` — `/sakura-cherry` のように URL slug を読む。
 - `components/site/Shell.tsx` — **版面の定数 `SHELL`**（`max-w-[1480px]` + 左右余白）。ヘッダー / フッター / ヒーロー / トップの全セクションがこれを使う。新しいセクションで `mx-auto max-w-... px-...` を手書きしない — 手書きに戻すと必ず 16px ずれる。
@@ -64,13 +71,28 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## microCMS（Blog）
 
-- 記事は microCMS のリスト API `blogs`。**コンテンツ ID がそのまま URL**（`/blog/<コンテンツID>`）。入稿・スキーマ・Webhook の手順は `docs/microcms.md`、環境変数は `.env.example`。
+- 記事は microCMS のリスト API `blogs`。**コンテンツ ID がそのまま URL**（`/blog/<コンテンツID>`）。入稿・スキーマ・Webhook の手順は `docs/microcms.md`。環境変数の一覧は `docs/studio.md`（`.env.example` は Claude の権限設定で書けないため更新されていない）。
 - `MICROCMS_SERVICE_DOMAIN` / `MICROCMS_API_KEY` が無い環境（ローカル・プレビュー）と、API が落ちたときは `data/blog.ts` の seed に落ちる。**CMS 未設定でサイトが 500 になる作りにしない** — ログは `[microcms]` で出る。
 - 一覧は 1 リクエスト（最大 100 件）。詳細ページもその一覧から引く（記事ごとに叩かない）。並びは掲載日の新しい順。
 - 本文はリッチエディタの HTML を `.blog-prose`（`app/globals.css`）で組む。手書き記事のブロック（`p` / `h` / `image`）と同じ寸法に合わせてあるので、CMS 側で色や文字サイズを付けない。
 - 反映は Webhook（`/api/revalidate`、`X-MICROCMS-Signature` を検証して `revalidateTag("blog")`）＋ 10 分の定期再検証。
 - 下書きは `/blog/preview?slug=…&draftKey=…`（`force-dynamic`・noindex・画面下に帯）。**コンテンツ ID に `preview` は使えない**。
 - microCMS の画像は `next.config.ts` の `remotePatterns`（`images.microcms-assets.io`）を通る。
+
+## 管理画面と決済（詳細は `docs/studio.md`）
+
+- 商品カタログの正本は `data/products.ts` のまま。DB (`piece_overrides`) に置くのは管理画面から動かす値（価格・ステータス・一言・物語）だけで、**行が無ければコード側の値が出る**。鍵が無くても DB が落ちてもサイトは今日と同じ姿で立つ。
+- 写真の枚数・`cutoutScale`・`cutoutAspect`・寸法・SKU は DB に持たない。写真の差し替えとセットでしか変わらないので、管理画面から触れても写真が付いてこない。
+- 注文が確定するのは **Stripe Webhook だけ**。`/checkout/thank-you` では作らない（カードは通ったのに客がタブを閉じた、で注文が消える）。Webhook は保存に失敗したら 500 を返して再送させる。
+- 決済が通ると Webhook が作品を自動で `sold_out` にする。一点物なので、手作業にすると二人目に買える状態で見える時間ができる。
+- Stripe に商品を登録しない。毎回 `price_data` でその場に組む（価格の正本が二つになると必ずどちらかが古くなる）。
+- 管理画面の日本語は `ch` で測らない。`max-w-[62ch]` は和文だと 20 字ほどで折り返す（DESIGN.md の Measure と同じ話）。
+- ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・Telegram 通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
+- **`.env` の値に `$` を入れない**。dotenv は `scrypt$abc$def` の `$abc` / `$def` を未定義の変数として空に置き換えるので、値が `scrypt` の 6 文字になってログインが必ず失敗する（実際に踏んだ）。パスワードハッシュの区切りは `:`、生成する秘密は base64url（`+/=` も避ける）。
+- セッション cookie は `SameSite=Lax`。`Strict` にすると外部サイトのリンクから `/studio` を開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST なので、`Lax` でもクロスサイトからの書き込みには cookie が付かない。
+- ログインの失敗理由（メールかパスワードか）を画面に出さない。メールが違ってもパスワードは必ず照合する — 早く返すと、応答の速さの差で「このアドレスは登録されている」が伝わる。
+- `lib/studio-cookie.ts` を `lib/studio-session.ts` と分けてあるのは、proxy.ts（Edge）が cookie 名だけを必要とするため。session 側を import すると node:crypto が Edge に載って落ちる。
+- `lib/studio-credentials.ts` は Next に依存しない。`node --experimental-strip-types` で直接読めるので、素の Node で照合を確かめられる。
 
 ## 落とし穴
 

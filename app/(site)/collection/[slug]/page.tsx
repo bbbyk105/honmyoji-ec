@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { InquiryCta } from "@/components/cart/HoldButton";
 import { PieceSlug } from "@/components/collection/PieceSlug";
 import { GalleryStrip } from "@/components/collection/GalleryStrip";
+import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
 import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { ProductHero } from "@/components/collection/ProductHero";
 import { StatusPill } from "@/components/collection/StatusPill";
@@ -12,10 +13,11 @@ import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
 import { blogHref } from "@/lib/microcms";
+import { getCatalog, getPiece } from "@/lib/catalog";
 import {
   LINE_LABEL,
   cm,
-  getProduct,
+  productCutout,
   productImage,
   productPath,
   products,
@@ -31,7 +33,7 @@ export function generateStaticParams(): Params[] {
 
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getPiece(slug);
   if (!product) return {};
   return {
     title: `${product.name} ${product.kanji} — ${aud.format(product.priceAud)}`,
@@ -74,20 +76,36 @@ const GALLERY_RATIO = ["4/5", "1/1", "16/10", "4/5", "1/1"] as const;
 
 export default async function ProductPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const product = getProduct(slug);
+  const product = await getPiece(slug);
   if (!product) notFound();
   if (slug !== product.slug) redirect(productPath(product));
 
-  const index = products.findIndex((p) => p.slug === product.slug);
-  const related = products.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 3);
+  const catalog = await getCatalog();
+  const index = catalog.findIndex((p) => p.slug === product.slug);
+  const related = catalog.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 3);
   /* お手入れの記事へ。記事は microCMS 側で入れ替わるので slug を焼き込まない。 */
   const careHref = await blogHref("holding-the-weave", "Care");
   const action = cta(product);
   const gallery = Array.from({ length: product.galleryCount }, (_, i) => i + 1);
   const extras = gallery.slice(1);
+  /* 拡大表示に渡す並び。0 番はヒーローの像、1 番から下のギャラリー。
+     ヒーローも押せば開くので、通し番号は一本にしておく。 */
+  const photos = gallery.map((n) => ({
+    src: productImage(product.slug, n),
+    alt: `${product.name}, view ${n}`,
+    caption: n === 1 ? `${product.name} · still life` : `${product.name} · view ${n}`,
+  }));
+  const shots = [
+    {
+      src: productCutout(product.slug),
+      alt: `${product.name} — ${product.note}`,
+      caption: `${product.name} · ${product.kanji}`,
+    },
+    ...photos,
+  ];
 
   return (
-    <>
+    <LightboxProvider shots={shots}>
       <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
         <div className="mx-auto grid w-full max-w-[1480px] gap-8 px-4 sm:px-5 md:grid-cols-12 md:gap-10 md:px-8 lg:px-12">
           <div className="md:col-span-6 lg:sticky lg:top-[80px] lg:self-start">
@@ -238,57 +256,58 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           </span>
         </Reveal>
 
-        {/* スマホは横スワイプ、md 以上は編集的なグリッド */}
+        {/* 写真はどれも押せば一枚で開く（拡大・掴んで移動）。
+            スマホは横スワイプ、md 以上は編集的なグリッド。 */}
         <div className="md:hidden">
-          <GalleryStrip
-            shots={gallery.map((n) => ({
-              src: productImage(product.slug, n),
-              alt: `${product.name}, view ${n}`,
-              caption: n === 1 ? `${product.name} · still life` : `${product.name} · view ${n}`,
-            }))}
-          />
+          <GalleryStrip shots={photos} offset={1} />
         </div>
 
-        <div className="hidden gap-5 md:grid md:grid-cols-12">
-          <Reveal className="md:col-span-7">
-            <Frame
-              src={productImage(product.slug, 1)}
-              alt={`${product.name}, still life`}
-              role="product-still"
-              ratio="4/5"
-              sizes="(min-width: 768px) 55vw, 100vw"
-            />
-          </Reveal>
-          <div className="grid gap-5 md:col-span-5">
-            {extras.slice(0, 2).map((n, i) => {
-              const ratio = GALLERY_RATIO[n] ?? "4/5";
-              return (
-                <Reveal key={n} delay={i * 70}>
+          <div className="hidden gap-5 md:grid md:grid-cols-12">
+            <Reveal className="md:col-span-7">
+              <Zoomable index={1}>
+                <Frame
+                  src={productImage(product.slug, 1)}
+                  alt={`${product.name}, still life`}
+                  role="product-still"
+                  ratio="4/5"
+                  sizes="(min-width: 768px) 55vw, 100vw"
+                />
+              </Zoomable>
+            </Reveal>
+            <div className="grid gap-5 md:col-span-5">
+              {extras.slice(0, 2).map((n, i) => {
+                const ratio = GALLERY_RATIO[n] ?? "4/5";
+                return (
+                  <Reveal key={n} delay={i * 70}>
+                    <Zoomable index={i + 2}>
+                      <Frame
+                        src={productImage(product.slug, n)}
+                        alt={`${product.name}, view ${n}`}
+                        role={i === 0 ? "product-detail" : "lifestyle"}
+                        ratio={ratio}
+                        caption={`${product.name} · ${i === 0 ? "detail" : "in place"}`}
+                        sizes="(min-width: 768px) 38vw, 100vw"
+                      />
+                    </Zoomable>
+                  </Reveal>
+                );
+              })}
+            </div>
+            {extras.slice(2).map((n, i) => (
+              <Reveal key={n} delay={i * 60} className={i === 0 ? "md:col-span-8" : "md:col-span-4"}>
+                <Zoomable index={i + 4}>
                   <Frame
                     src={productImage(product.slug, n)}
                     alt={`${product.name}, view ${n}`}
-                    role={i === 0 ? "product-detail" : "lifestyle"}
-                    ratio={ratio}
-                    caption={`${product.name} · ${i === 0 ? "detail" : "in place"}`}
-                    sizes="(min-width: 768px) 38vw, 100vw"
+                    role="product-detail"
+                    ratio={i === 0 ? "16/10" : "4/5"}
+                    caption={`${product.name} · ${n}`}
+                    sizes={i === 0 ? "(min-width: 768px) 66vw, 100vw" : "(min-width: 768px) 32vw, 100vw"}
                   />
-                </Reveal>
-              );
-            })}
+                </Zoomable>
+              </Reveal>
+            ))}
           </div>
-          {extras.slice(2).map((n, i) => (
-            <Reveal key={n} delay={i * 60} className={i === 0 ? "md:col-span-8" : "md:col-span-4"}>
-              <Frame
-                src={productImage(product.slug, n)}
-                alt={`${product.name}, view ${n}`}
-                role="product-detail"
-                ratio={i === 0 ? "16/10" : "4/5"}
-                caption={`${product.name} · ${n}`}
-                sizes={i === 0 ? "(min-width: 768px) 66vw, 100vw" : "(min-width: 768px) 32vw, 100vw"}
-              />
-            </Reveal>
-          ))}
-        </div>
       </section>
 
       {related.length > 0 ? (
@@ -314,25 +333,25 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       <nav className="mx-auto mt-20 w-full max-w-[1480px] border-t border-line px-5 md:px-8 lg:px-12">
         <div className="grid grid-cols-2">
           <Link
-            href={productPath(products[(index - 1 + products.length) % products.length])}
+            href={productPath(catalog[(index - 1 + catalog.length) % catalog.length])}
             className="group border-r border-line py-10 pr-5 no-underline"
           >
             <span className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-mist">Previous</span>
             <span className="mt-3 block font-display text-[26px] font-light leading-none text-ink">
-              {products[(index - 1 + products.length) % products.length].name}
+              {catalog[(index - 1 + catalog.length) % catalog.length].name}
             </span>
           </Link>
           <Link
-            href={productPath(products[(index + 1) % products.length])}
+            href={productPath(catalog[(index + 1) % catalog.length])}
             className="group py-10 pl-5 text-right no-underline"
           >
             <span className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-mist">Next</span>
             <span className="mt-3 block font-display text-[26px] font-light leading-none text-ink">
-              {products[(index + 1) % products.length].name}
+              {catalog[(index + 1) % catalog.length].name}
             </span>
           </Link>
         </div>
       </nav>
-    </>
+    </LightboxProvider>
   );
 }
