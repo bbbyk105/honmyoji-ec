@@ -41,8 +41,18 @@ piece_overrides ────┘   （DB が落ちてもコード側の値で立�
 
 ## ログイン
 
-**メールアドレスとパスワード**で入る。アカウントは一つで、DB にユーザー表は作らない
-（運用者が一人なので、表を作っても管理するものが増えるだけになる）。
+**メールアドレスとパスワード**で入る。アカウントは環境変数に並べる（最大 5 人）。
+DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、
+表を持つと管理するものが増えるだけになる。
+
+```bash
+STUDIO_EMAIL=          / STUDIO_PASSWORD_HASH=       # 1 人目
+STUDIO_EMAIL_2=        / STUDIO_PASSWORD_HASH_2=     # 2 人目
+STUDIO_EMAIL_3=        / STUDIO_PASSWORD_HASH_3=     # 3 人目 … 5 まで
+```
+
+`STUDIO_SESSION_SECRET` は全員で共有する一本の署名鍵。作り直すと全員のセッションが切れる。
+誰が入ったかは Telegram の通知に出る。
 
 画面はそれだけだが、裏では四つで守っている。
 
@@ -72,19 +82,21 @@ cookie を丸ごと抜かれても、別のブラウザに貼れば通らない�
 その場で `STUDIO_SESSION_SECRET` を変えれば全セッションが切れる。
 
 **どちらが違ったかは画面に出さない。** 「このアドレスは登録されている」と分かると、
-あとはパスワードだけを攻めればよくなる。メールが違ってもパスワードは必ず照合する
-（早く返すと、応答の速さの差で伝わってしまう）。理由はサーバーログにだけ残す。
+あとはパスワードだけを攻めればよくなる。メールが違ってもパスワードは必ず照合し、
+**一致しても途中で止めず全員ぶん照合してから返す**（早く返すと、応答の速さの差で
+「登録されている」「何番目のアカウントか」が漏れる）。理由はサーバーログにだけ残す。
 
 ### アカウントの作り方
 
 ```bash
-npm run studio:secrets
+npm run studio:secrets        # 1 人目
+npm run studio:secrets 2      # 2 人目（3〜5 も同じ）
 ```
 
-メールアドレスを聞き、パスワードを伏せて 2 回聞いたあと、`STUDIO_EMAIL` /
-`STUDIO_PASSWORD_HASH` / `STUDIO_SESSION_SECRET` の三行を出す。**平文のパスワードは
-どこにも保存されない**（人が憶えるだけ）。出た三行を `.env.local` と Vercel の
-Environment Variables に入れ、古い `STUDIO_PASSWORD` は消す。
+メールアドレスを聞き、パスワードを伏せて 2 回聞いたあと、その人ぶんの env 行を出す。
+**平文のパスワードはどこにも保存されない**（人が憶えるだけ）。出た行を `.env` と
+Vercel の Environment Variables に入れ、古い `STUDIO_PASSWORD` は消す。
+`STUDIO_SESSION_SECRET` は 1 人目のときだけ出る（全員で共有するため）。
 
 `STUDIO_SESSION_SECRET` を変えると、開いていたセッションは全部切れる。乗っ取りが
 疑わしいときの非常口。
@@ -114,10 +126,12 @@ SQL Editor で `supabase/migrations/` の中を番号順にそのまま流す。
 SUPABASE_URL=https://hopjtenwkxahsjaagpeb.supabase.co
 SUPABASE_SERVICE_ROLE_KEY=
 
-# /studio のアカウント。`npm run studio:secrets` が三つまとめて出す。
-# 三つ揃って初めてログイン画面が出る。
+# /studio のアカウント。`npm run studio:secrets [人数目]` が出す。
+# メール＋ハッシュが 1 組以上と SESSION_SECRET が揃って初めてログイン画面が出る。
 STUDIO_EMAIL=
 STUDIO_PASSWORD_HASH=
+STUDIO_EMAIL_2=
+STUDIO_PASSWORD_HASH_2=
 STUDIO_SESSION_SECRET=
 
 # Stripe

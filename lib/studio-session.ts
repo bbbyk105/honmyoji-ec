@@ -9,8 +9,8 @@ import { credentialsConfigured } from "@/lib/studio-credentials";
 /* ------------------------------------------------------------------
    /studio の鍵。**サーバ専用**。
 
-   運用者は一人なので、アカウント表もロールも作らない。入口はメールアドレスと
-   合言葉の一組だけで、硬さは次の三つで作っている。
+   アカウントは環境変数に並べる（DB にユーザー表は作らない）。入口はメールアドレスと
+   パスワードだけで、硬さは次の三つで作っている。
 
      1. 合言葉は scrypt のハッシュで持つ（STUDIO_PASSWORD_HASH）
      2. 回数制限（lib/studio-guard.ts）— 何度でも試せるなら 1 は飾りになる
@@ -33,7 +33,7 @@ const secret = process.env.STUDIO_SESSION_SECRET ?? "";
 /** 入館証と署名鍵が揃っているか。どれか欠けたら誰も入れない。 */
 export const studioConfigured = credentialsConfigured && Boolean(secret);
 
-export { passwordIsPlaintext, credentialsMatch } from "@/lib/studio-credentials";
+export { passwordIsPlaintext, credentialsMatch, matchAccount } from "@/lib/studio-credentials";
 
 function sign(payload: string): string {
   return createHmac("sha256", secret).update(payload).digest("base64url");

@@ -8,8 +8,8 @@ import { LOGIN_LIMITS, checkGate, clientIp, recordAttempt } from "@/lib/studio-g
 import { notifyStudio } from "@/lib/studio-notify";
 import {
   createSession,
-  credentialsMatch,
   destroySession,
+  matchAccount,
   requireSession,
   studioConfigured,
 } from "@/lib/studio-session";
@@ -71,7 +71,8 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
 
   if (!email || !password) return { error: "メールアドレスとパスワードを入力してください。" };
 
-  if (!credentialsMatch(email, password)) {
+  const who = matchAccount(email, password);
+  if (!who) {
     await recordAttempt(ip, false);
 
     const failures = await checkGate(ip);
@@ -88,7 +89,7 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
 
   await recordAttempt(ip, true);
   await createSession();
-  await notifyStudio(`MIROKU Studio — ${ip} からログインがありました。`);
+  await notifyStudio(`MIROKU Studio — ${who} が ${ip} からログインしました。`);
 
   redirect(safeNext(String(formData.get("next") ?? "/studio")));
 }
