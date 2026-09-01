@@ -34,7 +34,7 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
               [
                 ["all", "All"],
                 ["tatami-beri", LINE_LABEL["tatami-beri"].en],
-                ["kimono-remake", LINE_LABEL["kimono-remake"].en],
+                ["tote-bag", LINE_LABEL["tote-bag"].en],
               ] as const
             ).map(([key, label]) => (
               <button
@@ -54,6 +54,7 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
               [
                 ["all", "Any status"],
                 ["available", "Available"],
+                ["made_to_order", "Made to order"],
                 ["reserved", "Reserved"],
                 ["coming_soon", "Coming soon"],
                 ["sold_out", "Sold"],

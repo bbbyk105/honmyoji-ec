@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ImageWell } from "@/components/site/ImageWell";
 import { productImage, productPath, aud, type Product } from "@/data/products";
-import { PieceSlug } from "./PieceSlug";
+import { SoldBand } from "./SoldBand";
 import { StatusPill } from "./StatusPill";
 
 type Props = {
@@ -19,6 +19,8 @@ const RATIO = {
 };
 
 export function StillTile({ product, ratio = "4/5", priority = false, className = "" }: Props) {
+  const sold = product.status === "sold_out";
+
   return (
     <article className={`group ${className}`}>
       <Link
@@ -35,8 +37,12 @@ export function StillTile({ product, ratio = "4/5", priority = false, className 
             fill
             priority={priority}
             sizes="(min-width: 1024px) 40vw, 90vw"
-            className="object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.03]"
+            className={`object-cover transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              sold ? "" : "group-hover:scale-[1.03]"
+            }`}
           />
+          {/* 実写タイルは像を薄くできないので、ivory を一枚かぶせてから帯を引く */}
+          {sold ? <SoldBand className="inset-0 bg-ivory/55 px-[7%]" /> : null}
         </ImageWell>
         <div className="mt-4 flex items-baseline justify-between gap-4">
           <div>
@@ -45,7 +51,6 @@ export function StillTile({ product, ratio = "4/5", priority = false, className 
               {product.name}
               <span className="ml-2 font-jp text-[12px] tracking-[0.2em] text-mist">{product.kanji}</span>
             </h3>
-            <PieceSlug product={product} className="mt-1.5" />
           </div>
           <p className="shrink-0 font-sans text-[12px] tracking-[0.08em] text-charcoal/80">
             {aud.format(product.priceAud)}

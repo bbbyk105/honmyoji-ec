@@ -12,7 +12,7 @@ import { products, type Product, type ProductStatus } from "@/data/products";
    今日と同じ姿で立つ —— 管理画面のために公開ページを人質に取らない。
    ------------------------------------------------------------------ */
 
-const STATUSES: ProductStatus[] = ["available", "reserved", "sold_out", "coming_soon"];
+const STATUSES: ProductStatus[] = ["available", "made_to_order", "reserved", "sold_out", "coming_soon"];
 
 export type Override = {
   slug: string;

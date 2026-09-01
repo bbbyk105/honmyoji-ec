@@ -2,14 +2,15 @@
  * 商品カタログ（コード内）。価格・在庫ステータスの変更＝このファイルの編集。
  *
  * SKU 体系（内容.txt 11 より）: MI = MIROKU / BAG = バッグ / 001 = 作品番号
- *   MI-BAG-xxx 畳の縁バッグ, MI-KIM-xxx 着物リメイク, MI-PO 小物ポーチ, MI-ST ショルダー紐, MI-ZK 小物
+ *   MI-BAG-xxx 畳の縁バッグ, MI-KIM-xxx トートバッグ, MI-PO 小物ポーチ, MI-ST ショルダー紐, MI-ZK 小物
+ *   MI-KIM は先方の SKU 体系のまま（元は「着物リメイク」の略）。表示は Tote Bag。
  *
  * 価格は AUD（オーストラリアドル）固定表示。為替で日々動かさず、改定時にここを書き換える運用。
  * 寸法・重量は「それぞれ測ってお送りします」のため暫定値 — 実測後に差し替えること。
  */
 
-export type ProductStatus = "available" | "reserved" | "sold_out" | "coming_soon";
-export type ProductLine = "tatami-beri" | "kimono-remake";
+export type ProductStatus = "available" | "reserved" | "sold_out" | "coming_soon" | "made_to_order";
+export type ProductLine = "tatami-beri" | "tote-bag";
 export type UseTag = "Daily Bag" | "Formal" | "Interior" | "Gift";
 
 export type Product = {
@@ -48,19 +49,21 @@ export const STATUS_LABEL: Record<ProductStatus, { en: string; ja: string }> = {
   reserved: { en: "Reserved", ja: "取り置き中" },
   sold_out: { en: "Sold Out", ja: "完売" },
   coming_soon: { en: "Coming Soon", ja: "販売予定" },
+  /** 写真の一点は出たが、同じ形を別の色で織り直せるもの。一点物ではないので価格も別建て。 */
+  made_to_order: { en: "Made to Order", ja: "受注生産（色違い）" },
 };
 
 export const LINE_LABEL: Record<ProductLine, { en: string; ja: string }> = {
   "tatami-beri": { en: "Tatami-beri Bottle Bag", ja: "畳の縁 ボトルバッグ" },
-  "kimono-remake": { en: "Kimono Remake", ja: "着物リメイク" },
+  "tote-bag": { en: "Tote Bag", ja: "トートバッグ" },
 };
 
 const TATAMI_MATERIALS = [
   "Tatami-beri (tatami edging fabric, remnants)",
   "Japanese craft paper band — 100% recycled paper, made in Fuji City",
 ];
-const KIMONO_MATERIALS = [
-  "Vintage kimono & obi fabric",
+/* トートも中身は畳の縁。着物地は使っていない（2026-09-01 先方確認）。 */
+const TOTE_MATERIALS = [
   "Tatami-beri (tatami edging fabric, remnants)",
   "Cotton lining",
 ];
@@ -74,7 +77,7 @@ export const products: Product[] = [
     kanji: "桜",
     reading: "さくら",
     line: "tatami-beri",
-    priceAud: 220,
+    priceAud: 150,
     status: "available",
     note: "Cherry-pink tatami-beri over a chestnut weave, with a fringed handle.",
     noteJa: "栗色の縁に桜色を重ね、持ち手には房飾りを。",
@@ -88,7 +91,7 @@ export const products: Product[] = [
     tags: ["Gift", "Interior", "Formal"],
     galleryCount: 5,
     cutoutScale: 1,
-    cutoutAspect: 0.35,   // 490×1400
+    cutoutAspect: 0.352,   // 493×1400
   },
   {
     slug: "ai-indigo",
@@ -98,7 +101,7 @@ export const products: Product[] = [
     kanji: "藍",
     reading: "あい",
     line: "tatami-beri",
-    priceAud: 260,
+    priceAud: 190,
     status: "available",
     note: "Indigo, moss and sky-blue bands beneath a hand-braided navy handle.",
     noteJa: "藍・苔・空色の縁に、紺の編み手。",
@@ -146,7 +149,7 @@ export const products: Product[] = [
     kanji: "若葉",
     reading: "わかば",
     line: "tatami-beri",
-    priceAud: 220,
+    priceAud: 160,
     status: "available",
     note: "Pale mint and celadon — the quietest bag in the collection.",
     noteJa: "薄荷と青磁の淡い縁。いちばん静かな一本。",
@@ -169,16 +172,16 @@ export const products: Product[] = [
     name: "Kasane",
     kanji: "重",
     reading: "かさね",
-    line: "kimono-remake",
+    line: "tote-bag",
     priceAud: 190,
     status: "sold_out",
-    note: "A slim tote of teal kimono silk and two bands of patterned tatami-beri.",
-    noteJa: "青緑の着物地に、柄の縁を二本。細身のトート。",
+    note: "A slim tote in deep teal, with bands of patterned tatami-beri run the full height.",
+    noteJa: "青緑の本体に、柄の縁を縦に通した細身のトート。",
     story:
-      "Made from a kimono that had spent forty years folded in a chest. The teal silk was too good to cut into pieces, so it runs the full height of the bag, with two strips of tatami-beri sewn over it like an obi. Long leather-look handles sit on the shoulder.",
+      "Bands of gold-patterned tatami-beri are set into deep teal cloth, running the full height of the bag so that no pattern is cut short. Long handles sit on the shoulder, and the body folds flat when it is empty.",
     storyJa:
-      "四十年、箪笥に畳まれていた着物から。青緑の絹は切り刻むには惜しく、バッグの丈いっぱいに通し、帯のように縁を二本重ねました。長めの持ち手で肩に掛かります。",
-    materials: KIMONO_MATERIALS,
+      "青緑の生地に、金の柄の縁を縦に通しました。丈いっぱいに通してあるので、柄が途中で切れません。長めの持ち手は肩に掛かり、空のときは平らに畳めます。",
+    materials: TOTE_MATERIALS,
     size: { width: 26, height: 34, depth: 8, handleDrop: 28 },
     weightG: null,
     tags: ["Daily Bag", "Formal"],
@@ -193,16 +196,16 @@ export const products: Product[] = [
     name: "Musubi",
     kanji: "結",
     reading: "むすび",
-    line: "kimono-remake",
+    line: "tote-bag",
     priceAud: 210,
-    status: "available",
-    note: "Triangular patchwork of obi brocade with a tortoiseshell-look handle.",
-    noteJa: "帯地の三角の継ぎ合わせに、鼈甲調の持ち手。",
+    status: "sold_out",
+    note: "Triangular patchwork of tatami-beri with a tortoiseshell-look handle.",
+    noteJa: "縁を三角に継ぎ合わせ、鼈甲調の持ち手を。",
     story:
-      "Wine-red and gold obi fabric pieced into triangles, so the bag opens wide and closes flat like a furoshiki knot. The rigid arched handle is a vintage piece found in the same chest as the fabric.",
+      "Wine-red and gold tatami-beri pieced into triangles, so the bag opens wide and closes flat like a furoshiki knot. The rigid arched handle is a vintage piece.",
     storyJa:
-      "海老茶と金の帯地を三角に継ぎ、風呂敷の結び目のように大きく開いて平らに畳めます。弓なりの持ち手は、生地と同じ箪笥から出てきた古いもの。",
-    materials: KIMONO_MATERIALS,
+      "海老茶と金の縁を三角に継ぎ、風呂敷の結び目のように大きく開いて平らに畳めます。弓なりの持ち手は古いもの。",
+    materials: TOTE_MATERIALS,
     size: { width: 34, height: 22, depth: 12, handleDrop: 9 },
     weightG: null,
     tags: ["Formal", "Gift"],
@@ -217,16 +220,16 @@ export const products: Product[] = [
     name: "Hisui",
     kanji: "翡翠",
     reading: "ひすい",
-    line: "kimono-remake",
-    priceAud: 180,
-    status: "coming_soon",
-    note: "Jade-green cotton tote with a row of gold-diamond tatami-beri windows.",
-    noteJa: "翡翠色の木綿に、金の菱の縁を窓のように。",
+    line: "tote-bag",
+    priceAud: 330,
+    status: "made_to_order",
+    note: "Jade-green tote with a row of leaf-shaped tatami-beri windows.",
+    noteJa: "翡翠色の本体に、葉のかたちの縁を窓のように。",
     story:
-      "A wide, boxy tote for the market or the tea room. Five diamond-shaped windows of tatami-beri are set into the green cotton, each one cut from a different remnant. Finishing now; available soon.",
+      "A wide, boxy tote for the market or the tea room. Leaf-shaped panels of tatami-beri are set into the green cloth, each one cut from a different remnant. The cloth in the photograph is finished, but the same bag is woven to order in another set of colours.",
     storyJa:
-      "市場にも茶室にも似合う、幅広の箱型トート。緑の木綿に、菱形の縁を五つ、窓のように嵌め込みました。それぞれ違う端材から切り出しています。仕上げ中、まもなく販売。",
-    materials: KIMONO_MATERIALS,
+      "市場にも茶室にも似合う、幅広の箱型トート。緑の生地に、葉のかたちの縁を窓のように嵌め込みました。それぞれ違う端材から切り出しています。写真の生地は使い切りましたが、同じ形を別の色でお作りできます。",
+    materials: TOTE_MATERIALS,
     size: { width: 40, height: 24, depth: 14, handleDrop: 18 },
     weightG: null,
     tags: ["Daily Bag", "Interior"],
@@ -241,16 +244,16 @@ export const products: Product[] = [
     name: "Ichimatsu",
     kanji: "市松",
     reading: "いちまつ",
-    line: "kimono-remake",
-    priceAud: 180,
-    status: "coming_soon",
+    line: "tote-bag",
+    priceAud: 330,
+    status: "made_to_order",
     note: "Green-on-green checkerboard of tatami-beri squares.",
     noteJa: "緑と緑の市松。縁を四角に切って並べました。",
     story:
-      "Squares of two green tatami-beri patterns, alternated like the ichimatsu check of a kabuki costume. Soft-sided, with a short handle — for a lunch box, a book, and a fan.",
+      "Squares of two green tatami-beri patterns, alternated like the ichimatsu check of a kabuki costume. Soft-sided, with a short handle — for a lunch box, a book, and a fan. The greens in the photograph are finished, but the same checkerboard is woven to order in another set of colours.",
     storyJa:
-      "二種類の緑の縁を四角に切り、歌舞伎衣装の市松のように交互に並べました。柔らかい仕立てで、短い持ち手。お弁当と本と扇子のために。",
-    materials: KIMONO_MATERIALS,
+      "二種類の緑の縁を四角に切り、歌舞伎衣装の市松のように交互に並べました。柔らかい仕立てで、短い持ち手。お弁当と本と扇子のために。写真の緑は使い切りましたが、同じ市松を別の色でお作りできます。",
+    materials: TOTE_MATERIALS,
     size: { width: 30, height: 20, depth: 12, handleDrop: 10 },
     weightG: null,
     tags: ["Daily Bag"],
@@ -265,7 +268,7 @@ export const products: Product[] = [
     name: "Tsugi",
     kanji: "継",
     reading: "つぎ",
-    line: "kimono-remake",
+    line: "tote-bag",
     priceAud: 150,
     status: "sold_out",
     note: "Flat clutch of twelve tatami-beri squares in autumn browns.",
@@ -274,7 +277,7 @@ export const products: Product[] = [
       "The first bag in the series. Twelve squares of brown, rust and mauve edging, joined with a single strap. Sits under the arm or hangs on a wall as a textile — it was photographed on the temple's garden wall.",
     storyJa:
       "シリーズ最初の一点。茶・錆・藤の縁を十二枚継ぎ、一本の紐を付けました。小脇に抱えても、布として壁に掛けても。お寺の庭の壁で撮影しました。",
-    materials: KIMONO_MATERIALS,
+    materials: TOTE_MATERIALS,
     size: { width: 30, height: 25, depth: 3, handleDrop: 6 },
     weightG: null,
     tags: ["Interior", "Formal"],

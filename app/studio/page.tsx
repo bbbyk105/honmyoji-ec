@@ -11,7 +11,7 @@ import { dbEnabled } from "@/lib/supabase";
 
 export const dynamic = "force-dynamic";
 
-const PIECE_ORDER: ProductStatus[] = ["available", "reserved", "sold_out", "coming_soon"];
+const PIECE_ORDER: ProductStatus[] = ["available", "made_to_order", "reserved", "sold_out", "coming_soon"];
 
 /**
  * 今日の状態。

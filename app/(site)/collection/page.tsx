@@ -35,10 +35,14 @@ export default async function CollectionPage() {
           <CollectionStudio pieces={pieces} />
         </div>
 
-        <dl className="mt-20 grid gap-6 border-t border-line pt-8 font-sans text-[12px] leading-[1.8] text-charcoal/75 md:grid-cols-4">
+        <dl className="mt-20 grid gap-6 border-t border-line pt-8 font-sans text-[12px] leading-[1.8] text-charcoal/75 sm:grid-cols-2 md:grid-cols-5">
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-moss">Available</dt>
             <dd className="mt-2">Ready now, and one of a kind. Add it to your cart and we write back with payment details.</dd>
+          </div>
+          <div>
+            <dt className="text-[10px] uppercase tracking-[0.2em] text-clay">Made to order</dt>
+            <dd className="mt-2">The one photographed is finished, but the same bag is woven again in colours you choose.</dd>
           </div>
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-ink">Reserved</dt>
