@@ -11,6 +11,11 @@
 実行: python3 scripts/prepare-images.py            （全部）
       python3 scripts/prepare-images.py --skip-cutout （カットアウト以外だけ再生成）
       python3 scripts/prepare-images.py --only textures （畳の縁マクロだけ）
+      python3 scripts/prepare-images.py --only cutouts --product sakura （その1点のカットアウトだけ）
+
+一点だけ作り直したときは data/products.ts の cutoutAspect を出力の比率に合わせること
+（一覧の展示台に対する像の枠がこの値で決まる。詳細ヒーローと共有しているので、
+ 片方だけずれると View Transition の morph がずれる）。
 """
 from __future__ import annotations
 
@@ -127,7 +132,7 @@ def cutout(im: Image.Image, session) -> Image.Image:
     return canvas
 
 
-def main(skip_cutout: bool, only: str | None = None) -> None:
+def main(skip_cutout: bool, only: str | None = None, product: str | None = None) -> None:
     session = None
     if only == "textures":
         print("textures")
@@ -145,15 +150,23 @@ def main(skip_cutout: bool, only: str | None = None) -> None:
 
     print("products")
     for slug, spec in PRODUCTS.items():
+        if product and slug != product:
+            continue
         d = OUT / "products" / slug
         if not skip_cutout:
             co = cutout(load(spec["main"]), session)
             d.mkdir(parents=True, exist_ok=True)
             co.save(d / "cutout.webp", "WEBP", quality=88, method=6)
-            print(f"  {(d / 'cutout.webp').relative_to(ROOT)}  {co.size[0]}x{co.size[1]}")
+            print(f"  {(d / 'cutout.webp').relative_to(ROOT)}  {co.size[0]}x{co.size[1]}"
+                  f"  cutoutAspect {co.size[0] / co.size[1]:.3f}")
+        if only == "cutouts":
+            continue
         save_webp(fit(load(spec["main"]), 1600), d / "1.webp")
         for i, rel in enumerate(spec["gallery"], start=2):
             save_webp(fit(load(rel), 1600), d / f"{i}.webp")
+
+    if only == "cutouts":
+        return
 
     print("scenes")
     for name, rel in SCENES.items():
@@ -169,4 +182,5 @@ def main(skip_cutout: bool, only: str | None = None) -> None:
 
 if __name__ == "__main__":
     only = sys.argv[sys.argv.index("--only") + 1] if "--only" in sys.argv else None
-    main(skip_cutout="--skip-cutout" in sys.argv, only=only)
+    product = sys.argv[sys.argv.index("--product") + 1] if "--product" in sys.argv else None
+    main(skip_cutout="--skip-cutout" in sys.argv, only=only, product=product)

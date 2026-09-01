@@ -20,6 +20,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - `DESIGN.md` — 視覚言語の正本。UI を触る前に読む。
 - `data/products.ts` — **商品カタログの正本**。寸法・素材・写真の枚数・SKU はここを編集する。価格とステータスと文言は `/studio` から上書きできる（上書きが無ければここの値が出る）。読むときは `data/products.ts` ではなく `lib/catalog.ts` を通すこと。
+  - カテゴリ（`ProductLine`）は `tatami-beri`（ボトルバッグ）と `tote-bag`（トート）の二つ。**着物リメイクという区分は無い** — 九点とも畳の縁で、着物地は使っていない（2026-09-01 先方確認）。SKU の `MI-KIM-xxx` は先方の体系なのでそのまま残している。
+  - ステータス（`ProductStatus`）は五つ。`made_to_order` は「写真の一点は出たが、同じ形を別の色で織り直せる」もの（翡翠・市松）。**ステータスを増やしたら七箇所を直す**: `data/products.ts` の型と `STATUS_LABEL` / `lib/catalog.ts` の `STATUSES` / `components/collection/StatusPill.tsx` / `components/collection/CollectionStudio.tsx` の絞り込み / `app/(site)/collection/[slug]/page.tsx` の `cta()` / `app/studio/options.ts` / `app/studio/page.tsx` の `PIECE_ORDER`。`Record<ProductStatus, …>` にしてある三箇所は `tsc` が教えてくれるが、`cta()` と絞り込みは黙って落ちる。
+  - 買えるのは `available`（カート → Stripe）だけ。`made_to_order` は色を決める会話が要るのでカートに入れず、Contact（`subject=colour`）へ送る。
 - `data/site.ts` — ブランドコピー・FAQ・創業者・特商法/返品ポリシー。
 - `data/blog.ts` — Blog の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Blog が空にならないようにするための seed で、記事を足す場所ではない。
 - `lib/microcms.ts` — **Blog の記事はここから来る**。入稿の手順・スキーマ・Webhook は `docs/microcms.md`。
@@ -33,7 +36,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。ヒーローは `useLightboxSafe()` を使う — Provider が無い場所に置かれても壊れないため。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地は ivory のまま — 一枚だけ暗室に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。`stopLenis()` はカートと同じ扱い。
 - **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
 - `components/collection/GalleryStrip.tsx` — **スマホのギャラリー**（`md:hidden`）。snap の横スワイプ + `01 / 05` カウンタ。写真1枚の作品は自動で普通の一枚に落ちる。md 以上は従来の編集グリッド（`hidden md:grid`）。
-- `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`PieceSlug.tsx` — `/sakura-cherry` のように URL slug を読む。
+- `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`SoldBand.tsx` — 完売の帯（像の縦中央に罫を一本引いて `Sold out`。位置は呼び出し側が渡す — 台の中央に固定すると背の低い作品で像の上に浮く）。**URL slug（`/sakura-cherry`）を画面に出さない** — 2026-09-01 に `PieceSlug` ごと外した。
 - `components/site/Shell.tsx` — **版面の定数 `SHELL`**（`max-w-[1480px]` + 左右余白）。ヘッダー / フッター / ヒーロー / トップの全セクションがこれを使う。新しいセクションで `mx-auto max-w-... px-...` を手書きしない — 手書きに戻すと必ず 16px ずれる。
 - `components/site/Frame.tsx` — 写真井戸。`data-image-role` / `data-image-ratio` 属性付き。差し替えは `src` だけ。role・比率のキャプション表示は `showRole`（既定 off）。
 - `components/cart/` — Cart（localStorage）と MiniCart。決済は Contact へ手渡し。slug と旧 folder 名の両方を `getProduct` で解決する。**表示は Cart だが localStorage キーは `miroku-held` のまま**（変えると既存のカートが空になる）。UI 上の「Hold / Held」は 2026-08-31 に全て Cart 系の語へ置換済み。
@@ -51,6 +54,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - 商品カットアウト（背景除去）は rembg の **birefnet-general**（初回 ~1GB DL）＋「最大連結成分のみ残す」後処理。isnet/u2net は草地・壁で背景が残るので使わない。
   - 実行: `python3 -m venv .venv && .venv/bin/pip install rembg onnxruntime pillow scipy && .venv/bin/python scripts/prepare-images.py`
   - 新しい商品写真が来たら `PRODUCTS` に slug と元ファイルを追加 → 実行 → `data/products.ts` に `galleryCount` / `cutoutScale` を合わせる。
+  - **一点だけ作り直せる**: `.venv/bin/python scripts/prepare-images.py --only cutouts --product sakura`。他の八点の webp を書き換えないので、差分が一枚で済む。出力に `cutoutAspect` が出るので `data/products.ts` の値をそれに合わせること（一覧の展示台と詳細ヒーローが同じ枠を使っているので、片方だけずれると morph がずれる）。
+  - カットアウトが**バッグの一部を食う**ことがある（桜は敷布の上に立っていて、左下の角が斜めに切り落とされていた）。原本と `cutout.webp` を並べるのではなく、`cutout.webp` をマゼンタ地に合成して見ると欠けが分かる。rembg のモデルを更新して同じ `--only cutouts` を回すと直ることがある（2026-09-01 の桜はこれで直った）。撮り直しの写真が来るまでは、無地の壁を背にした一枚を `main` に選ぶのが確実。
 - 畳の縁マクロ（`texture/beri-*.webp`）は原本の座標指定で切り出している。写真が差し替わったら座標も見直す。
 - **切り出しは掲載する比率と同じ比率で**。`beri-indigo` は 4:5（home /material・blog リード）、`beri-sakura` は 16:10（blog 本文）。横長の原稿を 4:5 の井戸に入れると object-cover で削られた分だけ実効解像度が落ち、拡大されて荒れる。掲載側にも `max-w` を付けて、原稿以上の大きさを要求しないこと。
 - 画像を差し替えても dev server は `_next/image` の結果をキャッシュしたままになる。見た目が変わらないときは dev server を再起動するか `npm run build && npx next start` で確認する。

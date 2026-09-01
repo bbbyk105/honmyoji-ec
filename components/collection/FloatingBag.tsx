@@ -5,7 +5,7 @@ import Link from "next/link";
 import { ViewTransition } from "react";
 import type { CSSProperties } from "react";
 import { productCutout, productPath, aud, type Product } from "@/data/products";
-import { PieceSlug } from "./PieceSlug";
+import { SoldBand } from "./SoldBand";
 import { StatusPill } from "./StatusPill";
 
 type Props = {
@@ -27,6 +27,8 @@ const BAG_HEIGHT = 84;
 
 export function FloatingBag({ product, index = 0, priority = false }: Props) {
   const delay = { "--delay": `${index * 90}ms` } as CSSProperties;
+  /* 完売は像を淡くして、hover でも前に出さない — 触れて反応するものは買えるもの、で揃える。 */
+  const sold = product.status === "sold_out";
 
   // 像の高さは台の %、幅はそこから実比率で決まる。台幅を超えるものだけ幅で頭打ちにする。
   const bagH = BAG_HEIGHT * product.cutoutScale;
@@ -43,14 +45,16 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
           <span
             aria-hidden
             style={{ ...delay, width: `${bagW * 0.66}%`, bottom: `${GROUND - 1.6}%` }}
-            className="bag-ground absolute left-1/2 h-[2.4%] -translate-x-1/2 rounded-[50%] bg-ink/35 blur-[12px]"
+            className={`bag-ground absolute left-1/2 h-[2.4%] -translate-x-1/2 rounded-[50%] bg-ink/35 blur-[12px] ${
+              sold ? "opacity-40" : ""
+            }`}
           />
           <div
             className="bag-shadow-owner absolute left-1/2 -translate-x-1/2"
             style={{ height: `${bagH}%`, width: `${bagW}%`, bottom: `${GROUND}%` }}
           >
             <div className="bag-float relative h-full w-full" style={delay}>
-              <div className="bag-lift relative h-full w-full">
+              <div className={`relative h-full w-full ${sold ? "" : "bag-lift"}`}>
                 <ViewTransition name={`bag-${product.folder}`} share="morph" default="none">
                   <Image
                     src={productCutout(product.slug)}
@@ -58,12 +62,15 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
                     fill
                     priority={priority}
                     sizes="(min-width: 1280px) 30vw, (min-width: 640px) 46vw, 78vw"
-                    className="object-contain object-bottom"
+                    className={`object-contain object-bottom ${sold ? "opacity-55" : ""}`}
                   />
                 </ViewTransition>
               </div>
             </div>
           </div>
+          {sold ? (
+            <SoldBand className="inset-x-[7%] translate-y-1/2" style={{ bottom: `${GROUND + bagH / 2}%` }} />
+          ) : null}
         </div>
       </Link>
 
@@ -80,7 +87,6 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
             {aud.format(product.priceAud)}
           </p>
         </div>
-        <PieceSlug product={product} className="mt-2" />
       </div>
     </article>
   );

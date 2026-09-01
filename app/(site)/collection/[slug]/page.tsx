@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { InquiryCta } from "@/components/cart/HoldButton";
-import { PieceSlug } from "@/components/collection/PieceSlug";
 import { GalleryStrip } from "@/components/collection/GalleryStrip";
 import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
 import { SwipeStrip } from "@/components/site/SwipeStrip";
@@ -62,6 +61,12 @@ function cta(product: Product) {
         primary: { href: `/contact${q}&subject=notify`, label: "Notify me" },
         secondary: null,
         note: "Finished and photographed, but not released yet. Leave us your email and we write the day it goes on sale.",
+      };
+    case "made_to_order":
+      return {
+        primary: { href: `/contact${q}&subject=colour`, label: "Order in another colour" },
+        secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
+        note: "The edging in the photograph is finished, but this bag is woven again to order. Tell us the colours you have in mind — we send photographs of the tatami-beri we hold, then a private checkout link.",
       };
     case "sold_out":
       return {
@@ -140,7 +145,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               {product.kanji}
               <span className="ml-3 text-[11px] tracking-[0.2em] text-mist">{product.reading}</span>
             </p>
-            <PieceSlug product={product} className="hero-settle mt-4" />
 
             <div
               className="hero-settle mt-8 flex flex-wrap items-end gap-4"
@@ -182,7 +186,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                 product={product}
                 href={action.primary.href}
                 label={action.primary.label}
-                variant={product.status === "available" ? "solid" : "outline"}
+                variant={
+                  product.status === "available" || product.status === "made_to_order" ? "solid" : "outline"
+                }
               />
               {action.secondary ? (
                 <Button href={action.secondary.href} variant="outline" arrow={false}>
@@ -227,7 +233,12 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
                 <p>Honmyoji Temple, Fuji City, Japan</p>
                 <p>Weight — {product.weightG ? `${product.weightG} g` : "measured before shipping"}</p>
-                <p>One of a kind · never remade</p>
+                {/* 受注生産の二点だけは「二度と作らない」が嘘になる（色を変えて織り直せる） */}
+                <p>
+                  {product.status === "made_to_order"
+                    ? "Woven to order · no two the same"
+                    : "One of a kind · never remade"}
+                </p>
               </dd>
             </div>
             <div>

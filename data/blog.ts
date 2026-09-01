@@ -111,7 +111,7 @@ export const blogSeed: BlogPost[] = [
       },
       {
         type: "p",
-        text: "The kimono remakes are softer. They sit under the arm or on a shoulder. Keep sharp-toothed keys out of the pockets; they will mark the silk.",
+        text: "The totes are softer. They sit under the arm or on a shoulder. Keep sharp-toothed keys out of the pockets; they will snag the weave.",
       },
       {
         type: "image",

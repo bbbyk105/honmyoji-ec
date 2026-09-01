@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useActionState, useEffect } from "react";
 import { productCutout, productPath, aud, type Product } from "@/data/products";
 import { startCheckout, type CheckoutState } from "@/app/(site)/checkout/actions";
-import { PieceSlug } from "@/components/collection/PieceSlug";
 import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
 import { Button } from "@/components/site/Button";
 import { useCart } from "./CartProvider";
@@ -108,7 +107,6 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                       {p.name}
                       <span className="ml-2 font-jp text-[11px] tracking-[0.2em] text-mist">{p.kanji}</span>
                     </Link>
-                    <PieceSlug product={p} className="mt-2" />
                     <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-charcoal/80">
                       {aud.format(p.priceAud)}
                     </p>

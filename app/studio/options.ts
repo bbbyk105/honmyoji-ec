@@ -8,6 +8,7 @@ import type { OrderStatus } from "@/lib/orders";
 
 export const PIECE_STATUS_OPTIONS: { value: ProductStatus; label: string }[] = [
   { value: "available", label: "Available — 購入可能" },
+  { value: "made_to_order", label: "Made to order — 受注生産（色違い）" },
   { value: "reserved", label: "Reserved — 取り置き中" },
   { value: "sold_out", label: "Sold out — 完売" },
   { value: "coming_soon", label: "Coming soon — 販売予定" },
@@ -33,6 +34,8 @@ export const ORDER_STATUS_LABEL: Record<OrderStatus, string> = {
  */
 export const PIECE_STATUS_COLOR: Record<ProductStatus, string> = {
   available: "bg-moss",
+  /* reserved と同じ clay。点には必ずラベルが並ぶので、色だけで読ませていない。 */
+  made_to_order: "bg-clay",
   reserved: "bg-clay",
   sold_out: "bg-mist",
   coming_soon: "bg-indigo",
