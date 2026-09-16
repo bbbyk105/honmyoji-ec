@@ -2,9 +2,9 @@ import { STATUS_LABEL, type ProductStatus } from "@/data/products";
 
 const tone: Record<ProductStatus, string> = {
   available: "text-moss",
-  reserved: "text-charcoal",
+  reserved: "text-bone",
   /* 完売は一覧で読み落とされてはいけない。meta の mist ではなく本文より濃い ink で言い切る。 */
-  sold_out: "text-ink",
+  sold_out: "text-ivory",
   coming_soon: "text-indigo",
   /* clay は素材の色。受注生産は「縁を選んで織り直す」なので、材料の側の色で言う。 */
   made_to_order: "text-clay",

@@ -32,13 +32,13 @@ export default async function StudioPiecePage({
       <div className={STUDIO_HEAD}>
         <Link
           href="/studio/pieces"
-          className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ink"
+          className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ivory"
         >
           ← 作品一覧
         </Link>
         <div className="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div className="flex items-end gap-5">
-            <div className="relative h-[76px] w-[76px] shrink-0 bg-parchment">
+            <div className="relative h-[76px] w-[76px] shrink-0 bg-onyx">
               <Image
                 src={productCutout(base.folder)}
                 alt=""
@@ -48,7 +48,7 @@ export default async function StudioPiecePage({
               />
             </div>
             <div>
-              <h1 className="font-display text-[clamp(30px,4vw,42px)] font-light leading-[1.02] text-ink">
+              <h1 className="font-display text-[clamp(30px,4vw,42px)] font-light leading-[1.02] text-ivory">
                 {base.name}
                 <span className="ml-3 font-jp text-[15px] tracking-[0.24em] text-mist">
                   {base.kanji}
@@ -63,7 +63,7 @@ export default async function StudioPiecePage({
           <Link
             href={`/collection/${base.slug}`}
             target="_blank"
-            className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ink"
+            className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ivory"
           >
             公開ページを見る ↗
           </Link>
@@ -76,26 +76,26 @@ export default async function StudioPiecePage({
         <PieceForm base={base} override={override} disabled={!dbEnabled} />
 
         <aside className="lg:pt-2">
-          <div className="border border-line bg-paper px-5 py-5">
+          <div className="border border-line bg-lacquer px-5 py-5">
             <p className="eyebrow">コード側の値</p>
             <dl className="mt-4 space-y-2.5 font-sans text-[13px] leading-[1.6]">
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">価格</dt>
-                <dd className="tabular-nums text-charcoal">{aud.format(base.priceAud)}</dd>
+                <dd className="tabular-nums text-bone">{aud.format(base.priceAud)}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">ステータス</dt>
-                <dd className="text-charcoal">{STATUS_LABEL[base.status].en}</dd>
+                <dd className="text-bone">{STATUS_LABEL[base.status].en}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">寸法</dt>
-                <dd className="text-right text-charcoal">
+                <dd className="text-right text-bone">
                   {cm(base.size.width)} × {cm(base.size.height)}
                 </dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">写真</dt>
-                <dd className="text-charcoal">{base.galleryCount} 枚</dd>
+                <dd className="text-bone">{base.galleryCount} 枚</dd>
               </div>
             </dl>
             <p className="mt-5 border-t border-line pt-4 font-sans text-[12px] leading-[1.8] text-mist">

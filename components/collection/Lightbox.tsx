@@ -16,10 +16,9 @@ import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
 /* ------------------------------------------------------------------
    写真を一枚だけ大きく見る。
 
-   地は ivory のまま。写真ビューアは黒く落とすのが定石だが、この店は
-   「小さな展示カタログ」で、展示室は明るい —— 一枚だけ暗室に持っていくと、
-   そこだけ別のサイトになる。写真を大きくして、周りの情報を減らすことで
-   集中させる。
+   地はサイトと同じ sumi。ビューアだけ別の明るさに振らない —— 一枚だけ違う部屋に
+   持っていくと、そこだけ別のサイトになる（以前は逆向きに同じ理由で ivory だった）。
+   集中は明るさではなく、周りの情報を減らすこと（キャプションと倍率と送りだけ）で作る。
 
    拡大は倍率だけでなく、次の三つが揃って初めて使える道具になる。
      1. 見たい場所に寄れる（ホイールはカーソルの下を中心に拡大する）
@@ -77,7 +76,7 @@ export function Zoomable({ index, children }: { index: number; children: ReactNo
         type="button"
         onClick={() => open(index)}
         aria-label="写真を拡大する"
-        className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ink/30 focus-visible:ring-offset-2 focus-visible:ring-offset-ivory"
+        className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ivory/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sumi"
       />
     </div>
   );
@@ -252,18 +251,18 @@ function Viewer({
   /* 罫は「常に」引く。hover で初めて出る罫は、触るまで押せると分からない
      （Button.tsx と同じ判断）。色も mist ではなく ink —— 操作は本文ではない。 */
   const press =
-    "flex items-center justify-center font-sans leading-none text-ink outline-none transition-colors hover:bg-ink hover:text-ivory focus-visible:ring-2 focus-visible:ring-ink/30 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ink";
+    "flex items-center justify-center font-sans leading-none text-ivory outline-none transition-colors hover:bg-ivory hover:text-sumi focus-visible:ring-2 focus-visible:ring-ivory/30 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ivory";
 
   const zoomBtn = `${press} h-11 w-11 text-[16px]`;
 
-  const pager = `${press} h-11 w-11 border border-ink text-[17px]`;
+  const pager = `${press} h-11 w-11 border border-ivory text-[17px]`;
 
   return (
     <div
       role="dialog"
       aria-modal="true"
       aria-label={shot.alt}
-      className="fixed inset-0 z-[80] flex flex-col bg-ivory"
+      className="fixed inset-0 z-[80] flex flex-col bg-sumi"
     >
       {/* 上 — どの一枚か、いま何倍か、閉じる */}
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line px-4 py-2 md:px-8">
@@ -308,7 +307,7 @@ function Viewer({
             type="button"
             onClick={onClose}
             aria-label="閉じる"
-            className={`${press} h-11 gap-2.5 border border-ink px-4 text-[11.5px] font-medium uppercase tracking-[0.2em] md:px-5`}
+            className={`${press} h-11 gap-2.5 border border-ivory px-4 text-[11.5px] font-medium uppercase tracking-[0.2em] md:px-5`}
           >
             <span aria-hidden className="text-[15px]">
               ✕
@@ -367,13 +366,13 @@ function Viewer({
                 }}
                 aria-label={s.caption}
                 aria-current={i === index ? "true" : undefined}
-                className={`relative h-14 w-12 shrink-0 overflow-hidden bg-parchment outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ink/30 ${
+                className={`relative h-14 w-12 shrink-0 overflow-hidden bg-onyx outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ivory/30 ${
                   i === index ? "opacity-100" : "opacity-50 hover:opacity-85"
                 }`}
               >
                 <Image src={s.src} alt="" fill sizes="48px" className="object-cover" />
                 {i === index ? (
-                  <span aria-hidden className="absolute inset-0 border border-ink" />
+                  <span aria-hidden className="absolute inset-0 border border-ivory" />
                 ) : null}
               </button>
             ))}
@@ -385,7 +384,7 @@ function Viewer({
               ←
             </button>
             <p className="w-[74px] text-center font-sans text-[12px] tabular-nums tracking-[0.16em]">
-              <span className="font-medium text-ink">{String(index + 1).padStart(2, "0")}</span>
+              <span className="font-medium text-ivory">{String(index + 1).padStart(2, "0")}</span>
               <span className="text-mist"> / {String(shots.length).padStart(2, "0")}</span>
             </p>
             <button type="button" onClick={() => go(1)} aria-label="次の写真" className={pager}>

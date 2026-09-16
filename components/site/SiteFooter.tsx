@@ -11,11 +11,11 @@ const footerNav = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-line md:mt-28">
+    <footer className="mt-20 border-t border-line bg-onyx md:mt-28">
       <div className={`${SHELL} grid gap-14 py-16 md:grid-cols-[1.3fr_0.8fr_1.1fr] md:gap-16 md:py-20`}>
         <div>
-          <p className="font-sans text-[13px] font-medium tracking-[0.42em] text-ink">MIROKU</p>
-          <p className="mt-6 max-w-[28ch] font-display text-[26px] font-light leading-[1.3] text-ink">
+          <p className="font-sans text-[13px] font-medium tracking-[0.42em] text-ivory">MIROKU</p>
+          <p className="mt-6 max-w-[28ch] font-display text-[26px] font-light leading-[1.3] text-ivory">
             Woven once, at the edge of a tatami room.
           </p>
           <p className="mt-3 font-jp text-[12px] tracking-[0.16em] text-mist">畳の縁から、一本ずつ。</p>
@@ -26,7 +26,7 @@ export function SiteFooter() {
             <Link
               key={item.href}
               href={item.href}
-              className="link-line w-fit font-sans text-[10.5px] uppercase tracking-[0.24em] text-charcoal/80"
+              className="link-line w-fit font-sans text-[10.5px] uppercase tracking-[0.24em] text-bone/80"
             >
               {item.label}
             </Link>
@@ -35,7 +35,7 @@ export function SiteFooter() {
             href={site.instagram}
             target="_blank"
             rel="noreferrer"
-            className="link-line w-fit font-sans text-[10.5px] uppercase tracking-[0.24em] text-charcoal/80"
+            className="link-line w-fit font-sans text-[10.5px] uppercase tracking-[0.24em] text-bone/80"
           >
             Instagram
           </a>
@@ -46,7 +46,7 @@ export function SiteFooter() {
           <p className="mt-8 font-sans text-[11px] leading-[1.8] text-mist">
             {site.location}
             <br />
-            <a href={`mailto:${site.email}`} className="link-line text-charcoal/80">
+            <a href={`mailto:${site.email}`} className="link-line text-bone/80">
               {site.email}
             </a>
           </p>

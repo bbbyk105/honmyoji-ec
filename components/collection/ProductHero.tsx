@@ -16,14 +16,20 @@ export function ProductHero({ product }: { product: Product }) {
 
   return (
     <div className="relative flex h-[46vh] min-h-[280px] w-full items-end justify-center pb-8 sm:h-[52vh] sm:min-h-[340px] sm:pb-12 lg:h-[calc(100vh-80px)] lg:min-h-[520px]">
+      {/*
+        棚板。一覧の展示台と同じ考えで、接地は線で作る。ここだけは像の幅ではなく**列の幅**で
+        引く —— 像は 39〜100%（ichimatsu は列いっぱいまで太る）とばらつくので、像に合わせると
+        作品によって板がはみ出す。列の端で切れば、板の左右はグリッドの実在の線と揃う。
+        高さは `items-end` + `pb-8` の分だけ上げれば像の裾と一致する。
+      */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 bottom-8 h-px bg-ivory/25 sm:bottom-12"
+      />
       <div
         className="relative max-w-full"
         style={{ height: `${bagH}%`, aspectRatio: `${product.cutoutAspect}` }}
       >
-        <span
-          aria-hidden
-          className="absolute bottom-[-3%] left-1/2 h-[4%] w-[66%] -translate-x-1/2 rounded-[50%] bg-ink/30 blur-[18px]"
-        />
         <div className="bag-shadow-owner absolute inset-0">
           <ViewTransition name={`bag-${product.folder}`} share="morph" default="none">
             <Image
@@ -44,7 +50,7 @@ export function ProductHero({ product }: { product: Product }) {
             type="button"
             onClick={() => lightbox.open(0)}
             aria-label={`${product.name} の写真を拡大する`}
-            className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ink/30 focus-visible:ring-offset-4 focus-visible:ring-offset-ivory"
+            className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ivory/30 focus-visible:ring-offset-4 focus-visible:ring-offset-sumi"
           />
         ) : null}
       </div>

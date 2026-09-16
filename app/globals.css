@@ -2,29 +2,31 @@
 
 /* ------------------------------------------------------------------
    MIROKU — rooms, not storefronts.
-   Colour comes from the weave. The UI stays quiet so the object can speak.
+   展示室は暗い。地はヒーローの写真と同じ暖かい黒（#1b1710 の族）で、
+   純黒（#000）は一度も使わない — 冷たい黒の上では、畳の縁の赤も藍も濁る。
+
+   トークンは色の名前ではなく役どころ。地は三段（onyx < sumi < lacquer）、
+   文字は二段（ivory / bone）、その下に meta の mist と罫の line。
    ------------------------------------------------------------------ */
 @theme {
-  --color-ivory: #f3eee4;
-  --color-parchment: #e8e0d2;
-  --color-stone: #d4cbb8;
-  --color-sand: #c4b49a;
-  --color-paper: #f8f4ec;
-  --color-ink: #1a1714;
-  --color-charcoal: #352f29;
-  --color-mist: #6f675c;
-  --color-line: #d2c8b6;
-  --color-moss: #4a5340;
-  --color-indigo: #3a4554;
-  --color-clay: #7d5c45;
-  --color-rose: #a87268;
+  /* 地 — 深い順。段差は 6〜11 と小さい。大きく開けると黒が灰に見える */
+  --color-onyx: #0b0806;    /* 地より深いところ：写真の井戸、接地の影、フッターの土台 */
+  --color-sumi: #14100b;    /* 版の地 */
+  --color-lacquer: #1f1a13; /* 持ち上がる面：入力欄、注記、パネル */
+  --color-ash: #2a241b;     /* やわらかい面 */
+  --color-bark: #4a4133;    /* 暖かい支え：hover の罫 */
 
-  /* legacy aliases used by a few remaining utilities */
-  --color-washi: #f3eee4;
-  --color-washi-deep: #e8e0d2;
-  --color-sumi: #1a1714;
-  --color-gold: #4a5340;
-  --color-gold-light: #6b7560;
+  /* 文字 */
+  --color-ivory: #f2ece0;   /* 光 — 見出し・罫・塗りのボタン */
+  --color-bone: #cfc6b4;    /* 本文。見出しより一段落として、黒地のにじみを抑える */
+  --color-mist: #9c9280;    /* メタ・キャプション（sumi 上で 6.2:1） */
+  --color-line: #37301f;    /* ヘアライン */
+
+  /* 織りの色。黒地では沈むので、明度だけ上げて彩度は足していない */
+  --color-moss: #92a37b;    /* available */
+  --color-indigo: #8a9cb4;  /* coming soon */
+  --color-clay: #c89771;    /* made to order / エラー */
+  --color-rose: #cf9d92;    /* 桜のときだけ */
 
   --font-display: var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
   --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
@@ -36,7 +38,7 @@
 }
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
 }
 
 html {
@@ -45,27 +47,51 @@ html {
 }
 
 body {
-  background: var(--color-ivory);
-  color: var(--color-ink);
+  background: var(--color-sumi);
+  color: var(--color-ivory);
   font-family: var(--font-sans);
   font-weight: 400;
+  /* 黒地の細字は antialiased だと痩せて霞む。本文は 300 ではなく 400 で組む */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
 }
 
 ::selection {
-  background: rgba(74, 83, 64, 0.22);
+  background: rgba(242, 236, 224, 0.2);
+  color: var(--color-ivory);
 }
 
-/* Paper grain — never give this class a position; parents decide. */
+/* 黒い部屋に白い帯が一本走らないように。Firefox と WebKit の両方へ。 */
+* {
+  scrollbar-color: var(--color-bark) var(--color-onyx);
+  scrollbar-width: thin;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-onyx);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-bark);
+}
+
+/* 地の肌理。never give this class a position; parents decide.
+   multiply は黒の上では何も起きない（掛けるほど黒くなるだけ）。
+   明るい粒を soft-light で薄く乗せて、黒の面が印刷面に見えるところで止める。
+   0.22 では節そのものが一段明るくなり、粒ではなく「明るい長方形」の上辺が見えた。 */
 .washi-grain::before {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
-  opacity: 0.28;
-  mix-blend-mode: multiply;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.42 0 0 0 0 0.39 0 0 0 0 0.32 0 0 0 0.1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.1;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.84 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .tategaki {
@@ -147,53 +173,18 @@ body {
 }
 
 /* ------------------------------------------------------------------
-   Home hero — 暗い地に置く第一画面だけの層。ほかの節では使わない。
-   washi-grain は multiply なので暗い地の上では消える。ここは明るい粒子を
-   overlay で薄く重ねる。独自クラスに position は書かない（親が決める）。
+   Home hero — 第一画面だけの層。ほかの節では使わない。
+   ヒーローの地（#1b1710）は版の地 sumi より一段明るい。ここだけ写真が照らしている
+   部屋で、下から上がってくる紙の面（sumi）が room を一段沈める合図になる。
+   粒子は washi-grain より強い overlay。独自クラスに position は書かない（親が決める）。
+
+   **写真に暗幕は掛けない。** 以前は左の余白を沈める 100deg のグラデーションと、
+   スマホで上端を地ににじませる継ぎ目を敷いていたが、二つとも外した。原稿を実測すると
+   文字の載る左三分の一は一番明るい画素でも ivory と 4.6:1、95 パーセンタイルなら
+   5.8:1 あり、暗幕が無くても AA を満たす（2026-09-16 計測）。スマホの上端に至っては
+   写真のほうが地より暗い（輝度 12.9 対 23.4）ので、にじませる継ぎ目も要らなかった。
+   読めるようにするぶんは文字の不透明度で払う —— 写真を曇らせて払わない。
    ------------------------------------------------------------------ */
-.hero-veil {
-  /* スマホ：写真は下半分。足元の罫は写真の上に出たので、ここは接地の影だけ。
-     以前の 0.92 / 38% は帯のほとんどを覆っていて、作品が沈んで見えなかった */
-  background-image: linear-gradient(
-    to top,
-    rgba(21, 17, 11, 0.44) 0%,
-    rgba(21, 17, 11, 0.14) 7%,
-    rgba(21, 17, 11, 0) 17%
-  );
-}
-
-@media (min-width: 768px) {
-  .hero-veil {
-    /* 左の余白だけを沈める。66% から先は素のまま — 作品には一切かけない */
-    background-image:
-      linear-gradient(
-        100deg,
-        rgba(21, 17, 11, 0.86) 0%,
-        rgba(21, 17, 11, 0.66) 24%,
-        rgba(21, 17, 11, 0.3) 46%,
-        rgba(21, 17, 11, 0) 66%
-      ),
-      linear-gradient(
-        to top,
-        rgba(21, 17, 11, 0.72) 0%,
-        rgba(21, 17, 11, 0.22) 18%,
-        rgba(21, 17, 11, 0) 36%
-      );
-  }
-}
-
-/* スマホで写真の上端を地ににじませる継ぎ目。切り口を見せない。
-   長さは提げ手が溶ける分だけ（112px）— これ以上伸ばすと織りの上端まで曇る */
-.hero-seam {
-  background-image: linear-gradient(
-    to bottom,
-    #1b1710 0%,
-    rgba(27, 23, 16, 0.78) 26%,
-    rgba(27, 23, 16, 0.24) 62%,
-    rgba(27, 23, 16, 0) 100%
-  );
-}
-
 .hero-grain {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.9 0 0 0 0 0.82 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
@@ -209,7 +200,7 @@ body {
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
 .blog-prose {
-  color: var(--color-charcoal);
+  color: var(--color-bone);
 }
 
 .blog-prose > * + * {
@@ -236,7 +227,7 @@ body {
   font-family: var(--font-display);
   font-weight: 300;
   line-height: 1.2;
-  color: var(--color-ink);
+  color: var(--color-ivory);
 }
 
 .blog-prose h1,
@@ -270,7 +261,7 @@ body {
   font-style: italic;
   font-weight: 300;
   line-height: 1.35;
-  color: var(--color-ink);
+  color: var(--color-ivory);
 }
 
 .blog-prose blockquote p {
@@ -304,11 +295,12 @@ body {
 }
 
 .blog-prose a {
-  color: var(--color-ink);
+  color: var(--color-ivory);
   text-decoration: underline;
   text-decoration-thickness: 1px;
   text-underline-offset: 0.22em;
-  text-decoration-color: var(--color-line);
+  /* 罫の line は面の境目の濃さ。黒地で下線に使うと消えるので mist から引く */
+  text-decoration-color: var(--color-mist);
   transition: text-decoration-color 0.4s var(--ease-soft);
 }
 
@@ -332,7 +324,7 @@ body {
   height: auto;
   margin-top: 2.4em;
   margin-bottom: 2.4em;
-  background: var(--color-parchment);
+  background: var(--color-onyx);
 }
 
 .blog-prose figcaption {
@@ -376,13 +368,13 @@ body {
 
 .blog-prose code {
   font-size: 0.9em;
-  background: var(--color-parchment);
+  background: var(--color-onyx);
   padding: 0.1em 0.35em;
 }
 
 .blog-prose pre {
   overflow-x: auto;
-  background: var(--color-parchment);
+  background: var(--color-onyx);
   padding: 1.2em;
   font-size: 13px;
   line-height: 1.7;
@@ -415,21 +407,11 @@ body {
   }
 }
 
-@keyframes shadow-drift {
-  0%,
-  100% {
-    transform: translateX(-50%) scale(1);
-    opacity: 0.28;
-  }
-  50% {
-    transform: translateX(-50%) scale(0.86);
-    opacity: 0.16;
-  }
-}
-
+/* 黒地では 12% の影は「無い」のと同じ。落とす先が地より深い色になるよう、
+   純黒を濃く短く二枚。像の裾だけが沈み、台の面は明るいまま残る。 */
 .bag-shadow-owner {
-  filter: drop-shadow(0 24px 20px rgba(26, 23, 20, 0.12))
-    drop-shadow(0 4px 5px rgba(26, 23, 20, 0.08));
+  filter: drop-shadow(0 26px 24px rgba(0, 0, 0, 0.72))
+    drop-shadow(0 5px 7px rgba(0, 0, 0, 0.55));
 }
 
 .bag-float {
@@ -438,13 +420,6 @@ body {
     bag-drift 8s ease-in-out 1.1s 3;
   animation-delay: var(--delay, 0ms), calc(1.1s + var(--delay, 0ms));
   will-change: transform, opacity;
-}
-
-.bag-ground {
-  animation: shadow-drift 8s ease-in-out 1.1s 3;
-  animation-delay: calc(1.1s + var(--delay, 0ms));
-  /* both を付けないと 3 周終わった瞬間に影が素の濃さへ跳ねる */
-  animation-fill-mode: both;
 }
 
 /* 台の大きさは全点そろえてあるので、序列は hover で付ける。
@@ -552,7 +527,6 @@ body {
     animation-delay: 0s !important;
   }
   .bag-float,
-  .bag-ground,
   .hero-settle {
     animation: none;
     opacity: 1;

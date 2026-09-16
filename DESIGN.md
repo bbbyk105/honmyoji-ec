@@ -13,10 +13,10 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 
 ## Aesthetic Direction
 
-- **Direction:** Editorial / material-first. Quiet luxury without gold, black-marble, or zen cliché.
-- **Decoration:** Intentional and rare. Paper grain, a beri band used as a section edge, thin rules. No cards, icons, or glass.
+- **Direction:** Editorial / material-first. A dark room hung with lit objects. Quiet luxury without gold, black marble, or zen cliché.
+- **Decoration:** Intentional and rare. Grain on the ground, a beri band used as a section edge, thin rules. No cards, icons, glass — and no gradients anywhere (see Color).
 - **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large Newsreader italic at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
-- **Mood:** Warm ivory room. Colour lives in the cloth. Type is literary, not “luxury template.”
+- **Mood:** Warm black room, lit from the front. Colour lives in the cloth — on this ground the weave is the only saturated thing on the page. Type is literary, not “luxury template.”
 - **What we refused:** 3-up feature rows, centered manifesto + CTA stacks, pill buttons, drop shadows, Shopify grids, beige Instagram boutique, startup landing structure.
 
 ## Typography
@@ -35,25 +35,49 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 
 ## Color
 
-Restrained. Accents are moss and faded indigo — colours already in the weave — used for status and rare emphasis, never as chrome.
+Restrained, and now dark. The ground is the warm black of the hero photograph — **never `#000`**: on a cold
+black the tatami-beri's reds and indigos go grey. Accents are moss, faded indigo and clay — colours already
+in the weave, lifted in value so they read on the dark — used for status and rare emphasis, never as chrome.
+
+Tokens are **roles, not colour names**. Grounds come in three depths, type in two.
 
 | Token | Hex | Use |
 |---|---|---|
-| ivory | `#f3eee4` | Page ground |
-| parchment | `#e8e0d2` | Alternate well, image empty state |
-| stone | `#d4cbb8` | Soft fill |
-| sand | `#c4b49a` | Warm support |
-| paper | `#f8f4ec` | Raised note |
-| ink | `#1a1714` | Type, rules, solid buttons |
-| charcoal | `#352f29` | Body |
-| mist | `#6f675c` | Meta, captions |
-| line | `#d2c8b6` | Hairline |
-| moss | `#4a5340` | Available, rare accent |
-| indigo | `#3a4554` | Coming soon |
-| clay | `#7d5c45` | Material note (sparing) |
-| rose | `#a87268` | Sakura-related only, if ever |
+| onyx | `#0b0806` | Below the ground: image wells, contact shadows, footer base |
+| sumi | `#14100b` | Page ground |
+| lacquer | `#1f1a13` | Raised surface: form fields, notes, panels |
+| ash | `#2a241b` | Soft fill |
+| bark | `#4a4133` | Warm support — the hover hairline on a field |
+| ivory | `#f2ece0` | The light: headings, rules, solid button fills |
+| bone | `#cfc6b4` | Body — a step below ivory, so long text does not halate |
+| mist | `#9c9280` | Meta, captions (6.2∶1 on sumi) |
+| line | `#37301f` | Hairline |
+| moss | `#92a37b` | Available, rare accent |
+| indigo | `#8a9cb4` | Coming soon |
+| clay | `#c89771` | Made to order, material note, errors |
+| rose | `#cf9d92` | Sakura-related only, if ever |
 
-No gold. No near-black luxury footer.
+The home hero is one step lighter than the page (`#1b1710`) — the room the photograph lights. The sheet
+that rises over it is `sumi`, so scrolling reads as the lighting coming down, not as a section change.
+
+No gold. Depth is made with three near-blacks and one hairline, not with a metallic.
+
+**No gradients.** Not on the ground, not over a photograph, not under an object. Depth here is three
+near-blacks, one hairline and a grain — a fade is the one move that reads as a template rather than a
+decision, and on a warm black it also smears the only saturated thing on the page. The hero photograph
+carries no scrim: measured, the type zone is 8.3∶1 against ivory at its brightest 5 %, so legibility is
+bought with type opacity (meta at 75 %, never 55 %) rather than by clouding the picture.
+
+**On black, a shadow is not a ground — so the ground is a line.** A 12 % drop shadow under a cut-out is
+invisible here, and a soft pool of light is just a radial gradient. Every floating piece stands on a
+**shelf**: a 1px ivory hairline at ~25 %, drawn at the contact line, inset 6 % on the plinth so nine
+pieces read as one board per row with the gutters breaking it. It brightens to 45 % on hover, so the
+piece you touch is the one that is lit. On the PDP the shelf runs the full column width, because the
+widest piece fills the column and any inset would let it overhang its own plinth.
+
+A hard line is only as good as what stands on it. **Cut-outs carry no transparent margin** — the frame is
+sized from the canvas, so padding becomes a piece hovering above its shelf and drifting off centre. See
+`data/products.ts` (`cutoutAspect`).
 
 ## Spacing
 
@@ -90,15 +114,15 @@ No gold. No near-black luxury footer.
 
 ## Motion
 
-Reference: cellato.tokyo — but only its *grammar*, never its palette. Their vocabulary is
-(1) photographs that **open through a mask** instead of fading, (2) headings that **rise line by line
-from behind a mask**, and (3) a **horizontal band driven by vertical scroll**. All three work in an
-ivory room; their black ground and pill buttons do not, and are not adopted.
+Reference: cellato.tokyo — its *grammar*. Their vocabulary is (1) photographs that **open through a mask**
+instead of fading, (2) headings that **rise line by line from behind a mask**, and (3) a **horizontal band
+driven by vertical scroll**. The ground here is dark now too, but that is where the agreement stops: pill
+buttons, centred CTA stacks and a cold black are still refused.
 
 - **Approach:** Intentional, almost invisible. Lenis for wheel; GSAP (`useGSAP`) for enter, menu, and reveal. Not a showreel.
 - **Photographs open, they do not fade.** Every well is an `ImageWell`:
   - `wipe` (default) — mask opens from the bottom edge, 1.25s `expo.out`, while the image settles from `scale(1.12)` to 1
-  - `band` — the hero only: a centre strip widens outward to full frame, 1.5s, on load. The type and gradient sit *outside* the mask and stay put while it opens
+  - `band` — the hero only: a centre strip widens outward to full frame, 1.5s, on load. The type sits *outside* the mask and stays put while it opens
 - **Headings:** add `data-split-lines` to an `h2` inside a `Reveal` and it rises line by line from behind a mask (`SplitText` with `mask: "lines"`), 0.09s stagger — the hero's move, reused.
 - **Drift band:** `DriftBand` — a strip of photographs travelling left, scrubbed to scroll position. Never a self-running marquee: if the reader stops, it stops. **Bags only** — the band is a procession of the work, not a scrapbook of the precinct; scenery and hall interiors belong in the `lifestyle` / `process` wells, not here.
 - **Enter:** 1.0–1.2s fade/translate, `power3.out`. Home title uses SplitText lines.
@@ -126,7 +150,9 @@ Every well is a `Frame` (or equivalent) carrying `data-image-role` and `data-ima
 | `lifestyle` | 16∶10, 3∶4, 4∶5 | Campaign clusters |
 | `blog` | as article | Blog posts |
 
-Empty state: parchment field + role label + ratio. Do not use grey “image coming soon” boxes.
+Empty state: an `onyx` well with a `line` hairline on all four sides, plus role label + ratio. On the dark
+ground an unfilled well is the same value as the page, so without the hairline it is not a well at all.
+Do not use grey “image coming soon” boxes.
 
 When new photography arrives: replace `src` only. Keep crop classes (`object-[50%_58%]` etc.) unless the new frame is stronger.
 
@@ -153,7 +179,8 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 3. Material is an essay with a sticky title, not icon pillars.
 4. The blog is a publication — one column of meaning, an article set at 980px — not a widget of teaser cards.
 5. Collection is an exhibition — every piece cut out and floated on the same plinth, so nine different objects read as one show, not a merchandising grid of photographs.
-6. Footer stays ivory. The dark “luxury plinth” is gone.
+6. Footer is `onyx` — the base the page stands on, one step deeper than the ground. It is not a slab of
+   contrast bolted to the bottom; it is the same room, further from the light.
 
 ## Decisions Log
 
@@ -168,7 +195,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-08-31 | Collection is all cut-outs on one 4∶5 stage | Mixed stills and cut-outs made nine pieces look like nine different sites. Same stage, same ground line, same caption block — only the object changes |
 | 2026-08-31 | `cutoutAspect` in the product data | The stage is fixed, so the image box is derived (height × ratio). Gives a tight box for the view-transition morph and a shadow that matches the silhouette |
 | 2026-08-31 | Material macro capped at 400px, re-cut at 4∶5 | It was filling half the page from a landscape crop, so the weave was upscaled and rough. Smaller and native beats larger and soft |
-| 2026-08-31 | Form fields get a paper surface | A single hairline under each field is beautiful and unusable — nothing says where to type. `bg-paper` + full hairline + 15px text + a visible select chevron |
+| 2026-08-31 | Form fields get a raised surface | A single hairline under each field is beautiful and unusable — nothing says where to type. `bg-lacquer` (was `bg-paper`) + full hairline + 15px text + a visible select chevron |
 | 2026-08-31 | Errors are clay, not moss | Moss is the “available” colour. Failure must not be the same green as success |
 | 2026-08-31 | Role · ratio dropped from captions | Shooting notes leaking onto the page; kept as data attributes |
 | 2026-08-31 | Home featured: three equal plinths, hierarchy by hover | A 3× size gap between the feature and its two companions read as broken, not as emphasis. Same stage everywhere; `scale(1.06)` + 10px lift from the ground line singles out the piece under the cursor |
@@ -212,3 +239,11 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-09-01 | Made to Order は clay、pill に「in your colours」 | 一点物だけの店に「同じ形を別の色で織り直せる」一段が増えた（翡翠・市松）。moss は「今ここにある一点」の色なので流用できない。clay は素材の色 —— 縁を選び直す話だから材料の側の色で言う。`/studio` の点は reserved と同じ clay になるが、点には必ずラベルが並ぶので色だけで読ませていない |
 | 2026-09-01 | 完売は帯で言う | `Sold out` が 9px の mist で下のキャプションに並んでいるだけだったので、一覧を流し見して残っているものを数えられなかった。像を 55% に落とし、hover でも前に出さず、**像の縦中央**に ink の罫を一本引いてその真ん中で言う。pill も mist から ink へ。斜めのリボンやカードは使わない — 罫と語だけで、展示の「売約済」札に見える |
 | 2026-09-01 | URL slug を画面から外した | カードにもヒーローにもカートにも `/sakura-cherry` が 15px で出ていた。作品名の下に URL を並べても読者には意味がなく、Newsreader の名前と競って二つ目の見出しに見える。`PieceSlug` は削除（URL は URL バーが言う） |
+| 2026-09-16 | 地を黒へ。ヒーローの色に全ページを合わせる | 第一画面だけが暖かい黒で、その下が ivory の紙だった。一番強い一枚と残り全部の関係が「別の店」になっていて、スクロールするたび明るさが切り替わる。地をヒーローの族に寄せると、九点の織りがページで唯一の彩度になり、展示室の照明の下に置いたように見える。純黒は使わない — 冷たい黒の上では縁の赤も藍も濁る |
+| 2026-09-16 | トークンは色名ではなく役どころ | 反転で `ivory`＝地 / `ink`＝文字 の名前が逆さまになるので、面は深さ順（onyx / sumi / lacquer）、文字は ivory と bone に付け替えた。`paper` のまま値だけ黒にすると、次に読む人は必ず明るい面だと思って使う |
+| 2026-09-16 | 黒地では影ではなく光だまりで接地させる（→ 同日、棚板の罫に差し替え） | 12% の影は黒の上では存在しない。切り抜きが宙に貼り付いて見えるので、接地線を中心に ivory 11% の楕円を敷いた |
+| 2026-09-16 | グラデーションを全部やめる | ヒーローの暗幕・スマホの継ぎ目・接地の光だまりの三つを外した。原稿を実測すると文字ゾーンは一番明るい画素でも ivory と 4.6:1 あり、暗幕は読みやすさのためではなく不安のために敷いていた。外すと織りの色が戻る。読みやすさは文字の不透明度（meta を 55%→75%）で払う |
+| 2026-09-16 | 接地は光だまりではなく棚板の罫 | ぼかした楕円は結局グラデーション。接地線に ivory 25% のヘアラインを 1px 引き、台の内寸 6% で切る。九点が同じ高さで並ぶので一列が一枚の板に見え、hover で触れた一点の板だけが 45% に上がる。詳細ページだけは列いっぱい — 一番太い作品が列を埋めるので、内寸を取ると板からはみ出す |
+| 2026-09-16 | カットアウトに透明の余白を残さない | 棚板を引いた瞬間、九枚の余白が不揃いなのが露出した（musubi は上下 300px、ai は右 344px）。枠は canvas の寸法で決まるので、余白はそのまま「板から浮く」「中心からずれる」になる。Musubi は 67px 浮き、Ai は台の中心から 13% 左にいた。九枚とも alpha の外接矩形で切り直し、見た目の大きさが変わらないよう `cutoutScale` を同じ比率で落とした。`scripts/prepare-images.py` の 4% パディングも外した（影は CSS の drop-shadow、浮遊は transform で、どちらも要素の外に描ける） |
+| 2026-09-16 | 拡大表示も地に合わせて黒へ | 「一枚だけ別の明るさの部屋に持っていかない」という理由はそのまま。地が反転したので、同じ理由で ivory から sumi になった |
+| 2026-09-16 | フッターは onyx、粒子は soft-light で 0.1 | 「near-black の高級フッター」を否定していたのは、明るい版に黒い板を貼るからだった。全部が黒なら、一段深い面はただの土台になる。粒子は multiply が効かないので明るい粒を soft-light で乗せるが、0.22 では節そのものが持ち上がって「明るい長方形の上辺」が見えた |

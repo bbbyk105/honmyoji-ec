@@ -56,7 +56,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="en"
       className={`${newsreader.variable} ${sourceSans.variable} ${shippori.variable} h-full antialiased`}
     >
-      <body className="flex min-h-full flex-col bg-ivory text-ink">{children}</body>
+      <body className="flex min-h-full flex-col bg-sumi text-ivory">{children}</body>
     </html>
   );
 }

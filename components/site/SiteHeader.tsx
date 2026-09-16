@@ -26,9 +26,10 @@ export function SiteHeader() {
   const [pathWhenOpened, setPathWhenOpened] = useState(pathname);
   const [scrolled, setScrolled] = useState(false);
   /**
-   * 暗いヒーロー（home の第一画面）に重なっている間だけ、ヘッダーを ivory の文字にする。
-   * 判定は DOM の [data-dark-hero] の高さ — ページ側が暗い節を置いたときだけ効く。
-   * 初期値はパスから決める。最初の描画は必ず先頭なので、effect を待たずに正しい色で出る。
+   * ヒーローの写真に重なっている間だけ、スクロールしても帯を敷かない。
+   * 地は全ページ sumi なので文字の色は動かさない（以前は ivory / ink を切り替えていた）。
+   * 判定は DOM の [data-dark-hero] の高さ — ページ側がヒーローを置いたときだけ効く。
+   * 初期値はパスから決める。最初の描画は必ず先頭なので、effect を待たずに正しく出る。
    */
   const [onDarkHero, setOnDarkHero] = useState(pathname === "/");
   const { slugs, setOpen: setCartOpen } = useCart();
@@ -44,7 +45,7 @@ export function SiteHeader() {
     const read = () => {
       const y = window.scrollY;
       setScrolled(y > 20);
-      // ヘッダーの下端が暗い節を抜けるまでは暗い地の上。抜けた瞬間に ivory の帯へ戻る。
+      // ヘッダーの下端が写真を抜けた瞬間に、帯（sumi/92 + 罫）が敷かれる。
       setOnDarkHero(!!hero && y < hero.offsetHeight - 88);
     };
     read();
@@ -164,18 +165,22 @@ export function SiteHeader() {
     setOpen(false);
   };
 
-  /* 暗い地の上（＝ヒーローの中）。メニューは ivory の面なので、開いている間は通常の色に戻す。 */
-  const dark = onDarkHero && !open;
-  const tone = dark ? "text-ivory" : "text-ink";
-  const toneMuted = dark ? "text-ivory/60" : "text-mist";
+  /*
+    地は全ページ同じ暖かい黒なので、ヘッダーの文字色はどこでも一定。
+    変わるのは帯を敷くかどうかだけ — ヒーローの写真の上に半透明の帯と罫を走らせると、
+    第一画面に横線が一本入って見える。メニューが開いている間も帯は要らない（面が全部覆う）。
+  */
+  const overHero = onDarkHero && !open;
+  const tone = "text-ivory";
+  const toneMuted = "text-mist";
 
   return (
     <header
       ref={root}
       style={{ viewTransitionName: "site-header" }}
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-500 ${
-        scrolled && !open && !dark
-          ? "border-b border-line/80 bg-ivory/92"
+        scrolled && !open && !overHero
+          ? "border-b border-line bg-sumi/92"
           : "border-b border-transparent bg-transparent"
       }`}
     >
@@ -208,18 +213,14 @@ export function SiteHeader() {
                 href={item.href}
                 aria-current={active ? "page" : undefined}
                 className={`relative font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${
-                  active
-                    ? tone
-                    : dark
-                      ? "link-line text-ivory/65 hover:text-ivory"
-                      : "link-line text-charcoal/65 hover:text-ink"
+                  active ? tone : "link-line text-bone/60 hover:text-ivory"
                 }`}
               >
                 {item.label}
                 {active ? (
                   <span
                     aria-hidden
-                    className={`absolute -bottom-[5px] left-0 right-0 h-px ${dark ? "bg-ivory" : "bg-ink"}`}
+                    className="absolute -bottom-[5px] left-0 right-0 h-px bg-ivory"
                   />
                 ) : null}
               </Link>
@@ -239,7 +240,7 @@ export function SiteHeader() {
           >
             Cart
             {slugs.length > 0 ? (
-              <span className={`ml-1.5 tabular-nums ${dark ? "text-ivory/60" : "text-mist"}`}>
+              <span className="ml-1.5 tabular-nums text-mist">
                 ({slugs.length})
               </span>
             ) : null}
@@ -260,11 +261,11 @@ export function SiteHeader() {
             <span aria-hidden className="relative block h-[10px] w-6">
               <span
                 ref={lineA}
-                className={`absolute left-0 top-0 h-px w-full transition-colors duration-500 ${dark ? "bg-ivory" : "bg-ink"}`}
+                className="absolute left-0 top-0 h-px w-full bg-ivory"
               />
               <span
                 ref={lineB}
-                className={`absolute bottom-0 left-0 h-px w-full transition-colors duration-500 ${dark ? "bg-ivory" : "bg-ink"}`}
+                className="absolute bottom-0 left-0 h-px w-full bg-ivory"
               />
             </span>
           </button>
@@ -275,7 +276,7 @@ export function SiteHeader() {
         ref={overlay}
         id="site-menu"
         aria-hidden={!open}
-        className="invisible fixed inset-0 z-40 bg-ivory opacity-0 xl:hidden"
+        className="invisible fixed inset-0 z-40 bg-sumi opacity-0 xl:hidden"
         inert={!open}
       >
         <div className="flex h-full flex-col justify-between px-5 pb-10 pt-24 sm:px-8 sm:pt-28">
@@ -295,7 +296,7 @@ export function SiteHeader() {
                       </span>
                       <span
                         className={`font-display text-[clamp(36px,10vw,64px)] font-light leading-none ${
-                          active ? "text-ink" : "text-ink/75"
+                          active ? "text-ivory" : "text-ivory/75"
                         }`}
                       >
                         {item.label}
@@ -315,7 +316,7 @@ export function SiteHeader() {
                 leave();
                 setCartOpen(true);
               }}
-              className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.22em] text-ink"
+              className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.22em] text-ivory"
             >
               Cart · {String(slugs.length).padStart(2, "0")}
             </button>

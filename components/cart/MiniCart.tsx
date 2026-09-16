@@ -50,26 +50,26 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
         type="button"
         aria-label="Close cart"
         onClick={() => setOpen(false)}
-        className={`absolute inset-0 bg-ink/20 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-onyx/70 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
       />
       <aside
         role="dialog"
         aria-modal="true"
         aria-label="Cart"
         inert={!open}
-        className={`absolute inset-y-0 right-0 flex w-full max-w-[420px] flex-col bg-ivory shadow-[-24px_0_60px_rgba(26,23,20,0.08)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`absolute inset-y-0 right-0 flex w-full max-w-[420px] flex-col bg-sumi shadow-[-24px_0_60px_rgba(0,0,0,0.55)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex items-baseline justify-between border-b border-line px-7 py-6">
           <div>
             <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-mist">Reserve</p>
-            <p className="mt-2 font-display text-[28px] font-light leading-none text-ink">Cart</p>
+            <p className="mt-2 font-display text-[28px] font-light leading-none text-ivory">Cart</p>
           </div>
           <button
             type="button"
             onClick={() => setOpen(false)}
-            className="font-sans text-[10px] uppercase tracking-[0.28em] text-ink"
+            className="font-sans text-[10px] uppercase tracking-[0.28em] text-ivory"
           >
             Close
           </button>
@@ -77,7 +77,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
 
         <div className="flex-1 overflow-y-auto px-7 py-8">
           {pieces.length === 0 ? (
-            <p className="max-w-[28ch] font-sans text-[13px] leading-[1.9] text-charcoal/80">
+            <p className="max-w-[28ch] font-sans text-[13px] leading-[1.9] text-bone/80">
               Your cart is empty. Add a piece from the collection, then take it to checkout — or
               write to us first if you would rather ask.
             </p>
@@ -102,12 +102,12 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                     <Link
                       href={productPath(p)}
                       onClick={() => setOpen(false)}
-                      className="font-display text-[22px] font-light leading-none text-ink no-underline"
+                      className="font-display text-[22px] font-light leading-none text-ivory no-underline"
                     >
                       {p.name}
                       <span className="ml-2 font-jp text-[11px] tracking-[0.2em] text-mist">{p.kanji}</span>
                     </Link>
-                    <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-charcoal/80">
+                    <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-bone/80">
                       {aud.format(p.priceAud)}
                     </p>
                     {p.status !== "available" ? (
@@ -118,7 +118,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                     <button
                       type="button"
                       onClick={() => remove(p.slug)}
-                      className="mt-3 min-h-9 w-fit font-sans text-[10px] uppercase tracking-[0.2em] text-mist underline decoration-mist/40 underline-offset-4 transition-colors hover:text-ink hover:decoration-ink"
+                      className="mt-3 min-h-9 w-fit font-sans text-[10px] uppercase tracking-[0.2em] text-mist underline decoration-mist/40 underline-offset-4 transition-colors hover:text-ivory hover:decoration-ivory"
                     >
                       Remove
                     </button>
@@ -135,7 +135,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
               <span className="font-sans text-[10.5px] uppercase tracking-[0.22em] text-mist">
                 Subtotal
               </span>
-              <span className="font-sans text-[15px] tabular-nums text-ink">{aud.format(total)}</span>
+              <span className="font-sans text-[15px] tabular-nums text-ivory">{aud.format(total)}</span>
             </div>
           ) : null}
 
@@ -160,7 +160,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                     <button
                       type="submit"
                       disabled={pending || sold.length > 0}
-                      className="cta inline-flex min-h-12 w-full items-center justify-center gap-3 border border-ink bg-ink px-6 py-3.5 font-sans text-[11.5px] font-medium uppercase tracking-[0.2em] text-ivory transition-colors duration-300 hover:border-charcoal hover:bg-charcoal disabled:opacity-55"
+                      className="cta inline-flex min-h-12 w-full items-center justify-center gap-3 border border-ivory bg-ivory px-6 py-3.5 font-sans text-[11.5px] font-medium uppercase tracking-[0.2em] text-sumi transition-colors duration-300 hover:border-bone hover:bg-bone disabled:opacity-55"
                     >
                       {pending ? "Opening checkout" : "Check out"}
                       <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
@@ -171,7 +171,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                   <Link
                     href={`/contact?product=${query}&subject=reserve`}
                     onClick={() => setOpen(false)}
-                    className="cta inline-flex min-h-11 items-center justify-center gap-3 font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-ink no-underline link-cta"
+                    className="cta inline-flex min-h-11 items-center justify-center gap-3 font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-ivory no-underline link-cta"
                   >
                     Ask about these
                     <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
@@ -183,7 +183,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                 <Link
                   href={`/contact?product=${query}&subject=reserve`}
                   onClick={() => setOpen(false)}
-                  className="cta inline-flex min-h-12 items-center justify-center gap-3 border border-ink bg-ink px-6 py-3.5 font-sans text-[11.5px] font-medium uppercase tracking-[0.2em] text-ivory no-underline transition-colors duration-300 hover:border-charcoal hover:bg-charcoal"
+                  className="cta inline-flex min-h-12 items-center justify-center gap-3 border border-ivory bg-ivory px-6 py-3.5 font-sans text-[11.5px] font-medium uppercase tracking-[0.2em] text-sumi no-underline transition-colors duration-300 hover:border-bone hover:bg-bone"
                 >
                   Send this cart
                   <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
@@ -194,7 +194,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
               <button
                 type="button"
                 onClick={clear}
-                className="min-h-11 font-sans text-[10.5px] uppercase tracking-[0.2em] text-mist underline decoration-mist/40 underline-offset-4 transition-colors hover:text-ink hover:decoration-ink"
+                className="min-h-11 font-sans text-[10.5px] uppercase tracking-[0.2em] text-mist underline decoration-mist/40 underline-offset-4 transition-colors hover:text-ivory hover:decoration-ivory"
               >
                 Clear all
               </button>

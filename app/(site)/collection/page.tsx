@@ -18,14 +18,14 @@ export default async function CollectionPage() {
         <header className="grid gap-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
             <p className="eyebrow">Collection · 2026</p>
-            <h1 className="mt-5 font-display text-[clamp(40px,11vw,96px)] font-light leading-[0.94] text-ink">
+            <h1 className="mt-5 font-display text-[clamp(40px,11vw,96px)] font-light leading-[0.94] text-ivory">
               Nine pieces,
               <br />
               <em className="italic">none repeated.</em>
             </h1>
             <p className="mt-4 font-jp text-[13px] tracking-[0.2em] text-mist">{phrases.noTwo.ja}</p>
           </div>
-          <p className="max-w-[38ch] font-sans text-[14px] leading-[1.85] text-charcoal/85 md:col-span-4 md:col-start-9 md:pb-2">
+          <p className="max-w-[38ch] font-sans text-[14px] leading-[1.85] text-bone/85 md:col-span-4 md:col-start-9 md:pb-2">
             An exhibition, not a catalogue. Each bag is woven once, from whatever tatami-beri is on
             the table that week. Prices are in Australian dollars, and shipping is included.
           </p>
@@ -35,7 +35,7 @@ export default async function CollectionPage() {
           <CollectionStudio pieces={pieces} />
         </div>
 
-        <dl className="mt-20 grid gap-6 border-t border-line pt-8 font-sans text-[12px] leading-[1.8] text-charcoal/75 sm:grid-cols-2 md:grid-cols-5">
+        <dl className="mt-20 grid gap-6 border-t border-line pt-8 font-sans text-[12px] leading-[1.8] text-bone/75 sm:grid-cols-2 md:grid-cols-5">
           <div>
             <dt className="text-[10px] uppercase tracking-[0.2em] text-moss">Available</dt>
             <dd className="mt-2">Ready now, and one of a kind. Add it to your cart and we write back with payment details.</dd>
@@ -45,7 +45,7 @@ export default async function CollectionPage() {
             <dd className="mt-2">The one photographed is finished, but the same bag is woven again in colours you choose.</dd>
           </div>
           <div>
-            <dt className="text-[10px] uppercase tracking-[0.2em] text-ink">Reserved</dt>
+            <dt className="text-[10px] uppercase tracking-[0.2em] text-ivory">Reserved</dt>
             <dd className="mt-2">Held for someone who has already written. If payment is not completed, it comes back here.</dd>
           </div>
           <div>

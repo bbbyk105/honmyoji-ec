@@ -29,7 +29,7 @@ export default async function StudioOrdersPage() {
       <div className={STUDIO_HEAD}>
         <p className="eyebrow">Orders</p>
         <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3">
-          <h1 className="font-display text-[clamp(32px,4.4vw,46px)] font-light leading-[1.05] text-ink">
+          <h1 className="font-display text-[clamp(32px,4.4vw,46px)] font-light leading-[1.05] text-ivory">
             注文
           </h1>
           <p className="font-sans text-[12.5px] text-mist">
@@ -61,21 +61,21 @@ export default async function StudioOrdersPage() {
                 <li key={order.id} className="border-b border-line">
                   <Link
                     href={`/studio/orders/${order.id}`}
-                    className="grid grid-cols-[14px_1fr] items-center gap-x-5 gap-y-1.5 py-4 no-underline transition-colors hover:bg-paper md:grid-cols-[14px_96px_80px_1fr_150px_100px]"
+                    className="grid grid-cols-[14px_1fr] items-center gap-x-5 gap-y-1.5 py-4 no-underline transition-colors hover:bg-lacquer md:grid-cols-[14px_96px_80px_1fr_150px_100px]"
                   >
                     <span
                       aria-hidden
                       title={ORDER_STATUS_LABEL[order.status]}
                       className={`h-1.5 w-1.5 ${ORDER_STATUS_COLOR[order.status]}`}
                     />
-                    <span className="font-mono text-[12.5px] tracking-[0.06em] text-ink">
+                    <span className="font-mono text-[12.5px] tracking-[0.06em] text-ivory">
                       {orderRef(order.id)}
                     </span>
                     <span className="col-start-2 font-sans text-[12.5px] tabular-nums text-mist md:col-start-auto">
                       {shortDate(order.created_at)}
                     </span>
                     <span className="col-start-2 min-w-0 md:col-start-auto">
-                      <span className="block truncate font-sans text-[14px] text-charcoal">
+                      <span className="block truncate font-sans text-[14px] text-bone">
                         {order.customer_name ?? "—"}
                       </span>
                       <span className="block truncate font-sans text-[12px] text-mist">
@@ -85,7 +85,7 @@ export default async function StudioOrdersPage() {
                     <span className="col-start-2 truncate font-sans text-[12.5px] text-mist md:col-start-auto">
                       {order.slugs.join(" · ") || "—"}
                     </span>
-                    <span className="col-start-2 font-sans text-[14px] tabular-nums text-ink md:col-start-auto md:text-right">
+                    <span className="col-start-2 font-sans text-[14px] tabular-nums text-ivory md:col-start-auto md:text-right">
                       {orderAmount(order)}
                     </span>
                   </Link>

@@ -31,14 +31,14 @@ function LeadCopy({
       <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-mist">
         {blogMeta(topic, formatBlogDate(date))}
       </p>
-      <h2 className="mt-4 font-display text-[clamp(30px,3.2vw,40px)] font-light leading-[1.12] text-ink">
+      <h2 className="mt-4 font-display text-[clamp(30px,3.2vw,40px)] font-light leading-[1.12] text-ivory">
         <Link href={`/blog/${slug}`} className="no-underline">
           {title}
         </Link>
       </h2>
       {titleJa ? <p className="mt-2 font-jp text-[12px] tracking-[0.16em] text-mist">{titleJa}</p> : null}
       {dek ? (
-        <p className="mt-5 max-w-[42ch] font-sans text-[15px] leading-[1.85] text-charcoal">{dek}</p>
+        <p className="mt-5 max-w-[42ch] font-sans text-[15px] leading-[1.85] text-bone">{dek}</p>
       ) : null}
       <Button href={`/blog/${slug}`} variant="link" className="mt-7">
         Read this note
@@ -57,14 +57,14 @@ export default async function BlogIndexPage() {
         <header className="grid gap-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
             <p className="eyebrow">Blog</p>
-            <h1 className="mt-5 font-display text-[clamp(40px,11vw,92px)] font-light leading-[0.94] text-ink">
+            <h1 className="mt-5 font-display text-[clamp(40px,11vw,92px)] font-light leading-[0.94] text-ivory">
               Notes from
               <br />
               the table.
             </h1>
             <p className="mt-4 font-jp text-[13px] tracking-[0.22em] text-mist">手記</p>
           </div>
-          <p className="max-w-[36ch] font-sans text-[14px] leading-[1.85] text-charcoal/85 md:col-span-4 md:col-start-9">
+          <p className="max-w-[36ch] font-sans text-[14px] leading-[1.85] text-bone/85 md:col-span-4 md:col-start-9">
             Materials, care, the temple grounds, and how a piece is made once. A small publication,
             not a marketing feed.
           </p>
@@ -129,18 +129,18 @@ export default async function BlogIndexPage() {
                     <span className="block text-mist/75">{formatBlogDate(entry.date)}</span>
                   </p>
                   <div className="md:col-span-9">
-                    <h2 className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-[1.2] text-ink">
+                    <h2 className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-[1.2] text-ivory">
                       {entry.title}
                     </h2>
                     {entry.dek ? (
-                      <p className="mt-2 max-w-[54ch] font-sans text-[14px] leading-[1.75] text-charcoal/80">
+                      <p className="mt-2 max-w-[54ch] font-sans text-[14px] leading-[1.75] text-bone/80">
                         {entry.dek}
                       </p>
                     ) : null}
                   </div>
                   <span
                     aria-hidden
-                    className="hidden font-sans text-[15px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ink md:col-span-1 md:block md:text-right"
+                    className="hidden font-sans text-[15px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ivory md:col-span-1 md:block md:text-right"
                   >
                     →
                   </span>

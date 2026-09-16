@@ -37,7 +37,7 @@ export default async function StudioOverviewPage() {
     <div className={STUDIO_SHELL}>
       <div className={STUDIO_HEAD}>
         <p className="eyebrow">Overview</p>
-        <h1 className="mt-4 font-display text-[clamp(32px,4.4vw,46px)] font-light leading-[1.05] text-ink">
+        <h1 className="mt-4 font-display text-[clamp(32px,4.4vw,46px)] font-light leading-[1.05] text-ivory">
           {unshipped.length > 0
             ? `送る品が ${unshipped.length} 点あります`
             : "送っていない注文はありません"}
@@ -52,7 +52,7 @@ export default async function StudioOverviewPage() {
             <h2 className="eyebrow">最近の注文</h2>
             <Link
               href="/studio/orders"
-              className="font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ink"
+              className="font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ivory"
             >
               すべて見る
             </Link>
@@ -69,24 +69,24 @@ export default async function StudioOverviewPage() {
                 <li key={order.id} className="border-b border-line">
                   <Link
                     href={`/studio/orders/${order.id}`}
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-1 py-4 no-underline transition-colors hover:bg-paper"
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-1 py-4 no-underline transition-colors hover:bg-lacquer"
                   >
                     <span
                       aria-hidden
                       className={`h-1.5 w-1.5 ${ORDER_STATUS_COLOR[order.status]}`}
                     />
                     <span className="min-w-0">
-                      <span className="font-mono text-[12.5px] tracking-[0.06em] text-ink">
+                      <span className="font-mono text-[12.5px] tracking-[0.06em] text-ivory">
                         {orderRef(order.id)}
                       </span>
-                      <span className="ml-3 font-sans text-[13.5px] text-charcoal">
+                      <span className="ml-3 font-sans text-[13.5px] text-bone">
                         {order.customer_name ?? order.customer_email ?? "—"}
                       </span>
                       <span className="mt-1 block truncate font-sans text-[12px] text-mist">
                         {order.slugs.join(" · ") || "—"} · {ORDER_STATUS_LABEL[order.status]}
                       </span>
                     </span>
-                    <span className="text-right font-sans text-[14px] tabular-nums text-ink">
+                    <span className="text-right font-sans text-[14px] tabular-nums text-ivory">
                       {orderAmount(order)}
                     </span>
                   </Link>
@@ -102,14 +102,14 @@ export default async function StudioOverviewPage() {
             {counts.map(({ status, count }) => (
               <div key={status} className="flex items-center gap-3">
                 <span aria-hidden className={`h-1.5 w-1.5 ${PIECE_STATUS_COLOR[status]}`} />
-                <dt className="font-sans text-[13px] text-charcoal">{STATUS_LABEL[status].en}</dt>
-                <dd className="ml-auto font-sans text-[14px] tabular-nums text-ink">{count}</dd>
+                <dt className="font-sans text-[13px] text-bone">{STATUS_LABEL[status].en}</dt>
+                <dd className="ml-auto font-sans text-[14px] tabular-nums text-ivory">{count}</dd>
               </div>
             ))}
           </dl>
           <Link
             href="/studio/pieces"
-            className="mt-6 inline-block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ink"
+            className="mt-6 inline-block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ivory"
           >
             作品を編集する
           </Link>

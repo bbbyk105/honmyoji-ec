@@ -73,7 +73,7 @@ export function Frame({
   return (
     <figure className={className} data-image-role={role} data-image-ratio={ratio}>
       <ImageWell
-        className={`relative overflow-hidden bg-parchment ${wellClass ?? RATIO[ratio]}`}
+        className={`relative overflow-hidden bg-onyx ${wellClass ?? RATIO[ratio]}`}
         reveal={src ? reveal : "none"}
         overlay={children}
       >
@@ -87,9 +87,9 @@ export function Frame({
             className={crop}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-start justify-end bg-parchment p-6">
+          <div className="absolute inset-0 flex flex-col items-start justify-end bg-onyx p-6 ring-1 ring-inset ring-line">
             <p className="font-sans text-[9px] uppercase tracking-[0.28em] text-mist">{ROLE_LABEL[role]}</p>
-            <p className="mt-2 font-display text-[22px] font-light italic text-charcoal/50">{ratio.replace("/", "∶")}</p>
+            <p className="mt-2 font-display text-[22px] font-light italic text-bone/50">{ratio.replace("/", "∶")}</p>
           </div>
         )}
       </ImageWell>
