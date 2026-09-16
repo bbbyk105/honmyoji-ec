@@ -14,6 +14,59 @@ import { products, type Product, type ProductStatus } from "@/data/products";
 
 const STATUSES: ProductStatus[] = ["available", "made_to_order", "reserved", "sold_out", "coming_soon"];
 
+/**
+ * DB を待つ上限。健全な Supabase なら九行の select は 0.3 秒もかからない。
+ *
+ * supabase-js は fetch が失敗すると内部で数回やり直す。ホストごと消えていると
+ * その再試行が 7 秒かかり、SiteChrome が getCatalog() を呼ぶので**公開ページ全部**
+ * がその 7 秒を払うことになる（2026-09-16 に実際に踏んだ）。落ちている DB を
+ * 待つ時間は、コード側の値で出せると分かっている以上ただの無駄。
+ */
+const DB_TIMEOUT_MS = 2000;
+
+/**
+ * 一度失敗したらしばらく叩きに行かない。DB が落ちている間、訪問者全員に
+ * 2 秒ずつ払わせる理由が無い。復旧は次の窓で拾う（公開ページの revalidate は
+ * 600 秒なので、30 秒の遅れは見えない）。
+ */
+const DB_COOLDOWN_MS = 30_000;
+
+/** 直近の失敗から DB を休ませる期限。0 なら平常。 */
+let coolUntil = 0;
+
+/**
+ * 落ちている間ずっと同じ一行を吐かないための印。落ちた最初と、戻った瞬間だけ
+ * 知らせる。30 秒ごとに同じ警告が流れると、本当に見たいログが埋もれる。
+ */
+let degraded = false;
+
+/**
+ * ログに出す一行。supabase-js のエラーは message に Cloudflare の 521 ページが
+ * 丸ごと入ってくることがあるので、改行を潰して頭だけ拾う（2026-09-16 に実際に
+ * 踏んだ —— 端末が HTML で埋まった）。
+ */
+function describe(error: unknown): string {
+  const line = raw(error).replace(/\s+/g, " ").trim();
+  if (!line || line === "{}") return "原因不明";
+  return line.length > 140 ? `${line.slice(0, 140)}…` : line;
+}
+
+function raw(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (typeof error === "object" && error !== null) {
+    const { message } = error as { message?: unknown };
+    if (typeof message === "string" && message) return message;
+    // supabase-js の PostgrestError は素のオブジェクト。String() だと
+    // [object Object] になって何も分からない。
+    try {
+      return JSON.stringify(error);
+    } catch {
+      return "";
+    }
+  }
+  return String(error);
+}
+
 export type Override = {
   slug: string;
   price_aud: number | null;
@@ -55,17 +108,36 @@ export const getOverrides = cache(async (): Promise<Map<string, Override>> => {
   const empty = new Map<string, Override>();
   if (!client) return empty;
 
+  // 落ちていると分かっている間は、待たずにコード側の値へ。
+  if (Date.now() < coolUntil) return empty;
+
   try {
-    const { data, error } = await client.from("piece_overrides").select("*");
+    const { data, error } = await client
+      .from("piece_overrides")
+      .select("*")
+      .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS));
     if (error) throw error;
     const map = new Map<string, Override>();
     for (const row of data ?? []) {
       const o = toOverride(row as Record<string, unknown>);
       if (o) map.set(o.slug, o);
     }
+    coolUntil = 0;
+    if (degraded) {
+      degraded = false;
+      console.info("[studio] piece_overrides に再接続しました");
+    }
     return map;
   } catch (error) {
-    console.error("[studio] piece_overrides の読み込みに失敗 — data/products.ts の値で表示します", error);
+    coolUntil = Date.now() + DB_COOLDOWN_MS;
+    if (!degraded) {
+      degraded = true;
+      // console.error にすると Next の dev オーバーレイが画面を覆う。これは
+      // 設計どおりの縮退（コード側の値で出る）で、手を止める異常ではない。
+      console.warn(
+        `[studio] piece_overrides に繋がりません — data/products.ts の値で表示します（${DB_COOLDOWN_MS / 1000} 秒は再試行しません）: ${describe(error)}`,
+      );
+    }
     return empty;
   }
 });
