@@ -41,7 +41,7 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
                 key={key}
                 type="button"
                 onClick={() => setLine(key)}
-                className={`${chip} ${line === key ? "text-ink" : "text-mist hover:text-ink"}`}
+                className={`${chip} ${line === key ? "text-ivory" : "text-mist hover:text-ivory"}`}
               >
                 {label}
               </button>
@@ -64,7 +64,7 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
                 key={key}
                 type="button"
                 onClick={() => setStatus(key)}
-                className={`${chip} text-[10px] ${status === key ? "text-ink" : "text-mist hover:text-ink"}`}
+                className={`${chip} text-[10px] ${status === key ? "text-ivory" : "text-mist hover:text-ivory"}`}
               >
                 {label}
               </button>
@@ -83,7 +83,7 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
                 key={key}
                 type="button"
                 onClick={() => setSort(key)}
-                className={`${chip} text-[10px] ${sort === key ? "text-ink" : "text-mist hover:text-ink"}`}
+                className={`${chip} text-[10px] ${sort === key ? "text-ivory" : "text-mist hover:text-ivory"}`}
               >
                 {label}
               </button>
@@ -101,13 +101,13 @@ export function CollectionStudio({ pieces }: { pieces: Product[] }) {
         {list.map((p, i) => (
           <div key={p.slug} className="flex flex-col">
             <FloatingBag product={p} index={i % 3} priority={i < 3} />
-            <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-charcoal/75">{p.note}</p>
+            <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-bone/75">{p.note}</p>
           </div>
         ))}
       </div>
 
       {list.length === 0 ? (
-        <p className="py-20 font-display text-[28px] font-light text-ink">Nothing matches that yet.</p>
+        <p className="py-20 font-display text-[28px] font-light text-ivory">Nothing matches that yet.</p>
       ) : null}
     </div>
   );

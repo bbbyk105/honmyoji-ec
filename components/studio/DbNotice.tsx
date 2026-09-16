@@ -6,11 +6,11 @@
  */
 export function DbNotice() {
   return (
-    <div className="mt-10 border border-line bg-paper px-6 py-7">
-      <p className="font-display text-[24px] font-light leading-[1.25] text-ink">
+    <div className="mt-10 border border-line bg-lacquer px-6 py-7">
+      <p className="font-display text-[24px] font-light leading-[1.25] text-ivory">
         データベースに繋がっていません
       </p>
-      <p className="mt-3 max-w-[42em] font-sans text-[13.5px] leading-[1.9] text-charcoal">
+      <p className="mt-3 max-w-[42em] font-sans text-[13.5px] leading-[1.9] text-bone">
         いまは <code className="font-mono text-[12.5px]">data/products.ts</code> の値をそのまま表示しています。
         編集して保存することはできますが、保存先がないので値は残りません。
       </p>

@@ -44,12 +44,12 @@ export default async function ThankYouPage({
       <ClearCart />
       <section className="max-w-[54ch] py-24">
         <p className="eyebrow">Order received</p>
-        <h1 className="mt-6 font-display text-[clamp(38px,5.6vw,72px)] font-light leading-[1.02] text-ink">
+        <h1 className="mt-6 font-display text-[clamp(38px,5.6vw,72px)] font-light leading-[1.02] text-ivory">
           {name ? `Thank you, ${name}.` : "Thank you."}
         </h1>
         <p className="mt-5 font-jp text-[12px] tracking-[0.24em] text-mist">ありがとうございます</p>
 
-        <p className="mt-9 font-sans text-[15px] leading-[1.9] text-charcoal">
+        <p className="mt-9 font-sans text-[15px] leading-[1.9] text-bone">
           The piece is yours. It leaves Honmyoji within a few days, wrapped by hand, and we write
           to you with the tracking number as soon as it is on its way.
           {email ? ` A receipt is on its way to ${email}.` : ""}

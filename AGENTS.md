@@ -33,10 +33,10 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `app/layout.tsx` は html / body / フォントだけ。**ヘッダーやフッターをここに戻さない** — 親 layout は子から外せないので、`/studio` にサイトの外枠が付いてくる。公開サイトの外枠は `components/site/SiteChrome.tsx`（`app/(site)/layout.tsx` と `app/not-found.tsx` が共有する。404 は route group の layout を通らない）。
 - `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。
 - `proxy.ts` — Next 16 で `middleware.ts` から改名。`/studio/*` の `noindex` ヘッダーと、cookie の無い訪問者をログインへ返す処理。**認可の本体はここではない**（Edge に node:crypto が無い）— 検証は `lib/studio-session.ts` の `requireSession()` で、ページと Server Action が毎回通る。
-- `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。ヒーローは `useLightboxSafe()` を使う — Provider が無い場所に置かれても壊れないため。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地は ivory のまま — 一枚だけ暗室に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。`stopLenis()` はカートと同じ扱い。
+- `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。ヒーローは `useLightboxSafe()` を使う — Provider が無い場所に置かれても壊れないため。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地はサイトと同じ sumi — 一枚だけ別の明るさの部屋に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。`stopLenis()` はカートと同じ扱い。
 - **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
 - `components/collection/GalleryStrip.tsx` — **スマホのギャラリー**（`md:hidden`）。snap の横スワイプ + `01 / 05` カウンタ。写真1枚の作品は自動で普通の一枚に落ちる。md 以上は従来の編集グリッド（`hidden md:grid`）。
-- `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`SoldBand.tsx` — 完売の帯（像の縦中央に罫を一本引いて `Sold out`。位置は呼び出し側が渡す — 台の中央に固定すると背の低い作品で像の上に浮く）。**URL slug（`/sakura-cherry`）を画面に出さない** — 2026-09-01 に `PieceSlug` ごと外した。
+- `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。**接地は棚板の罫**（`SHELF_INSET`）— 黒地で 12% の影は見えず、ぼかした光だまりは結局グラデーションになるので、接地線に ivory 25% のヘアラインを 1px 引く（hover で 45%）。台の内寸は九点とも 6% で揃える。詳細ページ（`ProductHero`）だけは列いっぱいに引く — 一番太い ichimatsu が列を埋めるので、内寸を取るとそこだけ板からはみ出す。**cutout.webp に透明の余白を残さないこと** — 枠は canvas の寸法（`cutoutAspect`）で決まるので、余白はそのまま「像が板から浮く」「左右にずれる」になる（2026-09-16 に九枚とも切り直した。Musubi が 67px 浮き、Ai が中心から 13% 左にいた）。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`SoldBand.tsx` — 完売の帯（像の縦中央に罫を一本引いて `Sold out`。位置は呼び出し側が渡す — 台の中央に固定すると背の低い作品で像の上に浮く）。**URL slug（`/sakura-cherry`）を画面に出さない** — 2026-09-01 に `PieceSlug` ごと外した。
 - `components/site/Shell.tsx` — **版面の定数 `SHELL`**（`max-w-[1480px]` + 左右余白）。ヘッダー / フッター / ヒーロー / トップの全セクションがこれを使う。新しいセクションで `mx-auto max-w-... px-...` を手書きしない — 手書きに戻すと必ず 16px ずれる。
 - `components/site/Frame.tsx` — 写真井戸。`data-image-role` / `data-image-ratio` 属性付き。差し替えは `src` だけ。role・比率のキャプション表示は `showRole`（既定 off）。
 - `components/cart/` — Cart（localStorage）と MiniCart。決済は Contact へ手渡し。slug と旧 folder 名の両方を `getProduct` で解決する。**表示は Cart だが localStorage キーは `miroku-held` のまま**（変えると既存のカートが空になる）。UI 上の「Hold / Held」は 2026-08-31 に全て Cart 系の語へ置換済み。
@@ -56,6 +56,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - 新しい商品写真が来たら `PRODUCTS` に slug と元ファイルを追加 → 実行 → `data/products.ts` に `galleryCount` / `cutoutScale` を合わせる。
   - **一点だけ作り直せる**: `.venv/bin/python scripts/prepare-images.py --only cutouts --product sakura`。他の八点の webp を書き換えないので、差分が一枚で済む。出力に `cutoutAspect` が出るので `data/products.ts` の値をそれに合わせること（一覧の展示台と詳細ヒーローが同じ枠を使っているので、片方だけずれると morph がずれる）。
   - カットアウトが**バッグの一部を食う**ことがある（桜は敷布の上に立っていて、左下の角が斜めに切り落とされていた）。原本と `cutout.webp` を並べるのではなく、`cutout.webp` をマゼンタ地に合成して見ると欠けが分かる。rembg のモデルを更新して同じ `--only cutouts` を回すと直ることがある（2026-09-01 の桜はこれで直った）。撮り直しの写真が来るまでは、無地の壁を背にした一枚を `main` に選ぶのが確実。
+- **カットアウトは透明の余白を残さない**（`trim_box()`、alpha 2% で外接矩形を取る）。以前は影と浮遊アニメの逃げとして 4% 足していたが、影は CSS の drop-shadow、浮遊は transform で、どちらも要素の外へ描ける。余白を足すと接地の罫から像が浮く。
 - 畳の縁マクロ（`texture/beri-*.webp`）は原本の座標指定で切り出している。写真が差し替わったら座標も見直す。
 - **切り出しは掲載する比率と同じ比率で**。`beri-indigo` は 4:5（home /material・blog リード）、`beri-sakura` は 16:10（blog 本文）。横長の原稿を 4:5 の井戸に入れると object-cover で削られた分だけ実効解像度が落ち、拡大されて荒れる。掲載側にも `max-w` を付けて、原稿以上の大きさを要求しないこと。
 - 画像を差し替えても dev server は `_next/image` の結果をキャッシュしたままになる。見た目が変わらないときは dev server を再起動するか `npm run build && npx next start` で確認する。
@@ -101,7 +102,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 落とし穴
 
-- **`border-l` の引用バーを作らない**（markdown レンダラの既定＝AI感の元。引用は文字サイズと余白で立てる）。入力欄は罫線一本だけにしない（`bg-paper` + 全周ヘアライン）。`appearance-none` の `<select>` には矢印を自前で置く。エラー色は `clay`（`moss` は「購入可能」の色なので使わない）。
+- **`border-l` の引用バーを作らない**（markdown レンダラの既定＝AI感の元。引用は文字サイズと余白で立てる）。入力欄は罫線一本だけにしない（`bg-lacquer` + 全周ヘアライン）。`appearance-none` の `<select>` には矢印を自前で置く。エラー色は `clay`（`moss` は「購入可能」の色なので使わない）。
 - **`globals.css` の独自クラスに `position` を書かない**。レイヤー外の CSS は Tailwind ユーティリティより強く、`fixed` 等を上書きする（モバイルメニューが崩れた原因）。
 - `"use server"` ファイルから非 async 値（定数）を export すると 500。定数は `app/contact/subjects.ts` のような別モジュールへ。
 - 浮遊アニメ（`.bag-float`）は WCAG 2.2.2 のため 3 周で止める設計。無限ループにしない。
@@ -112,6 +113,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## デザイン
 
 Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, spacing, image roles, and what not to build (feature-card rows, gold luxury, centered CTA stacks) live there.
+
+**地は暖かい黒**（2026-09-16 にヒーローの色へ全ページを合わせた）。色トークンは色名ではなく役どころで、面は深さ順に `onyx` < `sumi`（版の地）< `lacquer`（入力欄・注記）、文字は `ivory`（見出し・罫・塗り）と `bone`（本文）、その下に `mist` と罫の `line`。**`ink` / `charcoal` / `paper` / `parchment` / `sand` はもう無い** — 反転で名前が意味と逆さまになるので付け替えた。`#000` は使わない（冷たい黒の上では縁の赤も藍も濁る）。
 
 ## 未着手 / 次フェーズ
 

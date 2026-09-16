@@ -122,7 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               href="/collection"
               variant="link"
               arrow={false}
-              className="hero-settle w-fit text-mist hover:text-ink"
+              className="hero-settle w-fit text-mist hover:text-ivory"
             >
               Collection
             </Button>
@@ -133,13 +133,13 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               {LINE_LABEL[product.line].en} · {product.sku}
             </p>
             <h1
-              className="hero-settle mt-4 font-display text-[clamp(52px,6.4vw,88px)] font-light leading-[0.94] text-ink"
+              className="hero-settle mt-4 font-display text-[clamp(52px,6.4vw,88px)] font-light leading-[0.94] text-ivory"
               style={{ "--delay": "120ms" } as React.CSSProperties}
             >
               {product.name}
             </h1>
             <p
-              className="hero-settle mt-3 font-jp text-[15px] tracking-[0.32em] text-charcoal/75"
+              className="hero-settle mt-3 font-jp text-[15px] tracking-[0.32em] text-bone/75"
               style={{ "--delay": "180ms" } as React.CSSProperties}
             >
               {product.kanji}
@@ -150,7 +150,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               className="hero-settle mt-8 flex flex-wrap items-end gap-4"
               style={{ "--delay": "240ms" } as React.CSSProperties}
             >
-              <span className="font-display text-[32px] font-light leading-none text-ink">
+              <span className="font-display text-[32px] font-light leading-none text-ivory">
                 {aud.format(product.priceAud)}
               </span>
               <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-mist">Shipping included</span>
@@ -160,13 +160,13 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             </div>
 
             <p
-              className="hero-settle mt-8 max-w-[40ch] font-display text-[22px] font-light leading-[1.4] text-ink"
+              className="hero-settle mt-8 max-w-[40ch] font-display text-[22px] font-light leading-[1.4] text-ivory"
               style={{ "--delay": "300ms" } as React.CSSProperties}
             >
               {product.note}
             </p>
             <p
-              className="hero-settle mt-5 max-w-[46ch] font-sans text-[14px] leading-[1.9] text-charcoal/85"
+              className="hero-settle mt-5 max-w-[46ch] font-sans text-[14px] leading-[1.9] text-bone/85"
               style={{ "--delay": "340ms" } as React.CSSProperties}
             >
               {product.story}
@@ -209,11 +209,11 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       {/* Specs — quiet documentation */}
       <section className="mx-auto w-full max-w-[1480px] px-5 pt-8 md:px-8 md:pt-12 lg:px-12">
         <Reveal>
-          <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ink">Specification</h2>
+          <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ivory">Specification</h2>
           <dl className="mt-8 grid gap-x-12 gap-y-8 border-t border-line pt-8 sm:grid-cols-2 lg:grid-cols-4">
             <div>
               <dt className="eyebrow">Measure</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
+              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
                 <p>W {cm(product.size.width)}</p>
                 <p>H {cm(product.size.height)}</p>
                 <p>D {cm(product.size.depth)}</p>
@@ -222,7 +222,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             </div>
             <div>
               <dt className="eyebrow">Materials</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
+              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
                 {product.materials.map((m) => (
                   <p key={m}>{m}</p>
                 ))}
@@ -230,7 +230,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             </div>
             <div>
               <dt className="eyebrow">Origin</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
+              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
                 <p>Honmyoji Temple, Fuji City, Japan</p>
                 <p>Weight — {product.weightG ? `${product.weightG} g` : "measured before shipping"}</p>
                 {/* 受注生産の二点だけは「二度と作らない」が嘘になる（色を変えて織り直せる） */}
@@ -243,10 +243,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             </div>
             <div>
               <dt className="eyebrow">Care</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-charcoal/85">
+              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
                 <p>Spot clean only. Never machine wash.</p>
                 <p>Dry it standing or hanging.</p>
-                <Link href={careHref} className="link-line text-ink">
+                <Link href={careHref} className="link-line text-ivory">
                   Care note
                 </Link>
               </dd>
@@ -258,7 +258,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       {/* Image-led documentation */}
       <section className="mx-auto w-full max-w-[1480px] px-5 pt-16 md:px-8 md:pt-24 lg:px-12">
         <Reveal className="mb-6 flex items-baseline justify-between gap-4 md:mb-8">
-          <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ink">
+          <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ivory">
             {product.name} — views
           </h2>
           <span className="shrink-0 font-sans text-[9.5px] uppercase tracking-[0.2em] text-mist">
@@ -324,8 +324,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       {related.length > 0 ? (
         <section className="mx-auto w-full max-w-[1480px] px-5 pt-24 md:px-8 md:pt-32 lg:px-12">
           <Reveal>
-            <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ink">Alongside</h2>
-            <p className="mt-3 max-w-[40ch] font-display text-[24px] font-light text-ink">
+            <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ivory">Alongside</h2>
+            <p className="mt-3 max-w-[40ch] font-display text-[24px] font-light text-ivory">
               Other pieces from the same table, chosen by hand.
             </p>
           </Reveal>
@@ -348,7 +348,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             className="group border-r border-line py-10 pr-5 no-underline"
           >
             <span className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-mist">Previous</span>
-            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ink">
+            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">
               {catalog[(index - 1 + catalog.length) % catalog.length].name}
             </span>
           </Link>
@@ -357,7 +357,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             className="group py-10 pl-5 text-right no-underline"
           >
             <span className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-mist">Next</span>
-            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ink">
+            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">
               {catalog[(index + 1) % catalog.length].name}
             </span>
           </Link>

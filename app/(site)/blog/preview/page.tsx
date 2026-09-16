@@ -30,7 +30,7 @@ export default async function BlogPreviewPage({
   return (
     <>
       {/* 下書きを見ていることが分からないまま公開ページと見分けが付かない、が一番危ない */}
-      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-paper/95 px-5 py-3 backdrop-blur">
+      <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-lacquer/95 px-5 py-3 backdrop-blur">
         <div className="mx-auto flex max-w-[980px] flex-wrap items-baseline justify-between gap-3">
           <p className="font-sans text-[10px] uppercase tracking-[0.24em] text-clay">
             Draft preview · not published

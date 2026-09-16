@@ -28,7 +28,7 @@ export default async function StudioPiecesPage() {
       <div className={STUDIO_HEAD}>
         <p className="eyebrow">Pieces</p>
         <div className="mt-4 flex flex-wrap items-baseline justify-between gap-x-8 gap-y-3">
-          <h1 className="font-display text-[clamp(32px,4.4vw,46px)] font-light leading-[1.05] text-ink">
+          <h1 className="font-display text-[clamp(32px,4.4vw,46px)] font-light leading-[1.05] text-ivory">
             作品
           </h1>
           <p className="font-sans text-[12.5px] text-mist">
@@ -56,9 +56,9 @@ export default async function StudioPiecesPage() {
             return (
               <li
                 key={piece.slug}
-                className="grid grid-cols-[52px_1fr] items-center gap-x-5 gap-y-3 border-t border-line py-4 transition-colors hover:bg-paper md:grid-cols-[52px_1fr_120px_100px_200px_64px] md:gap-y-0"
+                className="grid grid-cols-[52px_1fr] items-center gap-x-5 gap-y-3 border-t border-line py-4 transition-colors hover:bg-lacquer md:grid-cols-[52px_1fr_120px_100px_200px_64px] md:gap-y-0"
               >
-                <div className="relative h-13 w-13 bg-parchment">
+                <div className="relative h-13 w-13 bg-onyx">
                   <Image
                     src={productCutout(piece.folder)}
                     alt=""
@@ -71,7 +71,7 @@ export default async function StudioPiecesPage() {
                 <div className="min-w-0">
                   <Link
                     href={`/studio/pieces/${piece.slug}`}
-                    className="font-display text-[21px] font-light leading-none text-ink no-underline hover:text-charcoal"
+                    className="font-display text-[21px] font-light leading-none text-ivory no-underline hover:text-bone"
                   >
                     {piece.name}
                     <span className="ml-2.5 font-jp text-[12px] tracking-[0.24em] text-mist">
@@ -90,7 +90,7 @@ export default async function StudioPiecesPage() {
                   {piece.sku}
                 </p>
 
-                <p className="col-start-2 font-sans text-[15px] tabular-nums text-ink md:col-start-auto md:text-right">
+                <p className="col-start-2 font-sans text-[15px] tabular-nums text-ivory md:col-start-auto md:text-right">
                   {aud.format(piece.priceAud)}
                   {override?.price_aud ? (
                     <span
@@ -111,7 +111,7 @@ export default async function StudioPiecesPage() {
 
                 <Link
                   href={`/studio/pieces/${piece.slug}`}
-                  className="col-start-2 font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ink md:col-start-auto md:text-right"
+                  className="col-start-2 font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ivory md:col-start-auto md:text-right"
                 >
                   編集
                 </Link>

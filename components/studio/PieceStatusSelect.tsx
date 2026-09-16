@@ -37,7 +37,7 @@ export function PieceStatusSelect({
         disabled={disabled || pending}
         aria-label={`${slug} のステータス`}
         onChange={() => formRef.current?.requestSubmit()}
-        className={`w-full cursor-pointer appearance-none border border-line bg-paper py-2 pl-3 pr-8 font-sans text-[13px] text-ink outline-none transition-colors hover:border-sand focus:border-ink focus:ring-1 focus:ring-ink/15 disabled:cursor-wait ${
+        className={`w-full cursor-pointer appearance-none border border-line bg-lacquer py-2 pl-3 pr-8 font-sans text-[13px] text-ivory outline-none transition-colors hover:border-bark focus:border-ivory focus:ring-1 focus:ring-ivory/15 disabled:cursor-wait ${
           pending ? "opacity-55" : ""
         }`}
       >

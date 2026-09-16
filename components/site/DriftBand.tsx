@@ -46,7 +46,7 @@ export function DriftBand({ shots }: Props) {
         {row.map((shot, i) => (
           <div
             key={`${shot.src}-${i}`}
-            className="relative aspect-[4/5] w-[150px] shrink-0 overflow-hidden bg-parchment sm:w-[190px] md:w-[250px]"
+            className="relative aspect-[4/5] w-[150px] shrink-0 overflow-hidden bg-onyx sm:w-[190px] md:w-[250px]"
             style={{ transform: `translateY(${i % 3 === 1 ? 26 : i % 3 === 2 ? -20 : 0}px)` }}
           >
             <Image src={shot.src} alt="" fill sizes="250px" className="object-cover" />

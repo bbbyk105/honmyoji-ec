@@ -22,18 +22,18 @@ export function BlogArticle({ entry, next }: Props) {
   return (
     <article className="pt-16 sm:pt-[72px] md:pt-[80px]">
       <header className="mx-auto w-full max-w-[980px] px-5 pt-12 sm:pt-14 md:pt-20">
-        <Button href="/blog" variant="link" arrow={false} className="text-mist hover:text-ink">
+        <Button href="/blog" variant="link" arrow={false} className="text-mist hover:text-ivory">
           Blog
         </Button>
         <p className="eyebrow mt-10">{blogMeta(entry.topic, entry.season)}</p>
-        <h1 className="mt-4 max-w-[22ch] font-display text-[clamp(38px,5.2vw,68px)] font-light leading-[1.02] text-ink">
+        <h1 className="mt-4 max-w-[22ch] font-display text-[clamp(38px,5.2vw,68px)] font-light leading-[1.02] text-ivory">
           {entry.title}
         </h1>
         {entry.titleJa ? (
           <p className="mt-4 font-jp text-[14px] tracking-[0.22em] text-mist">{entry.titleJa}</p>
         ) : null}
         {entry.dek ? (
-          <p className="mt-8 max-w-[42ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-charcoal">
+          <p className="mt-8 max-w-[42ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-bone">
             {entry.dek}
           </p>
         ) : null}
@@ -67,7 +67,7 @@ export function BlogArticle({ entry, next }: Props) {
       >
         {entry.pull ? (
           <Reveal>
-            <p className="mb-16 max-w-[28ch] font-display text-[clamp(28px,3.4vw,40px)] font-light italic leading-[1.28] text-ink md:mb-20">
+            <p className="mb-16 max-w-[28ch] font-display text-[clamp(28px,3.4vw,40px)] font-light italic leading-[1.28] text-ivory md:mb-20">
               {entry.pull}
             </p>
           </Reveal>
@@ -86,7 +86,7 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "h" && block.text) {
               return (
                 <Reveal key={i}>
-                  <h2 className="pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ink">
+                  <h2 className="pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ivory">
                     {block.text}
                   </h2>
                 </Reveal>
@@ -97,7 +97,7 @@ export function BlogArticle({ entry, next }: Props) {
                 <Reveal key={i} className="py-8">
                   <figure>
                     <div
-                      className={`relative overflow-hidden bg-parchment ${
+                      className={`relative overflow-hidden bg-onyx ${
                         block.ratio === "16/10"
                           ? "aspect-[16/10]"
                           : block.ratio === "1/1"
@@ -123,7 +123,7 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "p" && block.text) {
               return (
                 <Reveal key={i}>
-                  <p className="font-sans text-[17px] leading-[1.9] text-charcoal">{block.text}</p>
+                  <p className="font-sans text-[17px] leading-[1.9] text-bone">{block.text}</p>
                 </Reveal>
               );
             }
@@ -140,18 +140,18 @@ export function BlogArticle({ entry, next }: Props) {
           >
             <span>
               <span className="block font-sans text-[10px] uppercase tracking-[0.24em] text-mist">Next note</span>
-              <span className="mt-3 block font-display text-[clamp(26px,3.2vw,38px)] font-light leading-[1.15] text-ink">
+              <span className="mt-3 block font-display text-[clamp(26px,3.2vw,38px)] font-light leading-[1.15] text-ivory">
                 {next.title}
               </span>
               {next.dek ? (
-                <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-charcoal/75">
+                <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-bone/75">
                   {next.dek}
                 </span>
               ) : null}
             </span>
             <span
               aria-hidden
-              className="shrink-0 pb-1 font-sans text-[17px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ink"
+              className="shrink-0 pb-1 font-sans text-[17px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ivory"
             >
               →
             </span>

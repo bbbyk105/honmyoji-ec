@@ -118,18 +118,31 @@ def clean_alpha(rgba: Image.Image, thresh: int = 60) -> Image.Image:
 def cutout(im: Image.Image, session) -> Image.Image:
     from rembg import remove
 
-    # 推論は縮小画像で十分。1600px に落として処理し、透明部分をトリムして余白を足す。
+    # 推論は縮小画像で十分。1600px に落として処理し、透明部分を残さず切る。
+    #
+    # **余白を足さないこと。** 画面側の枠は canvas の寸法（cutoutAspect）で決まるので、
+    # 透明の余白はそのまま「像が棚板から浮く」「台の中心からずれる」に化ける。以前は
+    # 影と浮遊アニメの逃げとして 4% 足していたが、影は CSS の drop-shadow、浮遊は
+    # transform で、どちらも要素の外に描けるので逃げは要らない。2026-09-16 に九枚とも
+    # 切り直した（musubi は上下に 300px 前後、ai は右に 344px 残っていた）。
+    #
+    # しきい値は 2%。これ未満の画素は黒地では見えないので、そこで切ってよい。
     base = fit(im, 1600)
     rgba = clean_alpha(remove(base, session=session, alpha_matting=False))
-    bbox = rgba.getchannel("A").getbbox()
-    if bbox:
-        rgba = rgba.crop(bbox)
-    # 上下左右に 4% の余白（影・浮遊アニメの逃げ）
-    pad = int(max(rgba.size) * 0.04)
-    canvas = Image.new("RGBA", (rgba.width + pad * 2, rgba.height + pad * 2), (0, 0, 0, 0))
-    canvas.paste(rgba, (pad, pad), rgba)
-    canvas.thumbnail((1400, 1400), Image.LANCZOS)
-    return canvas
+    rgba = rgba.crop(trim_box(rgba, thresh=6))
+    rgba.thumbnail((1400, 1400), Image.LANCZOS)
+    return rgba
+
+
+def trim_box(rgba: Image.Image, thresh: int = 6) -> tuple[int, int, int, int]:
+    """不透明な画素だけの外接矩形。`getbbox()` は alpha > 0 なので、消し残りの
+    ごく薄い画素まで拾って枠が広がる。"""
+    import numpy as np
+
+    ys, xs = np.where(np.array(rgba.getchannel("A")) >= thresh)
+    if not len(xs):
+        return (0, 0, rgba.width, rgba.height)
+    return (int(xs.min()), int(ys.min()), int(xs.max()) + 1, int(ys.max()) + 1)
 
 
 def main(skip_cutout: bool, only: str | None = None, product: str | None = None) -> None:

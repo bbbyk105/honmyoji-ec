@@ -10,7 +10,7 @@ export function Newsletter() {
 
   if (state.status === "sent") {
     return (
-      <p className="font-sans text-[13px] leading-[1.8] text-charcoal/85">{state.message}</p>
+      <p className="font-sans text-[13px] leading-[1.8] text-bone/85">{state.message}</p>
     );
   }
 
@@ -27,12 +27,12 @@ export function Newsletter() {
           required
           autoComplete="email"
           placeholder="Your email"
-          className="min-w-0 flex-1 bg-transparent py-2.5 font-sans text-[14px] text-ink outline-none placeholder:text-mist/60"
+          className="min-w-0 flex-1 bg-transparent py-2.5 font-sans text-[14px] text-ivory outline-none placeholder:text-mist/60"
         />
         <button
           type="submit"
           disabled={pending}
-          className="cta mb-1 flex min-h-11 shrink-0 items-center gap-2 font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-ink underline decoration-ink/40 underline-offset-[6px] transition-colors hover:decoration-ink disabled:opacity-50"
+          className="cta mb-1 flex min-h-11 shrink-0 items-center gap-2 font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-ivory underline decoration-ivory/40 underline-offset-[6px] transition-colors hover:decoration-ivory disabled:opacity-50"
         >
           {pending ? "…" : "Send"}
           {pending ? null : (

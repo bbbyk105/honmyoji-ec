@@ -108,7 +108,7 @@ export function SwipeStrip({
             {items.map((_, i) => (
               <span
                 key={i}
-                className={`h-px flex-1 transition-colors duration-500 ${i === index ? "bg-ink" : "bg-line"}`}
+                className={`h-px flex-1 transition-colors duration-500 ${i === index ? "bg-ivory" : "bg-line"}`}
               />
             ))}
           </div>

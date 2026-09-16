@@ -22,7 +22,7 @@ export default async function StudioLayout({ children }: { children: ReactNode }
   const signedIn = await verifySession();
 
   return (
-    <div className="flex min-h-screen flex-col bg-ivory">
+    <div className="flex min-h-screen flex-col bg-sumi">
       {signedIn ? <StudioNav /> : null}
       <main className="flex-1">{children}</main>
     </div>

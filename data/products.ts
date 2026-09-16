@@ -40,7 +40,13 @@ export type Product = {
   /** 一覧の浮遊表示でカットアウトが占める高さの比（背の高い瓶バッグ = 1） */
   cutoutScale: number;
   /** cutout.webp の 縦横比 (w/h)。全タイル同寸の展示台に対して像の枠を決めるのに使う。
-   *  値は scripts/prepare-images.py の出力から取る（写真を撮り直したら更新すること）。 */
+   *  値は scripts/prepare-images.py の出力から取る（写真を撮り直したら更新すること）。
+   *
+   *  **cutout.webp に透明の余白を残さないこと。** 枠は canvas の寸法で決まるので、
+   *  余白があるとその分だけ像が棚板から浮き、左右にも寄る。2026-09-16 時点の九枚は
+   *  余白が不揃いで（musubi は上下に 300px 前後、ai は右に 344px）、Musubi が板から
+   *  67px 浮き、Ai が台の中心から 13% 左にずれていた。光だまりの頃は見えなかったが、
+   *  接地が罫になった時点で全部露出した。 */
   cutoutAspect: number;
 };
 
@@ -90,8 +96,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Gift", "Interior", "Formal"],
     galleryCount: 5,
-    cutoutScale: 1,
-    cutoutAspect: 0.352,   // 493×1400
+    cutoutScale: 0.926,
+    cutoutAspect: 0.301,   // 390×1297
   },
   {
     slug: "ai-indigo",
@@ -114,8 +120,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Gift", "Formal", "Daily Bag"],
     galleryCount: 5,
-    cutoutScale: 0.9,
-    cutoutAspect: 0.559,   // 782×1400
+    cutoutScale: 0.832,
+    cutoutAspect: 0.294,   // 380×1294
   },
   {
     slug: "matsu-pine",
@@ -138,8 +144,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Gift"],
     galleryCount: 5,
-    cutoutScale: 0.88,
-    cutoutAspect: 0.569,   // 797×1400
+    cutoutScale: 0.767,
+    cutoutAspect: 0.345,   // 421×1220
   },
   {
     slug: "wakaba-celadon",
@@ -162,8 +168,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Interior"],
     galleryCount: 4,
-    cutoutScale: 1,
-    cutoutAspect: 0.377,   // 382×1012
+    cutoutScale: 0.927,
+    cutoutAspect: 0.328,   // 308×938
   },
   {
     slug: "kasane-silk",
@@ -186,8 +192,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Formal"],
     galleryCount: 2,
-    cutoutScale: 0.92,
-    cutoutAspect: 0.546,   // 765×1400
+    cutoutScale: 0.838,
+    cutoutAspect: 0.467,   // 596×1275
   },
   {
     slug: "musubi-obi",
@@ -210,8 +216,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Formal", "Gift"],
     galleryCount: 2,
-    cutoutScale: 0.76,
-    cutoutAspect: 0.769,   // 1076×1400
+    cutoutScale: 0.428,
+    cutoutAspect: 1.236,   // 974×788
   },
   {
     slug: "hisui-jade",
@@ -234,8 +240,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Interior"],
     galleryCount: 1,
-    cutoutScale: 0.78,
-    cutoutAspect: 0.69,   // 966×1400
+    cutoutScale: 0.723,
+    cutoutAspect: 0.666,   // 864×1298
   },
   {
     slug: "ichimatsu-check",
@@ -258,8 +264,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag"],
     galleryCount: 1,
-    cutoutScale: 0.66,
-    cutoutAspect: 1.03,   // 1178×1144
+    cutoutScale: 0.61,
+    cutoutAspect: 1.032,   // 1092×1058
   },
   {
     slug: "tsugi-autumn",
@@ -282,8 +288,8 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Interior", "Formal"],
     galleryCount: 1,
-    cutoutScale: 0.78,
-    cutoutAspect: 0.683,   // 742×1086
+    cutoutScale: 0.723,
+    cutoutAspect: 0.658,   // 662×1006
   },
 ];
 

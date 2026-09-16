@@ -17,14 +17,14 @@ export default function AboutPage() {
         <div className="mx-auto grid w-full max-w-[1480px] gap-10 px-4 pt-12 sm:px-5 sm:pt-14 md:grid-cols-12 md:items-end md:px-8 md:pt-20 lg:px-12">
           <div className="md:col-span-6">
             <p className="eyebrow">About</p>
-            <h1 className="mt-5 font-display text-[clamp(40px,5.8vw,80px)] font-light leading-[0.98] text-ink">
+            <h1 className="mt-5 font-display text-[clamp(40px,5.8vw,80px)] font-light leading-[0.98] text-ivory">
               A temple table,
               <br />
               a leftover edge.
             </h1>
             <p className="mt-4 font-jp text-[13px] tracking-[0.22em] text-mist">{phrases.shine.ja}</p>
           </div>
-          <p className="max-w-[40ch] font-sans text-[15px] leading-[1.85] text-charcoal/85 md:col-span-5 md:col-start-8 md:pb-2">
+          <p className="max-w-[40ch] font-sans text-[15px] leading-[1.85] text-bone/85 md:col-span-5 md:col-start-8 md:pb-2">
             MIROKU is a small making practice at Honmyoji, Fuji City. Bags are woven one by one from
             tatami-beri remnants and paper band recycled in the same city. Not a line. A sequence of
             encounters.
@@ -48,16 +48,16 @@ export default function AboutPage() {
         <div className="grid gap-12 md:grid-cols-12 md:gap-10">
           <Reveal delay={100} className="md:col-span-6">
             <p className="eyebrow">Maker</p>
-            <h2 className="mt-4 font-display text-[clamp(34px,4vw,50px)] font-light leading-[1.05] text-ink">
+            <h2 className="mt-4 font-display text-[clamp(34px,4vw,50px)] font-light leading-[1.05] text-ivory">
               {founder.name}
             </h2>
             <p className="mt-3 font-jp text-[14px] tracking-[0.24em] text-mist">{founder.nameJa}</p>
             <p className="mt-4 font-sans text-[13px] leading-[1.8] text-mist">{founder.title}</p>
 
-            <h3 className="mt-12 font-display text-[clamp(24px,2.6vw,32px)] font-light leading-[1.15] text-ink">
+            <h3 className="mt-12 font-display text-[clamp(24px,2.6vw,32px)] font-light leading-[1.15] text-ivory">
               How the bag began
             </h3>
-            <div className="mt-6 max-w-[56ch] space-y-5 font-sans text-[15.5px] leading-[1.9] text-charcoal">
+            <div className="mt-6 max-w-[56ch] space-y-5 font-sans text-[15.5px] leading-[1.9] text-bone">
               {founder.origin.en.map((p) => (
                 <p key={p}>{p}</p>
               ))}
@@ -76,7 +76,7 @@ export default function AboutPage() {
               {founder.timeline.map((t) => (
                 <div key={t.years} className="grid gap-x-8 gap-y-2 border-b border-line py-6 sm:grid-cols-[88px_1fr]">
                   <dt className="font-display text-[16px] italic leading-[1.6] text-moss">{t.years}</dt>
-                  <dd className="max-w-[54ch] font-sans text-[14px] leading-[1.85] text-charcoal/90">{t.en}</dd>
+                  <dd className="max-w-[54ch] font-sans text-[14px] leading-[1.85] text-bone/90">{t.en}</dd>
                 </div>
               ))}
             </dl>
@@ -97,13 +97,13 @@ export default function AboutPage() {
         </Reveal>
         <Reveal delay={80} className="flex flex-col justify-center md:col-span-5 md:col-start-8">
           <p className="eyebrow">Material philosophy</p>
-          <h3 className="mt-4 font-display text-[clamp(28px,3vw,38px)] font-light leading-[1.15] text-ink">
+          <h3 className="mt-4 font-display text-[clamp(28px,3vw,38px)] font-light leading-[1.15] text-ivory">
             {founder.reasons.title}
           </h3>
           <p className="mt-2 font-jp text-[12px] tracking-[0.18em] text-mist">{founder.reasons.titleJa}</p>
           <ul className="mt-8 space-y-6">
             {founder.reasons.en.map((r) => (
-              <li key={r} className="max-w-[52ch] font-sans text-[15.5px] leading-[1.85] text-charcoal">
+              <li key={r} className="max-w-[52ch] font-sans text-[15.5px] leading-[1.85] text-bone">
                 {r}
               </li>
             ))}
@@ -114,11 +114,11 @@ export default function AboutPage() {
       <section className="mx-auto mt-20 grid w-full max-w-[1480px] gap-10 px-5 md:grid-cols-12 md:px-8 md:pt-8 lg:px-12">
         <Reveal className="order-2 flex flex-col justify-center md:order-1 md:col-span-5">
           <p className="eyebrow">Place</p>
-          <h3 className="mt-4 font-display text-[clamp(28px,3.2vw,40px)] font-light leading-[1.1] text-ink">
+          <h3 className="mt-4 font-display text-[clamp(28px,3.2vw,40px)] font-light leading-[1.1] text-ivory">
             Made in a working temple.
           </h3>
           <p className="mt-3 font-jp text-[13px] tracking-[0.18em] text-mist">お寺で、ひとつずつ。</p>
-          <div className="mt-8 max-w-[52ch] space-y-5 font-sans text-[15.5px] leading-[1.9] text-charcoal">
+          <div className="mt-8 max-w-[52ch] space-y-5 font-sans text-[15.5px] leading-[1.9] text-bone">
             <p>{faq[5].a[0]}</p>
             <p>{faq[5].a[1]}</p>
             <p>
@@ -166,7 +166,7 @@ export default function AboutPage() {
         <div className="grid gap-10 border-t border-line pt-12 md:grid-cols-12">
           <Reveal className="md:col-span-5">
             <p className="eyebrow">Close</p>
-            <h2 className="mt-4 font-display text-[clamp(30px,3.6vw,46px)] font-light leading-[1.12] text-ink">
+            <h2 className="mt-4 font-display text-[clamp(30px,3.6vw,46px)] font-light leading-[1.12] text-ivory">
               {founder.handmade.title}
             </h2>
             <p className="mt-4 font-jp text-[16px] tracking-[0.28em] text-mist">{founder.handmade.titleJa}</p>
@@ -175,8 +175,8 @@ export default function AboutPage() {
             </Button>
           </Reveal>
           <Reveal delay={90} className="md:col-span-6 md:col-start-7">
-            <p className="max-w-[56ch] font-sans text-[16px] leading-[1.9] text-charcoal">{founder.handmade.en}</p>
-            <p className="mt-12 max-w-[30ch] font-display text-[clamp(24px,2.8vw,32px)] font-light italic leading-[1.35] text-ink">
+            <p className="max-w-[56ch] font-sans text-[16px] leading-[1.9] text-bone">{founder.handmade.en}</p>
+            <p className="mt-12 max-w-[30ch] font-display text-[clamp(24px,2.8vw,32px)] font-light italic leading-[1.35] text-ivory">
               {founder.message.en}
             </p>
             <p className="mt-6 font-sans text-[11px] uppercase tracking-[0.22em] text-mist">— {founder.name}</p>

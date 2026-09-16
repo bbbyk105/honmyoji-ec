@@ -28,7 +28,7 @@ export function GalleryStrip({ shots, offset = 0 }: { shots: Shot[]; offset?: nu
           type="button"
           onClick={() => open(offset)}
           aria-label="写真を拡大する"
-          className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-parchment"
+          className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-onyx"
         >
           <Image src={only.src} alt={only.alt} fill sizes="100vw" className="object-cover" />
         </button>
@@ -55,7 +55,7 @@ export function GalleryStrip({ shots, offset = 0 }: { shots: Shot[]; offset?: nu
           type="button"
           onClick={() => open(i + offset)}
           aria-label={`${shot.caption} を拡大する`}
-          className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-parchment"
+          className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-onyx"
         >
           <Image src={shot.src} alt={shot.alt} fill sizes="82vw" className="object-cover" />
         </button>

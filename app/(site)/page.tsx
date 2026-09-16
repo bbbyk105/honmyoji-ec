@@ -37,15 +37,17 @@ export default async function HomePage() {
       <HomeHero materialHref={materialHref} />
 
       {/*
-        ヒーローの上に上がってくる紙の面。ヒーローは sticky で貼り付いたままなので、
-        黒い版が上へ抜けるのではなく、ivory の紙がそれを覆っていく。
-        暗 → 明の切り替えを「別のセクションが始まった」ではなく「紙が上がってきた」に見せる。
-        上辺の影は紙が部屋に落とす影。ここが罫一本だと、境目がただの切り口に見える。
+        ヒーローの上に上がってくる面。ヒーローは sticky で貼り付いたままなので、
+        第一画面が上へ抜けるのではなく、この面がそれを覆っていく。
+        ヒーローの地（#1b1710）より版の地（sumi）のほうが一段深いので、
+        上がってくると部屋が沈む —— 明暗の切り替えではなく「照明が落ちる」に見せる。
+        差は 7 しかないので、上辺に ivory の細い罫を一本引いて縁を立たせ、
+        その下に影を落とす。罫だけだと切り口に、影だけだと境目が読めない。
         z-10 は必須 — 素の（position を持たない）セクションは sticky の下に潜って消える。
       */}
       <div
         data-page-sheet
-        className="relative z-10 bg-ivory shadow-[0_-40px_90px_-40px_rgba(15,12,8,0.62)]"
+        className="relative z-10 border-t border-ivory/10 bg-sumi shadow-[0_-40px_90px_-40px_rgba(0,0,0,0.85)]"
       >
 
         {/* 2. Intro — text as a page, not a marketing block */}
@@ -53,7 +55,7 @@ export default async function HomePage() {
           <div className={`${SHELL} grid gap-12 py-16 md:grid-cols-12 md:gap-8 md:py-24`}>
             <Reveal className="md:col-span-7 lg:col-span-6">
               <p className="eyebrow">Atelier note</p>
-              <h2 data-split-lines className="mt-5 font-display text-[clamp(32px,4.2vw,56px)] font-light leading-[1.08] text-ink">
+              <h2 data-split-lines className="mt-5 font-display text-[clamp(32px,4.2vw,56px)] font-light leading-[1.08] text-ivory">
                 Objects woven from
                 <br />
                 a leftover edge.
@@ -61,7 +63,7 @@ export default async function HomePage() {
             </Reveal>
             {/* 段は文章の幅ぶんだけ。38ch で止めると 4 カラムの右側に穴が空く。 */}
             <Reveal delay={120} className="flex flex-col justify-end md:col-span-5 md:col-start-8 lg:col-span-4 lg:col-start-9">
-              <p className="font-sans text-[15px] leading-[1.85] text-charcoal/90">
+              <p className="font-sans text-[15px] leading-[1.85] text-bone/90">
                 One-of-a-kind bags, made at a temple in Fuji City, from tatami-beri remnants and paper
                 band recycled in the same streets. Each piece is finished by hand, blessed at the temple,
                 and never made twice.
@@ -79,7 +81,7 @@ export default async function HomePage() {
             <Reveal className="flex items-end justify-between gap-6 border-b border-line pb-5">
               <div>
                 <p className="eyebrow">Exhibition · 2026</p>
-                <h2 data-split-lines className="mt-3 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-none text-ink">
+                <h2 data-split-lines className="mt-3 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-none text-ivory">
                   Pieces on show
                 </h2>
               </div>
@@ -101,7 +103,7 @@ export default async function HomePage() {
               {[sakura, ai, wakaba].map((piece, i) => (
                 <Reveal key={piece.slug} delay={i * 80}>
                   <FloatingBag product={piece} index={i} priority={i < 2} />
-                  <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-charcoal/75">
+                  <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-bone/75">
                     {piece.note}
                   </p>
                 </Reveal>
@@ -115,7 +117,7 @@ export default async function HomePage() {
           <div className={`${SHELL} grid gap-12 md:grid-cols-12 md:items-start md:gap-8`}>
             <Reveal className="md:col-span-5 md:sticky md:top-28">
               <p className="eyebrow">Material</p>
-              <h2 data-split-lines className="mt-4 font-display text-[clamp(34px,4vw,52px)] font-light leading-[1.08] text-ink">
+              <h2 data-split-lines className="mt-4 font-display text-[clamp(34px,4vw,52px)] font-light leading-[1.08] text-ivory">
                 A fabric that
                 <br />
                 once bordered
@@ -138,14 +140,14 @@ export default async function HomePage() {
                   sizes="(min-width: 768px) 400px, 100vw"
                 />
               </Reveal>
-              <Reveal delay={80} className="mt-10 max-w-[46ch] space-y-5 font-sans text-[15px] leading-[1.9] text-charcoal/90">
+              <Reveal delay={80} className="mt-10 max-w-[46ch] space-y-5 font-sans text-[15px] leading-[1.9] text-bone/90">
                 <p>
                   Tatami-beri is the woven band sewn around a tatami mat — brocade chosen room by room.
                   When a floor is remade, the bands are cut away. We take those remnants and weave them
                   onto paper band made in Fuji from cartons and waste paper.
                 </p>
                 <p>
-                  The character <span className="font-jp text-ink">縁</span> is also read{" "}
+                  The character <span className="font-jp text-ivory">縁</span> is also read{" "}
                   <em className="font-display text-[18px] italic">en</em>: a meeting. The bag begins
                   there — leftover cloth, a city&apos;s recycled paper, a pair of hands at the temple.
                 </p>
@@ -177,7 +179,7 @@ export default async function HomePage() {
         <section className={`${SHELL} pt-4 md:pt-6`}>
           <Reveal className="md:max-w-[36ch]">
             <p className="eyebrow">In place</p>
-            <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.6vw,46px)] font-light leading-[1.1] text-ink">
+            <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.6vw,46px)] font-light leading-[1.1] text-ivory">
               How a piece fits into a day.
             </h2>
           </Reveal>
@@ -199,11 +201,11 @@ export default async function HomePage() {
               />
             </Reveal>
             <Reveal delay={100} className="flex flex-col justify-center md:col-span-5 lg:col-span-4">
-              <p className="font-display text-[clamp(24px,2.3vw,30px)] font-light leading-[1.3] text-ink">
+              <p className="font-display text-[clamp(24px,2.3vw,30px)] font-light leading-[1.3] text-ivory">
                 Not styled for a season. Made to be carried — to a tea room, to the market, to the
                 front door and back.
               </p>
-              <p className="mt-6 font-sans text-[14px] leading-[1.85] text-charcoal/85">
+              <p className="mt-6 font-sans text-[14px] leading-[1.85] text-bone/85">
                 Every photograph here was taken in the temple grounds — the hall, the bamboo grove,
                 the corridor. Nothing was shot in a studio.
               </p>
@@ -240,7 +242,7 @@ export default async function HomePage() {
         </section>
 
         {/* 6. Craft */}
-        <section className="mt-20 bg-parchment/70 md:mt-28">
+        <section className="mt-20 bg-onyx/70 md:mt-28">
           <div className={`${SHELL} grid gap-12 py-16 md:grid-cols-12 md:gap-8 md:py-24`}>
             <Reveal className="md:col-span-5">
               <Frame
@@ -254,13 +256,13 @@ export default async function HomePage() {
             </Reveal>
             <Reveal delay={100} className="flex flex-col justify-center md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8">
               <p className="eyebrow">Making</p>
-              <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-[1.08] text-ink">
+              <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-[1.08] text-ivory">
                 One pair of hands,
                 <br />
                 one table, one week.
               </h2>
               <p className="mt-3 font-jp text-[13px] tracking-[0.18em] text-mist">一本ずつ、お寺で。</p>
-              <div className="mt-8 max-w-[46ch] space-y-5 font-sans text-[15px] leading-[1.9] text-charcoal/90">
+              <div className="mt-8 max-w-[46ch] space-y-5 font-sans text-[15px] leading-[1.9] text-bone/90">
                 <p>
                   {founder.handmade.en}
                 </p>
@@ -288,7 +290,7 @@ export default async function HomePage() {
             <Reveal className="flex items-end justify-between gap-6 xl:col-span-3 xl:flex-col xl:items-start xl:justify-start xl:gap-8">
               <div>
                 <p className="eyebrow">Blog</p>
-                <h2 data-split-lines className="mt-3 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-none text-ink">
+                <h2 data-split-lines className="mt-3 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-none text-ivory">
                   Recent notes
                 </h2>
               </div>
@@ -311,14 +313,14 @@ export default async function HomePage() {
                       </span>
                     </p>
                     <div className="md:col-span-8">
-                      <h3 className="font-display text-[26px] font-light leading-[1.2] text-ink">{entry.title}</h3>
-                      <p className="mt-1.5 max-w-[52ch] font-sans text-[13.5px] leading-[1.75] text-charcoal/80">
+                      <h3 className="font-display text-[26px] font-light leading-[1.2] text-ivory">{entry.title}</h3>
+                      <p className="mt-1.5 max-w-[52ch] font-sans text-[13.5px] leading-[1.75] text-bone/80">
                         {entry.dek}
                       </p>
                     </div>
                     <span
                       aria-hidden
-                      className="hidden font-sans text-[15px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ink md:col-span-1 md:block md:text-right"
+                      className="hidden font-sans text-[15px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ivory md:col-span-1 md:block md:text-right"
                     >
                       →
                     </span>
@@ -333,7 +335,7 @@ export default async function HomePage() {
         <section className={`${SHELL} pb-8`}>
           <Reveal className="grid gap-8 border-t border-line pt-10 md:grid-cols-12">
             {/* 一文を 7 カラム（800px）に置くと一行で流れて、締めの言葉に見えない。折って、写真と同じ高さの中央に置く。 */}
-            <p className="self-center font-display text-[clamp(22px,2.6vw,32px)] font-light leading-[1.35] text-ink md:col-span-6 lg:col-span-5">
+            <p className="self-center font-display text-[clamp(22px,2.6vw,32px)] font-light leading-[1.35] text-ivory md:col-span-6 lg:col-span-5">
               {phrases.noTwo.en}
             </p>
             <div className="md:col-span-4 md:col-start-9">

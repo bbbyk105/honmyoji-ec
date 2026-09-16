@@ -41,13 +41,13 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
       <div className={STUDIO_HEAD}>
         <Link
           href="/studio/orders"
-          className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ink"
+          className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ivory"
         >
           ← 注文一覧
         </Link>
         <div className="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
           <div>
-            <h1 className="font-display text-[clamp(30px,4vw,42px)] font-light leading-[1.02] text-ink">
+            <h1 className="font-display text-[clamp(30px,4vw,42px)] font-light leading-[1.02] text-ivory">
               {orderRef(order.id)}
             </h1>
             <p className="mt-2.5 flex items-center gap-2.5 font-sans text-[12.5px] text-mist">
@@ -55,7 +55,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
               {ORDER_STATUS_LABEL[order.status]} · {fullDate(order.created_at)}
             </p>
           </div>
-          <p className="font-display text-[30px] font-light tabular-nums text-ink">
+          <p className="font-display text-[30px] font-light tabular-nums text-ivory">
             {orderAmount(order)}
           </p>
         </div>
@@ -75,7 +75,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
               ) : (
                 pieces.map((piece) => (
                   <li key={piece.slug} className="flex items-center gap-4">
-                    <div className="relative h-11 w-11 shrink-0 bg-parchment">
+                    <div className="relative h-11 w-11 shrink-0 bg-onyx">
                       <Image
                         src={productCutout(piece.folder)}
                         alt=""
@@ -87,13 +87,13 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
                     <div className="min-w-0">
                       <Link
                         href={`/studio/pieces/${piece.slug}`}
-                        className="font-display text-[18px] font-light text-ink no-underline hover:text-charcoal"
+                        className="font-display text-[18px] font-light text-ivory no-underline hover:text-bone"
                       >
                         {piece.name}
                       </Link>
                       <p className="font-sans text-[12px] text-mist">{piece.sku}</p>
                     </div>
-                    <p className="ml-auto font-sans text-[13px] tabular-nums text-charcoal">
+                    <p className="ml-auto font-sans text-[13px] tabular-nums text-bone">
                       {aud.format(piece.priceAud)}
                     </p>
                   </li>
@@ -105,7 +105,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
           <section>
             <h2 className="eyebrow border-b border-line pb-3">送り先</h2>
             {address ? (
-              <address className="mt-4 font-sans text-[13.5px] not-italic leading-[1.9] text-charcoal">
+              <address className="mt-4 font-sans text-[13.5px] not-italic leading-[1.9] text-bone">
                 {address.name ?? order.customer_name}
                 <br />
                 {address.line1}
@@ -136,7 +136,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
               <p className="mt-4 font-sans text-[13px] leading-[1.8]">
                 <a
                   href={`mailto:${order.customer_email}`}
-                  className="text-charcoal underline decoration-line underline-offset-[5px] transition-colors hover:decoration-ink"
+                  className="text-bone underline decoration-line underline-offset-[5px] transition-colors hover:decoration-ivory"
                 >
                   {order.customer_email}
                 </a>
@@ -149,13 +149,13 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
             <dl className="mt-4 space-y-2.5 font-sans text-[12.5px] leading-[1.6]">
               <div>
                 <dt className="text-mist">Payment intent</dt>
-                <dd className="mt-1 break-all font-mono text-[11.5px] text-charcoal">
+                <dd className="mt-1 break-all font-mono text-[11.5px] text-bone">
                   {order.stripe_intent ?? "—"}
                 </dd>
               </div>
               <div>
                 <dt className="text-mist">発送日</dt>
-                <dd className="mt-1 text-charcoal">{fullDate(order.shipped_at)}</dd>
+                <dd className="mt-1 text-bone">{fullDate(order.shipped_at)}</dd>
               </div>
             </dl>
             {order.stripe_intent ? (
@@ -163,7 +163,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
                 href={`https://dashboard.stripe.com/payments/${order.stripe_intent}`}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ink"
+                className="mt-4 inline-block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ivory"
               >
                 Stripe で見る ↗
               </a>

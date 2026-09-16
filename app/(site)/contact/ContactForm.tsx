@@ -15,8 +15,8 @@ type Props = {
  * どこを触ればいいのか分からない（＝手紙用紙の枠がない）ので面を持たせている。
  */
 const field =
-  "w-full border border-line bg-paper px-4 py-3.5 font-sans text-[15px] leading-[1.6] text-ink outline-none transition-colors placeholder:text-mist/80 hover:border-sand focus:border-ink focus:ring-1 focus:ring-ink/15 aria-[invalid=true]:border-clay";
-const label = "block font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-charcoal";
+  "w-full border border-line bg-lacquer px-4 py-3.5 font-sans text-[15px] leading-[1.6] text-ivory outline-none transition-colors placeholder:text-mist/80 hover:border-bark focus:border-ivory focus:ring-1 focus:ring-ivory/15 aria-[invalid=true]:border-clay";
+const label = "block font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-bone";
 const hint = "mt-2 font-sans text-[12px] leading-[1.6] text-clay";
 
 export function ContactForm({ product, subject, subjects }: Props) {
@@ -25,9 +25,9 @@ export function ContactForm({ product, subject, subjects }: Props) {
 
   if (state.status === "sent") {
     return (
-      <div className="border border-line bg-paper px-6 py-10 sm:px-10 sm:py-12">
-        <p className="font-display text-[34px] font-light leading-[1.2] text-ink">Sent.</p>
-        <p className="mt-4 max-w-[44ch] font-sans text-[14px] leading-[1.9] text-charcoal">{state.message}</p>
+      <div className="border border-line bg-lacquer px-6 py-10 sm:px-10 sm:py-12">
+        <p className="font-display text-[34px] font-light leading-[1.2] text-ivory">Sent.</p>
+        <p className="mt-4 max-w-[44ch] font-sans text-[14px] leading-[1.9] text-bone">{state.message}</p>
       </div>
     );
   }
@@ -38,9 +38,9 @@ export function ContactForm({ product, subject, subjects }: Props) {
   return (
     <form action={action} className="space-y-7" noValidate>
       {product ? (
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border border-line bg-paper px-4 py-4">
+        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border border-line bg-lacquer px-4 py-4">
           <span className="font-sans text-[10.5px] uppercase tracking-[0.2em] text-mist">Piece</span>
-          <span className="font-display text-[22px] font-light text-ink">
+          <span className="font-display text-[22px] font-light text-ivory">
             {product.name}
             <span className="ml-2 font-jp text-[12px] tracking-[0.3em] text-mist">{product.kanji}</span>
           </span>
@@ -151,7 +151,7 @@ export function ContactForm({ product, subject, subjects }: Props) {
       </div>
 
       {state.status === "error" ? (
-        <p role="alert" className="border border-clay/60 bg-paper px-4 py-3.5 font-sans text-[13px] leading-[1.7] text-clay">
+        <p role="alert" className="border border-clay/60 bg-lacquer px-4 py-3.5 font-sans text-[13px] leading-[1.7] text-clay">
           {state.message}
         </p>
       ) : null}

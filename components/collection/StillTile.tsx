@@ -25,10 +25,10 @@ export function StillTile({ product, ratio = "4/5", priority = false, className 
     <article className={`group ${className}`}>
       <Link
         href={productPath(product)}
-        className="block no-underline outline-none focus-visible:ring-2 focus-visible:ring-ink/25"
+        className="block no-underline outline-none focus-visible:ring-2 focus-visible:ring-ivory/25"
       >
         <ImageWell
-          className={`relative overflow-hidden bg-parchment ${RATIO[ratio]}`}
+          className={`relative overflow-hidden bg-onyx ${RATIO[ratio]}`}
           reveal="wipe"
         >
           <Image
@@ -41,18 +41,18 @@ export function StillTile({ product, ratio = "4/5", priority = false, className 
               sold ? "" : "group-hover:scale-[1.03]"
             }`}
           />
-          {/* 実写タイルは像を薄くできないので、ivory を一枚かぶせてから帯を引く */}
-          {sold ? <SoldBand className="inset-0 bg-ivory/55 px-[7%]" /> : null}
+          {/* 実写タイルは像を薄くできないので、地の色を一枚かぶせてから帯を引く */}
+          {sold ? <SoldBand className="inset-0 bg-sumi/60 px-[7%]" /> : null}
         </ImageWell>
         <div className="mt-4 flex items-baseline justify-between gap-4">
           <div>
             <StatusPill status={product.status} />
-            <h3 className="mt-2 font-display text-[26px] font-light leading-none text-ink">
+            <h3 className="mt-2 font-display text-[26px] font-light leading-none text-ivory">
               {product.name}
               <span className="ml-2 font-jp text-[12px] tracking-[0.2em] text-mist">{product.kanji}</span>
             </h3>
           </div>
-          <p className="shrink-0 font-sans text-[12px] tracking-[0.08em] text-charcoal/80">
+          <p className="shrink-0 font-sans text-[12px] tracking-[0.08em] text-bone/80">
             {aud.format(product.priceAud)}
           </p>
         </div>
