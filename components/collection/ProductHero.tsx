@@ -10,7 +10,8 @@ import { useLightboxSafe } from "./Lightbox";
  * 像の枠は cutoutAspect でぴったりに切っておく — 一覧側の枠と形が揃っていないと morph が滑らない。
  */
 export function ProductHero({ product }: { product: Product }) {
-  const bagH = Math.round(78 * product.cutoutScale);
+  /* 一覧と同じ背丈。横に太い作品は max-w-full が列の幅で受け止める（下の註）。 */
+  const bagH = 78;
   /* 拡大表示は LightboxProvider があるときだけ。ヒーローは単体でも置けるようにしておく。 */
   const lightbox = useLightboxSafe();
 
