@@ -36,7 +36,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。ヒーローは `useLightboxSafe()` を使う — Provider が無い場所に置かれても壊れないため。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地はサイトと同じ sumi — 一枚だけ別の明るさの部屋に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。`stopLenis()` はカートと同じ扱い。
 - **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
 - `components/collection/GalleryStrip.tsx` — **スマホのギャラリー**（`md:hidden`）。snap の横スワイプ + `01 / 05` カウンタ。写真1枚の作品は自動で普通の一枚に落ちる。md 以上は従来の編集グリッド（`hidden md:grid`）。
-- `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。像の枠は `cutoutScale`（台の高さに対する割合）× `cutoutAspect`（cutout.webp の実比率）で決まる。`ProductHero.tsx` も同じ枠なので morph がずれない。**接地は棚板の罫**（`SHELF_INSET`）— 黒地で 12% の影は見えず、ぼかした光だまりは結局グラデーションになるので、接地線に ivory 25% のヘアラインを 1px 引く（hover で 45%）。台の内寸は九点とも 6% で揃える。詳細ページ（`ProductHero`）だけは列いっぱいに引く — 一番太い ichimatsu が列を埋めるので、内寸を取るとそこだけ板からはみ出す。**cutout.webp に透明の余白を残さないこと** — 枠は canvas の寸法（`cutoutAspect`）で決まるので、余白はそのまま「像が板から浮く」「左右にずれる」になる（2026-09-16 に九枚とも切り直した。Musubi が 67px 浮き、Ai が中心から 13% 左にいた）。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`SoldBand.tsx` — 完売の帯（像の縦中央に罫を一本引いて `Sold out`。位置は呼び出し側が渡す — 台の中央に固定すると背の低い作品で像の上に浮く）。**URL slug（`/sakura-cherry`）を画面に出さない** — 2026-09-01 に `PieceSlug` ごと外した。
+- `components/collection/FloatingBag.tsx` — カットアウトの浮遊展示。**一覧もトップも全点これ**（4:5 の展示台・同じ接地線）。大小で序列を付けず、hover で `scale(1.06)` + 10px 浮上（`.bag-lift`、原点は接地線）。**背丈は九点とも同じ**（`BAG_HEIGHT = 78`、2026-09-16 に `cutoutScale` を廃止）— 像の幅だけ `cutoutAspect` から決まる。横に太い musubi / ichimatsu は同じ背丈だと板をはみ出すので、そこだけ `SHELF_SPAN` で頭打ちにして低く立たせる。実寸の大小は像では言わず、下の SPEC の数字が言う。`ProductHero.tsx` も同じ背丈なので morph がずれない。**接地は棚板の罫**（`SHELF_INSET`）— 黒地で 12% の影は見えず、ぼかした光だまりは結局グラデーションになるので、接地線に ivory 25% のヘアラインを 1px 引く（hover で 45%）。台の内寸は九点とも 6% で揃える。詳細ページ（`ProductHero`）だけは列いっぱいに引く — 一番太い ichimatsu が列を埋めるので、内寸を取るとそこだけ板からはみ出す。**cutout.webp に透明の余白を残さないこと** — 枠は canvas の寸法（`cutoutAspect`）で決まるので、余白はそのまま「像が板から浮く」「左右にずれる」になる（2026-09-16 に九枚とも切り直した。Musubi が 67px 浮き、Ai が中心から 13% 左にいた）。`StillTile.tsx` — 4:5 静物タイル（トップの締めと関連商品のみ）。`SoldBand.tsx` — 完売の帯（像の縦中央に罫を一本引いて `Sold out`。位置は呼び出し側が渡す — 台の中央に固定すると背の低い作品で像の上に浮く）。**URL slug（`/sakura-cherry`）を画面に出さない** — 2026-09-01 に `PieceSlug` ごと外した。
 - `components/site/Shell.tsx` — **版面の定数 `SHELL`**（`max-w-[1480px]` + 左右余白）。ヘッダー / フッター / ヒーロー / トップの全セクションがこれを使う。新しいセクションで `mx-auto max-w-... px-...` を手書きしない — 手書きに戻すと必ず 16px ずれる。
 - `components/site/Frame.tsx` — 写真井戸。`data-image-role` / `data-image-ratio` 属性付き。差し替えは `src` だけ。role・比率のキャプション表示は `showRole`（既定 off）。
 - `components/cart/` — Cart（localStorage）と MiniCart。決済は Contact へ手渡し。slug と旧 folder 名の両方を `getProduct` で解決する。**表示は Cart だが localStorage キーは `miroku-held` のまま**（変えると既存のカートが空になる）。UI 上の「Hold / Held」は 2026-08-31 に全て Cart 系の語へ置換済み。
@@ -53,13 +53,20 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `scripts/prepare-images.py` が原本 → `public/images/{products,scenes,texture}/*.webp` を生成する。
   - 商品カットアウト（背景除去）は rembg の **birefnet-general**（初回 ~1GB DL）＋「最大連結成分のみ残す」後処理。isnet/u2net は草地・壁で背景が残るので使わない。
   - 実行: `python3 -m venv .venv && .venv/bin/pip install rembg onnxruntime pillow scipy && .venv/bin/python scripts/prepare-images.py`
-  - 新しい商品写真が来たら `PRODUCTS` に slug と元ファイルを追加 → 実行 → `data/products.ts` に `galleryCount` / `cutoutScale` を合わせる。
+  - 新しい商品写真が来たら `PRODUCTS` に slug と元ファイルを追加 → 実行 → `data/products.ts` に `galleryCount` / `cutoutAspect` を合わせる（`cutoutAspect` は script が出力する）。
   - **一点だけ作り直せる**: `.venv/bin/python scripts/prepare-images.py --only cutouts --product sakura`。他の八点の webp を書き換えないので、差分が一枚で済む。出力に `cutoutAspect` が出るので `data/products.ts` の値をそれに合わせること（一覧の展示台と詳細ヒーローが同じ枠を使っているので、片方だけずれると morph がずれる）。
   - カットアウトが**バッグの一部を食う**ことがある（桜は敷布の上に立っていて、左下の角が斜めに切り落とされていた）。原本と `cutout.webp` を並べるのではなく、`cutout.webp` をマゼンタ地に合成して見ると欠けが分かる。rembg のモデルを更新して同じ `--only cutouts` を回すと直ることがある（2026-09-01 の桜はこれで直った）。撮り直しの写真が来るまでは、無地の壁を背にした一枚を `main` に選ぶのが確実。
 - **カットアウトは透明の余白を残さない**（`trim_box()`、alpha 2% で外接矩形を取る）。以前は影と浮遊アニメの逃げとして 4% 足していたが、影は CSS の drop-shadow、浮遊は transform で、どちらも要素の外へ描ける。余白を足すと接地の罫から像が浮く。
 - 畳の縁マクロ（`texture/beri-*.webp`）は原本の座標指定で切り出している。写真が差し替わったら座標も見直す。
 - **切り出しは掲載する比率と同じ比率で**。`beri-indigo` は 4:5（home /material・blog リード）、`beri-sakura` は 16:10（blog 本文）。横長の原稿を 4:5 の井戸に入れると object-cover で削られた分だけ実効解像度が落ち、拡大されて荒れる。掲載側にも `max-w` を付けて、原稿以上の大きさを要求しないこと。
-- 画像を差し替えても dev server は `_next/image` の結果をキャッシュしたままになる。見た目が変わらないときは dev server を再起動するか `npm run build && npx next start` で確認する。
+- **画像を差し替えたら `.next/dev/cache/images` を消す**。`_next/image` の最適化結果は Next 16 ではここに残る（`.next/cache/images` ではない）。原本を差し替えても `X-Nextjs-Cache: STALE` のまま古いバイト列を返し続け、再検証もされない。しかも srcset の幅ごとに別エントリなので、`w=1080` は新しいのに `w=640` だけ古い、という混ざり方をする（2026-09-17 に踏んだ。九点の背丈を揃えたのに一覧がばらばらに見えたのがこれ）。**dev server を再起動するだけでは直らない** —— 起動時にディスクの内容を読むので、止める → 消す → 起動する、の順でないと同じ像が戻ってくる。
+  ```bash
+  pkill -f "next dev"; rm -rf .next/dev/cache/images .next/cache/images; npm run dev
+  ```
+  ブラウザ側にも残るので、直ったか見るときはハードリロード（⌘⇧R）する。確認は curl が早い —— 返ってきた webp の寸法が `data/products.ts` の `cutoutAspect` と合っていれば新しい。
+  ```bash
+  curl -s -H 'Accept: image/webp' 'http://localhost:3000/_next/image?url=%2Fimages%2Fproducts%2Fai%2Fcutout.webp&w=640&q=75' | file -
+  ```
 
 ## View Transitions（一覧 → 詳細のモーフ）
 
@@ -88,7 +95,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 管理画面と決済（詳細は `docs/studio.md`）
 
 - 商品カタログの正本は `data/products.ts` のまま。DB (`piece_overrides`) に置くのは管理画面から動かす値（価格・ステータス・一言・物語）だけで、**行が無ければコード側の値が出る**。鍵が無くても DB が落ちてもサイトは今日と同じ姿で立つ。
-- 写真の枚数・`cutoutScale`・`cutoutAspect`・寸法・SKU は DB に持たない。写真の差し替えとセットでしか変わらないので、管理画面から触れても写真が付いてこない。
+- 写真の枚数・`cutoutAspect`・寸法・SKU は DB に持たない。写真の差し替えとセットでしか変わらないので、管理画面から触れても写真が付いてこない。
 - 注文が確定するのは **Stripe Webhook だけ**。`/checkout/thank-you` では作らない（カードは通ったのに客がタブを閉じた、で注文が消える）。Webhook は保存に失敗したら 500 を返して再送させる。
 - 決済が通ると Webhook が作品を自動で `sold_out` にする。一点物なので、手作業にすると二人目に買える状態で見える時間ができる。
 - Stripe に商品を登録しない。毎回 `price_data` でその場に組む（価格の正本が二つになると必ずどちらかが古くなる）。

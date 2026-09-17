@@ -15,31 +15,43 @@ type Props = {
 };
 
 /**
- * 展示台（stage）はどの作品でも同じ 4:5。像だけが実物の比率で立つ。
- * 台の比率・接地線・キャプション位置を固定することで、並べたとき見え方が揃う。
- * 序列は台の大小ではなく hover（触れた一点が前に出る）で付ける。
+ * 展示台（stage）はどの作品でも同じ 4:5。像は実物の**縦横比**で立つが、**背丈は揃える**
+ * （2026-09-16）。台の比率・接地線・背丈・キャプション位置を固定してあるので、
+ * 並べたとき変わるのは織りだけになる。
+ * 序列は大小ではなく hover（触れた一点が前に出る）で付ける。
  */
 const STAGE_H_OVER_W = 5 / 4;
 /** 台の高さに対する接地線の位置 */
 const GROUND = 8;
 /**
  * 棚板の左右の入り。九点とも同じ値で引くので、一列が一枚の板に見える。
- * 像の幅は 37〜71%（sakura が一番細く ichimatsu が一番太い）ので、88% あれば
- * どの作品も板からはみ出さない。板のほうを揃えるのが台の役目 —— 像に合わせて
- * 一点ずつ長さを変えると、九点並べたときに板がばらけて棚に見えなくなる。
+ * 板のほうを揃えるのが台の役目 —— 像に合わせて一点ずつ長さを変えると、
+ * 九点並べたときに板がばらけて棚に見えなくなる。背丈を揃えた結果、像の幅は
+ * 29〜88%（sakura が一番細く、musubi と ichimatsu が板いっぱい）になる。
  */
 const SHELF_INSET = 6;
-/** 台の高さに対して像が占める割合。cutoutScale = 1（背の高いボトルバッグ）のとき */
-const BAG_HEIGHT = 84;
+/**
+ * 九点とも同じ背丈で立たせる。実寸の大小は像の側では言わない —— 図版は同じ大きさで刷り、
+ * 寸法は下の SPEC が数字で言う、という展示図録の並べ方（2026-09-16）。
+ * 値は以前 sakura が立っていた高さそのもの（84 × 0.926）なので、一番背の高い一点は動かない。
+ */
+const BAG_HEIGHT = 78;
+/** 棚板の長さ。横に太い作品は背丈ではなくここで頭打ちになる（板からはみ出させない）。 */
+const SHELF_SPAN = 100 - SHELF_INSET * 2;
 
 export function FloatingBag({ product, index = 0, priority = false }: Props) {
   const delay = { "--delay": `${index * 90}ms` } as CSSProperties;
   /* 完売は像を淡くして、hover でも前に出さない — 触れて反応するものは買えるもの、で揃える。 */
   const sold = product.status === "sold_out";
 
-  // 像の高さは台の %、幅はそこから実比率で決まる。台幅を超えるものだけ幅で頭打ちにする。
-  const bagH = BAG_HEIGHT * product.cutoutScale;
-  const bagW = Math.min(92, bagH * STAGE_H_OVER_W * product.cutoutAspect);
+  /*
+    背丈は九点とも BAG_HEIGHT。幅はそこから実比率で決まる。
+    ただし musubi（帯・横長）と ichimatsu は同じ背丈だと板をはみ出すので、そこだけ
+    板の長さで頭打ちにする —— はみ出させるくらいなら、その二点だけ低く立たせる。
+  */
+  const wide = STAGE_H_OVER_W * product.cutoutAspect;
+  const bagH = Math.min(BAG_HEIGHT, SHELF_SPAN / wide);
+  const bagW = bagH * wide;
 
   return (
     <article className="group flex h-full flex-col">

@@ -37,8 +37,6 @@ export type Product = {
   tags: UseTag[];
   /** public/images/products/<folder>/1.webp … n.webp */
   galleryCount: number;
-  /** 一覧の浮遊表示でカットアウトが占める高さの比（背の高い瓶バッグ = 1） */
-  cutoutScale: number;
   /** cutout.webp の 縦横比 (w/h)。全タイル同寸の展示台に対して像の枠を決めるのに使う。
    *  値は scripts/prepare-images.py の出力から取る（写真を撮り直したら更新すること）。
    *
@@ -96,7 +94,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Gift", "Interior", "Formal"],
     galleryCount: 5,
-    cutoutScale: 0.926,
     cutoutAspect: 0.301,   // 390×1297
   },
   {
@@ -120,7 +117,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Gift", "Formal", "Daily Bag"],
     galleryCount: 5,
-    cutoutScale: 0.832,
     cutoutAspect: 0.294,   // 380×1294
   },
   {
@@ -144,7 +140,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Gift"],
     galleryCount: 5,
-    cutoutScale: 0.767,
     cutoutAspect: 0.345,   // 421×1220
   },
   {
@@ -168,7 +163,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Interior"],
     galleryCount: 4,
-    cutoutScale: 0.927,
     cutoutAspect: 0.328,   // 308×938
   },
   {
@@ -192,7 +186,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Formal"],
     galleryCount: 2,
-    cutoutScale: 0.838,
     cutoutAspect: 0.467,   // 596×1275
   },
   {
@@ -216,7 +209,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Formal", "Gift"],
     galleryCount: 2,
-    cutoutScale: 0.428,
     cutoutAspect: 1.236,   // 974×788
   },
   {
@@ -240,7 +232,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag", "Interior"],
     galleryCount: 1,
-    cutoutScale: 0.723,
     cutoutAspect: 0.666,   // 864×1298
   },
   {
@@ -264,7 +255,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Daily Bag"],
     galleryCount: 1,
-    cutoutScale: 0.61,
     cutoutAspect: 1.032,   // 1092×1058
   },
   {
@@ -288,7 +278,6 @@ export const products: Product[] = [
     weightG: null,
     tags: ["Interior", "Formal"],
     galleryCount: 1,
-    cutoutScale: 0.723,
     cutoutAspect: 0.658,   // 662×1006
   },
 ];
