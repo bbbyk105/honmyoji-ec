@@ -19,6 +19,9 @@ export function HomeAtmosphere() {
       if (!el) return;
       if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
+      const page = el.parentElement;
+      if (!page) return;
+
       const threadA = el.querySelector<HTMLElement>("[data-thread-a]");
       const threadB = el.querySelector<HTMLElement>("[data-thread-b]");
       const band = el.querySelector<HTMLElement>("[data-thread-band]");
@@ -31,7 +34,7 @@ export function HomeAtmosphere() {
             xPercent: 26,
             ease: "none",
             scrollTrigger: {
-              trigger: el.parentElement,
+              trigger: page,
               start: "top top",
               end: "bottom bottom",
               scrub: 1.2,
@@ -48,7 +51,7 @@ export function HomeAtmosphere() {
             xPercent: -22,
             ease: "none",
             scrollTrigger: {
-              trigger: el.parentElement,
+              trigger: page,
               start: "top top",
               end: "bottom bottom",
               scrub: 1.5,
@@ -66,7 +69,7 @@ export function HomeAtmosphere() {
             yPercent: 7,
             ease: "none",
             scrollTrigger: {
-              trigger: el.parentElement,
+              trigger: page,
               start: "top top",
               end: "bottom bottom",
               scrub: 1.8,
@@ -82,7 +85,7 @@ export function HomeAtmosphere() {
     <div ref={root} aria-hidden className="home-atmosphere pointer-events-none absolute inset-0 overflow-hidden">
       <span
         data-thread-a
-        className="absolute bottom-0 left-[18%] top-0 w-px bg-ivory/[0.055]"
+        className="absolute bottom-0 left-[18%] top-0 w-px bg-ivory/5"
       />
       <span
         data-thread-b
