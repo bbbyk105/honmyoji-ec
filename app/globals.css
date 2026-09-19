@@ -25,10 +25,10 @@
   --color-clay: #ad8c76;
   --color-rose: #ae8580;
 
-  --font-display: var(--font-bodoni), "Bodoni Moda", "Bodoni 72", Didot, serif;
-  --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
+  --font-display: var(--font-instrument), "Instrument Serif", Georgia, serif;
+  --font-jp: var(--font-noto-serif-jp), "Noto Serif JP", "Hiragino Mincho ProN",
     "Yu Mincho", serif;
-  --font-sans: var(--font-manrope), Manrope, "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-inter), Inter, "Helvetica Neue", Arial, sans-serif;
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-morph: cubic-bezier(0.33, 1, 0.68, 1);
@@ -108,7 +108,7 @@ body {
   font-family: var(--font-sans);
   font-size: 0.625rem;
   font-weight: 400;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-mist);
 }
@@ -192,7 +192,7 @@ body {
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文 17px / 1.9、見出しは Bodoni Moda。行長は親の 980px 版面に合わせる
+   本文 17px / 1.9、見出しは Instrument Serif。行長は親の 980px 版面に合わせる
   （内側で 62ch / 24ch を切ると右が空洞になる — DESIGN.md「列は文字幅」）。
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
