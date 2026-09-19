@@ -497,10 +497,32 @@ body {
   }
 }
 
-::view-transition-old(root),
+::view-transition-old(root) {
+  animation: 680ms cubic-bezier(0.22, 0.61, 0.36, 1) both atelier-page-out;
+}
+
 ::view-transition-new(root) {
-  animation-duration: 480ms;
-  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation: 760ms cubic-bezier(0.76, 0, 0.24, 1) both atelier-page-in;
+}
+
+@keyframes atelier-page-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0.36;
+    transform: scale(0.992);
+  }
+}
+
+@keyframes atelier-page-in {
+  from {
+    clip-path: inset(100% 0 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
 }
 
 ::view-transition-group(site-header) {
@@ -546,5 +568,99 @@ body {
   .group:hover .bag-lift,
   .group:focus-within .bag-lift {
     transform: translateY(-4px);
+  }
+}
+
+
+/* ------------------------------------------------------------------
+   Immersive home layer — CELLATO / exhibition-site grammar translated
+   into MIROKU's own material language. No gradients: depth comes from
+   woven SVG linework, the existing grain, photography and motion.
+   ------------------------------------------------------------------ */
+
+.atelier-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.11;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cg fill='none' stroke='%23f2ece0' stroke-opacity='.34' stroke-width='.55'%3E%3Cpath d='M24 0v192M72 0v192M120 0v192M168 0v192'/%3E%3Cpath d='M0 40h192M0 104h192M0 168h192' stroke-opacity='.16'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 192px 192px;
+}
+
+.home-atmosphere {
+  z-index: 0;
+}
+
+.exhibition-stage .exhibition-piece {
+  transition:
+    opacity 0.75s var(--ease-soft),
+    transform 0.75s var(--ease-soft);
+  transform-origin: 50% 70%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .exhibition-stage:has(.exhibition-piece:hover) .exhibition-piece:not(:hover) {
+    opacity: 0.38;
+    transform: scale(0.985);
+  }
+
+  .exhibition-stage .exhibition-piece:hover {
+    z-index: 2;
+  }
+}
+
+.material-scene,
+.campaign-scene,
+.craft-scene {
+  isolation: isolate;
+}
+
+.material-scene::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  bottom: 2%;
+  width: 1px;
+  background: rgba(242, 236, 224, 0.045);
+  pointer-events: none;
+}
+
+.campaign-scene::before {
+  content: "IN PLACE";
+  position: absolute;
+  right: 0;
+  top: 4.5rem;
+  z-index: -1;
+  font-family: var(--font-display);
+  font-size: clamp(72px, 14vw, 220px);
+  font-weight: 300;
+  line-height: 0.8;
+  letter-spacing: -0.045em;
+  color: rgba(242, 236, 224, 0.025);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.craft-scene::after {
+  content: "";
+  position: absolute;
+  inset: 12% 8% auto auto;
+  width: 22vw;
+  max-width: 320px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(242, 236, 224, 0.045);
+  transform: rotate(12deg);
+  pointer-events: none;
+  z-index: -1;
+}
+
+@media (max-width: 767px) {
+  .material-scene::before,
+  .campaign-scene::before,
+  .craft-scene::after {
+    display: none;
   }
 }
