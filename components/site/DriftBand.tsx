@@ -36,20 +36,6 @@ export function DriftBand({ shots }: Props) {
           scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 0.9 },
         },
       );
-
-      const frames = gsap.utils.toArray<HTMLElement>(el.querySelectorAll("[data-drift-frame]"));
-      frames.forEach((frame, i) => {
-        gsap.fromTo(
-          frame,
-          { scale: 1.055, yPercent: i % 2 === 0 ? 2.5 : -2.5 },
-          {
-            scale: 1,
-            yPercent: i % 2 === 0 ? -2.5 : 2.5,
-            ease: "none",
-            scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 1.15 },
-          },
-        );
-      });
     },
     { scope: root },
   );
@@ -63,9 +49,7 @@ export function DriftBand({ shots }: Props) {
             className="relative aspect-[4/5] w-[150px] shrink-0 overflow-hidden bg-onyx sm:w-[190px] md:w-[250px]"
             style={{ transform: `translateY(${i % 3 === 1 ? 26 : i % 3 === 2 ? -20 : 0}px)` }}
           >
-            <div data-drift-frame className="relative h-full w-full overflow-hidden">
-              <Image src={shot.src} alt="" fill sizes="250px" className="object-cover" />
-            </div>
+            <Image src={shot.src} alt="" fill sizes="250px" className="object-cover" />
           </div>
         ))}
       </div>
