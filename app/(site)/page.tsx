@@ -6,6 +6,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { HomeHero } from "@/components/home/HomeHero";
+import { HomeAtmosphere } from "@/components/home/HomeAtmosphere";
 import { FloatingBag } from "@/components/collection/FloatingBag";
 import { StillTile } from "@/components/collection/StillTile";
 import { productImage } from "@/data/products";
@@ -47,8 +48,9 @@ export default async function HomePage() {
       */}
       <div
         data-page-sheet
-        className="relative z-10 border-t border-ivory/10 bg-sumi shadow-[0_-40px_90px_-40px_rgba(0,0,0,0.85)]"
+        className="atelier-surface relative z-10 overflow-hidden border-t border-ivory/10 bg-sumi shadow-[0_-40px_90px_-40px_rgba(0,0,0,0.85)]"
       >
+        <HomeAtmosphere />
 
         {/* 2. Intro — text as a page, not a marketing block */}
         <section className="washi-grain relative">
@@ -76,7 +78,7 @@ export default async function HomePage() {
         </section>
 
         {/* 3. Featured — chosen, not a row of equal cards */}
-        <section>
+        <section className="relative z-[1]">
           <div className={SHELL}>
             <Reveal className="flex items-end justify-between gap-6 border-b border-line pb-5">
               <div>
@@ -97,23 +99,31 @@ export default async function HomePage() {
               中央寄せと 01 / 03 は SwipeStrip が持つ（コマの入れ方の理由はそちらの註）。
             */}
             <SwipeStrip
-              className="mt-12"
+              className="exhibition-stage mt-12"
               trackClassName="-mx-4 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-8 sm:overflow-visible md:gap-10"
             >
               {[sakura, ai, wakaba].map((piece, i) => (
-                <Reveal key={piece.slug} delay={i * 80}>
-                  <FloatingBag product={piece} index={i} priority={i < 2} />
-                  <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-bone/75">
-                    {piece.note}
-                  </p>
-                </Reveal>
+                <div key={piece.slug} className="exhibition-piece relative">
+                  <span
+                    aria-hidden
+                    className="pointer-events-none absolute right-2 top-2 z-0 font-display text-[clamp(72px,8vw,126px)] font-light leading-none text-ivory/[0.035]"
+                  >
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
+                  <Reveal delay={i * 80} className="relative z-[1]">
+                    <FloatingBag product={piece} index={i} priority={i < 2} />
+                    <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-bone/75">
+                      {piece.note}
+                    </p>
+                  </Reveal>
+                </div>
               ))}
             </SwipeStrip>
           </div>
         </section>
 
         {/* 4. Material essay */}
-        <section className="pt-24 md:pt-32">
+        <section className="material-scene relative z-[1] pt-24 md:pt-32">
           <div className={`${SHELL} grid gap-12 md:grid-cols-12 md:items-start md:gap-8`}>
             <Reveal className="md:col-span-5 md:sticky md:top-28">
               <p className="eyebrow">Material</p>
@@ -176,7 +186,7 @@ export default async function HomePage() {
         />
 
         {/* 5. Campaign / living objects */}
-        <section className={`${SHELL} pt-4 md:pt-6`}>
+        <section className={`${SHELL} campaign-scene relative z-[1] pt-4 md:pt-6`}>
           <Reveal className="md:max-w-[36ch]">
             <p className="eyebrow">In place</p>
             <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.6vw,46px)] font-light leading-[1.1] text-ivory">
@@ -242,7 +252,7 @@ export default async function HomePage() {
         </section>
 
         {/* 6. Craft */}
-        <section className="mt-20 bg-onyx/70 md:mt-28">
+        <section className="craft-scene relative z-[1] mt-20 bg-onyx/70 md:mt-28">
           <div className={`${SHELL} grid gap-12 py-16 md:grid-cols-12 md:gap-8 md:py-24`}>
             <Reveal className="md:col-span-5">
               <Frame
@@ -279,7 +289,7 @@ export default async function HomePage() {
         </section>
 
         {/* 7. The blog as a publication, not a blog widget */}
-        <section className={`${SHELL} py-16 md:py-24`}>
+        <section className={`${SHELL} relative z-[1] py-16 md:py-24`}>
           {/*
             一覧は 1040px で読める幅を保つ。ただし版面が 1384px まで開く xl 以上では
             右に 344px の空白が残るので、そこで見出しを左の段へ出して版面を埋める
@@ -332,7 +342,7 @@ export default async function HomePage() {
         </section>
 
         {/* quiet closing piece, not a CTA banner */}
-        <section className={`${SHELL} pb-8`}>
+        <section className={`${SHELL} relative z-[1] pb-8`}>
           <Reveal className="grid gap-8 border-t border-line pt-10 md:grid-cols-12">
             {/* 一文を 7 カラム（800px）に置くと一行で流れて、締めの言葉に見えない。折って、写真と同じ高さの中央に置く。 */}
             <p className="self-center font-display text-[clamp(22px,2.6vw,32px)] font-light leading-[1.35] text-ivory md:col-span-6 lg:col-span-5">
