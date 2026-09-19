@@ -193,12 +193,12 @@ export function SiteHeader() {
           aria-label={`${site.name} — home`}
         >
           <span
-            className={`block font-display text-[20px] font-light leading-none tracking-[0.18em] transition-colors duration-500 sm:text-[23px] ${tone}`}
+            className={`block font-sans text-[17px] font-medium leading-none tracking-[0.12em] transition-colors duration-500 sm:text-[19px] ${tone}`}
           >
             MIROKU
           </span>
           <span
-            className={`mt-[7px] block font-sans text-[8px] uppercase tracking-[0.3em] transition-colors duration-500 ${toneMuted}`}
+            className={`mt-[7px] block font-sans text-[8px] uppercase tracking-[0.18em] transition-colors duration-500 ${toneMuted}`}
           >
             Honmyoji · Fuji
           </span>
@@ -212,7 +212,7 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${
+                className={`relative font-sans text-[10.5px] uppercase tracking-[0.14em] transition-colors duration-500 ${
                   active ? tone : "link-line text-bone/60 hover:text-ivory"
                 }`}
               >
@@ -235,7 +235,7 @@ export function SiteHeader() {
               leave();
               setCartOpen(true);
             }}
-            className={`link-line min-h-11 font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${tone}`}
+            className={`link-line min-h-11 font-sans text-[10.5px] uppercase tracking-[0.14em] transition-colors duration-500 ${tone}`}
             aria-label={`Cart, ${slugs.length} ${slugs.length === 1 ? "piece" : "pieces"}`}
           >
             Cart
@@ -255,7 +255,7 @@ export function SiteHeader() {
             }}
             aria-expanded={open}
             aria-controls="site-menu"
-            className={`flex min-h-11 min-w-11 items-center justify-end gap-2.5 font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 xl:hidden ${tone}`}
+            className={`flex min-h-11 min-w-11 items-center justify-end gap-2.5 font-sans text-[10.5px] uppercase tracking-[0.14em] transition-colors duration-500 xl:hidden ${tone}`}
           >
             <span className="hidden sm:inline">{open ? "Close" : "Menu"}</span>
             <span aria-hidden className="relative block h-[10px] w-6">
@@ -295,28 +295,28 @@ export function SiteHeader() {
                         {String(i + 1).padStart(2, "0")}
                       </span>
                       <span
-                        className={`font-display text-[clamp(36px,10vw,64px)] font-light leading-none ${
+                        className={`font-display text-[clamp(38px,9vw,60px)] font-normal leading-[0.95] tracking-[-0.02em] ${
                           active ? "text-ivory" : "text-ivory/75"
                         }`}
                       >
                         {item.label}
                       </span>
                     </span>
-                    <span className="hidden font-jp text-[12px] tracking-[0.2em] text-mist sm:block">{item.ja}</span>
+                    <span className="hidden font-jp text-[12px] tracking-[0.14em] text-mist sm:block">{item.ja}</span>
                   </Link>
                 </li>
               );
             })}
           </ul>
           <div data-menu-foot className="border-t border-line pt-6">
-            <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-mist">{site.location}</p>
+            <p className="font-sans text-[10px] uppercase tracking-[0.14em] text-mist">{site.location}</p>
             <button
               type="button"
               onClick={() => {
                 leave();
                 setCartOpen(true);
               }}
-              className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.22em] text-ivory"
+              className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.14em] text-ivory"
             >
               Cart · {String(slugs.length).padStart(2, "0")}
             </button>
