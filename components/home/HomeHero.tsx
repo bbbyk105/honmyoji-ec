@@ -95,7 +95,7 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
     <section
       ref={root}
       data-dark-hero
-      className="sticky top-0 z-0 isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#1b1710] text-ivory"
+      className="sticky top-0 z-0 isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#111110] text-ivory"
     >
       <figure
         data-image-role="hero-campaign"
@@ -120,7 +120,7 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
       <div
         aria-hidden
         data-hero-dim
-        className="pointer-events-none absolute inset-0 z-20 bg-[#120e08] opacity-0"
+        className="pointer-events-none absolute inset-0 z-20 bg-[#090909] opacity-0"
       />
 
       <div
@@ -150,11 +150,11 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
 
             <h1
               data-hero-title
-              className="mt-5 max-w-[9.8ch] font-display text-[clamp(42px,5.4vw,78px)] font-light leading-[0.96] tracking-[-0.025em] text-ivory max-sm:text-[clamp(40px,10.6vw,52px)] sm:mt-6"
+              className="mt-5 max-w-[9.8ch] font-display text-[clamp(42px,5.15vw,74px)] font-normal leading-[0.96] tracking-[-0.035em] text-ivory max-sm:text-[clamp(40px,10.6vw,52px)] sm:mt-6"
             >
               Made to be
               <br />
-              <em className="font-light italic">held.</em>
+              <em className="font-normal italic">held.</em>
             </h1>
 
             <div data-hero-cta className="mt-7 flex flex-wrap items-center gap-x-8 gap-y-3 sm:mt-8">
