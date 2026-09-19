@@ -11,6 +11,7 @@ type Props = {
   children: ReactNode;
   className?: string;
   delay?: number;
+  direction?: "up" | "left" | "right" | "none";
   as?: "div" | "section" | "article" | "li" | "p" | "figure";
 };
 
@@ -18,7 +19,13 @@ type Props = {
  * 入場。ブロックは静かに上がり、`data-split-lines` を付けた見出しだけは
  * 行ごとにマスクの下から起き上がる（ヒーローと同じ所作を本文の見出しにも使う）。
  */
-export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }: Props) {
+export function Reveal({
+  children,
+  className = "",
+  delay = 0,
+  direction = "up",
+  as: Tag = "div",
+}: Props) {
   const ref = useRef<HTMLElement | null>(null);
 
   useGSAP(
@@ -39,19 +46,33 @@ export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }:
         },
       });
 
-      tl.from(el, { y: 26, autoAlpha: 0, duration: 1.05, ease: "power3.out" });
+      const offset =
+        direction === "none"
+          ? { x: 0, y: 0 }
+          : { x: 0, y: 18 };
+
+      tl.from(el, {
+        ...offset,
+        autoAlpha: 0,
+        duration: direction === "none" ? 0.7 : 0.92,
+        ease: "power2.out",
+      });
 
       for (const head of heads) {
         const split = SplitText.create(head, { type: "lines", mask: "lines" });
         splits.push(split);
-        tl.from(split.lines, { yPercent: 108, duration: 1.1, stagger: 0.09, ease: "power3.out" }, 0.06);
+        tl.from(
+          split.lines,
+          { yPercent: 58, autoAlpha: 0, duration: 0.95, stagger: 0.06, ease: "power3.out" },
+          0.04,
+        );
       }
 
       return () => {
         for (const split of splits) split.revert();
       };
     },
-    { dependencies: [delay] },
+    { dependencies: [delay, direction] },
   );
 
   return (

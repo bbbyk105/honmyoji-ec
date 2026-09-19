@@ -1,37 +1,34 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   MIROKU — rooms, not storefronts.
-   展示室は暗い。地はヒーローの写真と同じ暖かい黒（#1b1710 の族）で、
-   純黒（#000）は一度も使わない — 冷たい黒の上では、畳の縁の赤も藍も濁る。
-
-   トークンは色の名前ではなく役どころ。地は三段（onyx < sumi < lacquer）、
-   文字は二段（ivory / bone）、その下に meta の mist と罫の line。
+   MIROKU — contemporary craft, not "Japanese luxury" styling.
+   茶・生成りへ寄せすぎず、無彩色に近い charcoal と mineral white で組む。
+   色はバッグそのものに任せ、UI はほぼ色を持たない。
    ------------------------------------------------------------------ */
 @theme {
-  /* 地 — 深い順。段差は 6〜11 と小さい。大きく開けると黒が灰に見える */
-  --color-onyx: #0b0806;    /* 地より深いところ：写真の井戸、接地の影、フッターの土台 */
-  --color-sumi: #14100b;    /* 版の地 */
-  --color-lacquer: #1f1a13; /* 持ち上がる面：入力欄、注記、パネル */
-  --color-ash: #2a241b;     /* やわらかい面 */
-  --color-bark: #4a4133;    /* 暖かい支え：hover の罫 */
+  /* Ground — almost neutral. Depth comes from luminance, not brown hue. */
+  --color-onyx: #080808;
+  --color-sumi: #0e0e0d;
+  --color-lacquer: #151514;
+  --color-ash: #1d1d1b;
+  --color-bark: #393834;
 
-  /* 文字 */
-  --color-ivory: #f2ece0;   /* 光 — 見出し・罫・塗りのボタン */
-  --color-bone: #cfc6b4;    /* 本文。見出しより一段落として、黒地のにじみを抑える */
-  --color-mist: #9c9280;    /* メタ・キャプション（sumi 上で 6.2:1） */
-  --color-line: #37301f;    /* ヘアライン */
+  /* Type — mineral white, not cream. */
+  --color-ivory: #f1efe9;
+  --color-bone: #c8c5bd;
+  --color-mist: #85827b;
+  --color-line: #2a2926;
 
-  /* 織りの色。黒地では沈むので、明度だけ上げて彩度は足していない */
-  --color-moss: #92a37b;    /* available */
-  --color-indigo: #8a9cb4;  /* coming soon */
-  --color-clay: #c89771;    /* made to order / エラー */
-  --color-rose: #cf9d92;    /* 桜のときだけ */
+  /* Status colours are muted so the product remains the only saturated object. */
+  --color-moss: #8c9885;
+  --color-indigo: #8490a0;
+  --color-clay: #ad8c76;
+  --color-rose: #ae8580;
 
-  --font-display: var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
-  --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
+  --font-display: var(--font-instrument), "Instrument Serif", Georgia, serif;
+  --font-jp: var(--font-noto-serif-jp), "Noto Serif JP", "Hiragino Mincho ProN",
     "Yu Mincho", serif;
-  --font-sans: var(--font-source), "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-inter), Inter, "Helvetica Neue", Arial, sans-serif;
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-morph: cubic-bezier(0.33, 1, 0.68, 1);
@@ -57,7 +54,7 @@ body {
 }
 
 ::selection {
-  background: rgba(242, 236, 224, 0.2);
+  background: rgba(241, 239, 233, 0.16);
   color: var(--color-ivory);
 }
 
@@ -91,7 +88,12 @@ body {
   pointer-events: none;
   opacity: 0.1;
   mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.84 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 0.42 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+.font-display {
+  font-weight: 400;
+  font-synthesis: none;
 }
 
 .tategaki {
@@ -110,8 +112,8 @@ body {
 .eyebrow {
   font-family: var(--font-sans);
   font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.28em;
+  font-weight: 400;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--color-mist);
 }
@@ -186,16 +188,16 @@ body {
    読めるようにするぶんは文字の不透明度で払う —— 写真を曇らせて払わない。
    ------------------------------------------------------------------ */
 .hero-grain {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.9 0 0 0 0 0.82 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.93 0 0 0 0 0.93 0 0 0 0.46 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
   mix-blend-mode: overlay;
-  opacity: 0.13;
+  opacity: 0.095;
 }
 
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文 17px / 1.9、見出しは Newsreader。行長は親の 980px 版面に合わせる
+   本文 17px / 1.9、見出しは Instrument Serif。行長は親の 980px 版面に合わせる
   （内側で 62ch / 24ch を切ると右が空洞になる — DESIGN.md「列は文字幅」）。
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
@@ -225,7 +227,7 @@ body {
 .blog-prose h3 {
   margin-top: 2.6em;
   font-family: var(--font-display);
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.2;
   color: var(--color-ivory);
 }
@@ -259,7 +261,7 @@ body {
   font-family: var(--font-display);
   font-size: clamp(22px, 2.6vw, 30px);
   font-style: italic;
-  font-weight: 300;
+  font-weight: 400;
   line-height: 1.35;
   color: var(--color-ivory);
 }
@@ -397,15 +399,6 @@ body {
   }
 }
 
-@keyframes bag-drift {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
 
 /* 黒地では 12% の影は「無い」のと同じ。落とす先が地より深い色になるよう、
    純黒を濃く短く二枚。像の裾だけが沈み、台の面は明るいまま残る。 */
@@ -415,10 +408,8 @@ body {
 }
 
 .bag-float {
-  animation:
-    bag-enter 1.1s var(--ease-soft) both,
-    bag-drift 8s ease-in-out 1.1s 3;
-  animation-delay: var(--delay, 0ms), calc(1.1s + var(--delay, 0ms));
+  animation: bag-enter 0.95s var(--ease-soft) both;
+  animation-delay: var(--delay, 0ms);
   will-change: transform, opacity;
 }
 
@@ -431,7 +422,7 @@ body {
 
 .group:hover .bag-lift,
 .group:focus-within .bag-lift {
-  transform: translateY(-10px) scale(1.06);
+  transform: translateY(-4px) scale(1.025);
 }
 
 @keyframes hero-settle {
@@ -497,10 +488,34 @@ body {
   }
 }
 
-::view-transition-old(root),
+::view-transition-old(root) {
+  animation: 360ms var(--ease-soft) both atelier-page-out;
+}
+
 ::view-transition-new(root) {
-  animation-duration: 480ms;
-  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation: 430ms var(--ease-soft) both atelier-page-in;
+}
+
+@keyframes atelier-page-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.997);
+  }
+}
+
+@keyframes atelier-page-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 ::view-transition-group(site-header) {
@@ -546,5 +561,65 @@ body {
   .group:hover .bag-lift,
   .group:focus-within .bag-lift {
     transform: translateY(-4px);
+  }
+}
+
+
+/* ------------------------------------------------------------------
+   Immersive home layer — CELLATO / exhibition-site grammar translated
+   into MIROKU's own material language. No gradients: depth comes from
+   woven SVG linework, the existing grain, photography and motion.
+   ------------------------------------------------------------------ */
+
+.atelier-surface::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: soft-light;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cg fill='none' stroke='%23f1efe9' stroke-opacity='.34' stroke-width='.55'%3E%3Cpath d='M24 0v192M72 0v192M120 0v192M168 0v192'/%3E%3Cpath d='M0 40h192M0 104h192M0 168h192' stroke-opacity='.16'/%3E%3C/g%3E%3C/svg%3E");
+  background-size: 192px 192px;
+}
+
+.home-atmosphere {
+  z-index: 0;
+}
+
+.exhibition-stage .exhibition-piece {
+  transition: opacity 0.55s var(--ease-soft);
+  transform-origin: 50% 70%;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .exhibition-stage:has(.exhibition-piece:hover) .exhibition-piece:not(:hover) {
+    opacity: 0.66;
+  }
+
+  .exhibition-stage .exhibition-piece:hover {
+    z-index: 2;
+  }
+}
+
+.material-scene,
+.campaign-scene,
+.craft-scene {
+  isolation: isolate;
+}
+
+.material-scene::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 5%;
+  bottom: 2%;
+  width: 1px;
+  background: rgba(241, 239, 233, 0.045);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .material-scene::before {
+    display: none;
   }
 }

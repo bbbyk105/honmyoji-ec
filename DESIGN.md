@@ -15,49 +15,47 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 
 - **Direction:** Editorial / material-first. A dark room hung with lit objects. Quiet luxury without gold, black marble, or zen cliché.
 - **Decoration:** Intentional and rare. Grain on the ground, a beri band used as a section edge, thin rules. No cards, icons, glass — and no gradients anywhere (see Color).
-- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large Newsreader italic at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
-- **Mood:** Warm black room, lit from the front. Colour lives in the cloth — on this ground the weave is the only saturated thing on the page. Type is literary, not “luxury template.”
+- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large Instrument Serif italic at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
+- **Mood:** Neutral charcoal room, lit from the front. The UI carries almost no hue; colour lives in the cloth. Type is fashion-editorial, not “Japanese luxury” styling.
 - **What we refused:** 3-up feature rows, centered manifesto + CTA stacks, pill buttons, drop shadows, Shopify grids, beige Instagram boutique, startup landing structure.
 
 ## Typography
 
-- **Display:** Newsreader (300 / italic) — optical, editorial, less costume than display Garamonds used on luxury templates.
-- **UI / body:** Source Sans 3 (300–600) — clear, slightly condensed, bilingual-friendly.
-- **Japanese:** Shippori Mincho — for secondary lines only. Never dump bilingual pairs on every heading.
+- **Display:** Instrument Serif (400 / italic) — narrow contrast and sharper vertical stress; use at controlled sizes, never as oversized “luxury” wallpaper.
+- **UI / body:** Inter (300–600) — neutral, contemporary, and deliberately non-editorial so the serif carries the brand voice.
+- **Japanese:** Noto Serif JP — for secondary lines only. Never dump bilingual pairs on every heading.
 - **Scale (approx.):**
-  - Hero: clamp(44px, 7vw, 104px), leading ~0.92
-  - Page title: clamp(40px, 6vw, 92px)
-  - Section: clamp(32px, 4vw, 52px)
-  - Deck: 22–26px Newsreader light
+  - Hero: clamp(42px, 5.15vw, 74px), leading ~0.96
+  - Page title: clamp(38px, 5vw, 76px)
+  - Section: clamp(30px, 3.8vw, 50px)
+  - Deck: 22–26px Instrument Serif
   - Body: 14–17px / 1.85
-  - Meta: 9.5–10.5px uppercase, tracking 0.22–0.28em
+  - Meta: 9.5–10.5px uppercase, tracking 0.14–0.20em
 - **Loading:** `next/font/google`, `display: "swap"`. Shippori `preload: false`.
 
 ## Color
 
-Restrained, and now dark. The ground is the warm black of the hero photograph — **never `#000`**: on a cold
-black the tatami-beri's reds and indigos go grey. Accents are moss, faded indigo and clay — colours already
-in the weave, lifted in value so they read on the dark — used for status and rare emphasis, never as chrome.
+Restrained and nearly neutral. The UI no longer leans brown or cream: that combination read as hospitality / “wa-modern” styling rather than fashion. The ground is charcoal-black, type is mineral off-white, and almost all hue is reserved for the actual bags. Status accents stay muted and functional.
 
 Tokens are **roles, not colour names**. Grounds come in three depths, type in two.
 
 | Token | Hex | Use |
 |---|---|---|
-| onyx | `#0b0806` | Below the ground: image wells, contact shadows, footer base |
-| sumi | `#14100b` | Page ground |
-| lacquer | `#1f1a13` | Raised surface: form fields, notes, panels |
-| ash | `#2a241b` | Soft fill |
-| bark | `#4a4133` | Warm support — the hover hairline on a field |
-| ivory | `#f2ece0` | The light: headings, rules, solid button fills |
-| bone | `#cfc6b4` | Body — a step below ivory, so long text does not halate |
-| mist | `#9c9280` | Meta, captions (6.2∶1 on sumi) |
-| line | `#37301f` | Hairline |
-| moss | `#92a37b` | Available, rare accent |
-| indigo | `#8a9cb4` | Coming soon |
-| clay | `#c89771` | Made to order, material note, errors |
-| rose | `#cf9d92` | Sakura-related only, if ever |
+| onyx | `#080808` | Below the ground: image wells, contact shadows, footer base |
+| sumi | `#0e0e0d` | Page ground |
+| lacquer | `#151514` | Raised surface: form fields, notes, panels |
+| ash | `#1d1d1b` | Soft fill |
+| bark | `#393834` | Neutral support — hover hairline on a field |
+| ivory | `#f1efe9` | Mineral white: headings, rules, solid button fills |
+| bone | `#c8c5bd` | Body — a step below ivory, so long text does not halate |
+| mist | `#85827b` | Meta and captions |
+| line | `#2a2926` | Hairline |
+| moss | `#8c9885` | Available, rare accent |
+| indigo | `#8490a0` | Coming soon |
+| clay | `#ad8c76` | Made to order, material note, errors |
+| rose | `#ae8580` | Sakura-related only, if ever |
 
-The home hero is one step lighter than the page (`#1b1710`) — the room the photograph lights. The sheet
+The home hero is one step lighter than the page (`#111110`) — the room the photograph lights. The sheet
 that rises over it is `sumi`, so scrolling reads as the lighting coming down, not as a section change.
 
 No gold. Depth is made with three near-blacks and one hairline, not with a metallic.
@@ -186,7 +184,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 
 | Date | Decision | Rationale |
 |---|---|---|
-| 2026-08-30 | Newsreader + Source Sans 3 + Shippori | Editorial without costume luxury serif |
+| 2026-09-19 | Instrument Serif + Inter + Shippori | Use Instrument Serif only for editorial display moments; keep logo and UI in Inter so the site does not read as a luxury-template serif system |
 | 2026-08-30 | Drop gold / sumi footer | Avoid fake-luxury signals; moss/indigo from the cloth |
 | 2026-08-30 | Hold / inquiry instead of cart checkout | Matches one-of-a-kind making and current ops |
 | 2026-08-30 | Frame roles + ratios in captions | Photography can be swapped without layout work |
