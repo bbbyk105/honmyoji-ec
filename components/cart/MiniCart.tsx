@@ -142,7 +142,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
           <p className="font-sans text-[11px] leading-[1.8] text-mist">
             {canCheckout
               ? "Shipping is added at the next step. Payment is handled by Stripe — we never see your card."
-              : "Checkout is arranged individually for one-of-a-kind pieces. Send the cart and we’ll reply with payment and delivery details."}
+              : "Nothing is charged here. Send us your cart and a person writes back with payment details."}
           </p>
 
           {state.error ? (
