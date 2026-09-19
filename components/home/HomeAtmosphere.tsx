@@ -29,9 +29,9 @@ export function HomeAtmosphere() {
       if (threadA) {
         gsap.fromTo(
           threadA,
-          { xPercent: -18 },
+          { xPercent: -3 },
           {
-            xPercent: 26,
+            xPercent: 4,
             ease: "none",
             scrollTrigger: {
               trigger: page,
@@ -46,9 +46,9 @@ export function HomeAtmosphere() {
       if (threadB) {
         gsap.fromTo(
           threadB,
-          { xPercent: 14 },
+          { xPercent: 3 },
           {
-            xPercent: -22,
+            xPercent: -4,
             ease: "none",
             scrollTrigger: {
               trigger: page,
@@ -63,10 +63,10 @@ export function HomeAtmosphere() {
       if (band) {
         gsap.fromTo(
           band,
-          { xPercent: -8, yPercent: -4 },
+          { xPercent: -1.5, yPercent: -1 },
           {
-            xPercent: 16,
-            yPercent: 7,
+            xPercent: 2,
+            yPercent: 1,
             ease: "none",
             scrollTrigger: {
               trigger: page,
@@ -85,15 +85,15 @@ export function HomeAtmosphere() {
     <div ref={root} aria-hidden className="home-atmosphere pointer-events-none absolute inset-0 overflow-hidden">
       <span
         data-thread-a
-        className="absolute bottom-0 left-[18%] top-0 w-px bg-ivory/5"
+        className="absolute bottom-0 left-[18%] top-0 w-px bg-ivory/[0.025]"
       />
       <span
         data-thread-b
-        className="absolute bottom-0 left-[77%] top-0 w-px bg-ivory/[0.04]"
+        className="absolute bottom-0 left-[77%] top-0 w-px bg-ivory/[0.02]"
       />
       <span
         data-thread-band
-        className="absolute left-[58%] top-[8%] h-[78%] w-[9vw] min-w-20 border-x border-ivory/[0.035]"
+        className="absolute left-[58%] top-[8%] h-[78%] w-[9vw] min-w-20 border-x border-ivory/[0.02]"
       />
     </div>
   );
