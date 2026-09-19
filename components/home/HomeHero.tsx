@@ -15,98 +15,132 @@ type Props = {
   materialHref?: string;
 };
 
-/** 展示のクレジット。三つ以上並べると帯になるので増やさない。 */
 const CREDITS = ["Handwoven", "Tatami-beri / paper band", "One of a kind"];
 
 /**
- * 第一画面。DESIGN.md の「ヒーローは刻まれた写真であって、左コピー / 右写真ではない」は
- * ここでも守っている — 版を割らず、一枚の写真そのものが持つ左の余白に文字を刻む。
- * **写真には何も掛けない**（暗幕も継ぎ目も外した理由は globals.css の Home hero の節）。
- * 地はサイト全体と同じ暖かい黒だが、この節だけ一段明るい（#1b1710 / 版の地は #14100b）。
- * 写真が部屋を照らしている、という差。下の面が上がってくると照明が落ちる。
- *
- * 縦組みの一行が主役。英語の見出しは支え。写真は原寸で右に置き、左の余白は空けておく。
- * 版面は SHELL — 写真だけが画面いっぱいに出るので、文字の左端は下のセクションと揃う。
- *
- * この節は `sticky top-0`。下の面（`[data-page-sheet]`）が z 上位で敷かれていて、
- * スクロールするとそれが下から上がってきてこの部屋を覆う。覆われる間に文字を先に消し、
- * 部屋を奥へ沈めているので、境目は「節が変わった」ではなく「照明が落ちた」に見える。
+ * 第一画面は「商品画像 + コピー」ではなく、ブランドのオープニングシークエンスとして扱う。
+ * 写真・縦組み・一本の織り線が同じタイミングで立ち上がり、スクロールを始めると
+ * 下の版に覆われながら部屋が奥へ沈む。派手な 3D は使わず、写真とタイポの奥行きだけで作る。
  */
 export function HomeHero({ materialHref = "/blog" }: Props) {
   const root = useRef<HTMLElement>(null);
 
   useGSAP(
     () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      const el = root.current;
+      if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
 
-      const image = root.current?.querySelector<HTMLElement>("[data-hero-image]");
-      const title = root.current?.querySelector<HTMLElement>("[data-hero-title]");
+      const image = el.querySelector<HTMLElement>("[data-hero-image]");
+      const title = el.querySelector<HTMLElement>("[data-hero-title]");
+      const thread = el.querySelector<HTMLElement>("[data-hero-thread]");
 
-      /*
-        入場の順は 像 → 縦の一行 → クレジット → 見出し → CTA → 罫。
-        写真は「開く」（DESIGN.md）が、全面の帯ワイプはこの大きさでは掃くような動きになるので、
-        ここは 1.05 倍からの静かな落ち着きと、縦組みが上から書かれていくマスクに留める。
-      */
       const tl = gsap.timeline({ defaults: { ease: "power2.out" } });
 
       if (image) {
-        tl.from(image, { autoAlpha: 0, scale: 1.05, duration: 2.2, ease: "expo.out" }, 0);
+        tl.fromTo(
+          image,
+          { clipPath: "inset(0% 0% 0% 100%)", scale: 1.085 },
+          {
+            clipPath: "inset(0% 0% 0% 0%)",
+            scale: 1,
+            duration: 1.75,
+            ease: "expo.inOut",
+          },
+          0,
+        );
+      }
+
+      if (thread) {
+        tl.fromTo(
+          thread,
+          { xPercent: -108, autoAlpha: 0 },
+          { xPercent: 108, autoAlpha: 1, duration: 1.85, ease: "power4.inOut" },
+          0.12,
+        ).to(thread, { autoAlpha: 0, duration: 0.42 }, 1.48);
       }
 
       tl.from(
         "[data-hero-ja]",
-        { clipPath: "inset(0% 0% 100% 0%)", duration: 1.5, ease: "expo.out" },
-        0.7,
-      )
-        .from("[data-hero-meta]", { autoAlpha: 0, y: 12, duration: 0.9, stagger: 0.09 }, 1.05);
+        { clipPath: "inset(0% 0% 100% 0%)", duration: 1.35, ease: "expo.out" },
+        0.64,
+      ).from(
+        "[data-hero-meta]",
+        { autoAlpha: 0, y: 14, duration: 0.82, stagger: 0.08 },
+        0.95,
+      );
 
       if (title) {
         const split = SplitText.create(title, { type: "lines", mask: "lines" });
-        tl.from(split.lines, { yPercent: 110, duration: 1.1, stagger: 0.1, ease: "power3.out" }, 1.2);
+        tl.from(
+          split.lines,
+          { yPercent: 116, rotate: 1.4, duration: 1.15, stagger: 0.11, ease: "power4.out" },
+          1.05,
+        );
       }
 
-      tl.from("[data-hero-cta]", { autoAlpha: 0, y: 12, duration: 0.9 }, 1.55).from(
+      tl.from(
+        "[data-hero-cta]",
+        { autoAlpha: 0, y: 14, duration: 0.85 },
+        1.45,
+      ).from(
         "[data-hero-rail]",
-        { autoAlpha: 0, duration: 0.9 },
-        1.75,
+        { autoAlpha: 0, duration: 0.85 },
+        1.66,
       );
 
       /*
-        退場。この節は pin されているので、動くのは上から降りてくる版の面のほう。
-        だから「視差」ではなく「部屋が奥へ退く」を作る — 文字は紙の端が届く前に消え、
-        写真だけがわずかに寄って暗くなる。黒い版がそのまま上へ抜けるのを避けるための一手。
+       * マウスに追従するのは写真だけ。最大 8px 程度に留め、UI が追いかけてくる感じにはしない。
+       * スクロール時の frame scale と競合させないため、内側の image layer を動かす。
+       */
+      const finePointer = window.matchMedia("(pointer: fine)").matches;
+      let cleanupPointer = () => {};
+      if (finePointer && image) {
+        const xTo = gsap.quickTo(image, "x", { duration: 1.2, ease: "power3.out" });
+        const yTo = gsap.quickTo(image, "y", { duration: 1.2, ease: "power3.out" });
 
-        trigger は sticky の自分自身ではなく版の面。sticky を trigger にすると、
-        resize（スマホのアドレスバー開閉）で走る再計測が、貼り付いた現在位置を
-        「先頭」と読んでしまい、範囲が丸ごとずれる。
-      */
+        const onMove = (event: PointerEvent) => {
+          const rect = el.getBoundingClientRect();
+          const nx = (event.clientX - rect.left) / rect.width - 0.5;
+          const ny = (event.clientY - rect.top) / rect.height - 0.5;
+          xTo(nx * 12);
+          yTo(ny * 8);
+        };
+        const onLeave = () => {
+          xTo(0);
+          yTo(0);
+        };
+
+        el.addEventListener("pointermove", onMove);
+        el.addEventListener("pointerleave", onLeave);
+        cleanupPointer = () => {
+          el.removeEventListener("pointermove", onMove);
+          el.removeEventListener("pointerleave", onLeave);
+        };
+      }
+
       const sheet = document.querySelector<HTMLElement>("[data-page-sheet]");
       if (sheet) {
         const scrub = { trigger: sheet, scrub: true } as const;
 
-        /*
-          写真は動かすのではなく寄る。`[data-hero-image]` を y で送ると、覆われる手前で
-          井戸の上端に地の色の帯が出る（pin されているので、その帯が画面に居座る）。
-          枠ごと 1.05 倍なら隙間は生まれず、はみ出た分は節の overflow が刈る。
-        */
         gsap.to("[data-hero-frame]", {
-          scale: 1.05,
+          scale: 1.055,
           ease: "none",
           scrollTrigger: { ...scrub, start: "top bottom", end: "top top" },
         });
-        /* 文字は面が画面の三割まで来た時点で消えている（端で切られる字を作らない）。 */
         gsap.to("[data-hero-fade]", {
           autoAlpha: 0,
-          y: -30,
+          y: -34,
           ease: "none",
-          scrollTrigger: { ...scrub, start: "top 92%", end: "top 32%" },
+          scrollTrigger: { ...scrub, start: "top 92%", end: "top 30%" },
         });
         gsap.to("[data-hero-dim]", {
-          opacity: 0.88,
+          opacity: 0.9,
           ease: "none",
           scrollTrigger: { ...scrub, start: "top 88%", end: "top top" },
         });
       }
+
+      return cleanupPointer;
     },
     { scope: root },
   );
@@ -117,23 +151,13 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
       data-dark-hero
       className="sticky top-0 z-0 isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#1b1710] text-ivory"
     >
-      {/*
-        写真は画面いっぱい。左に余白のある一枚なので、切らずにそのまま置ける。
-        スマホは縦横比が違いすぎて左の余白が消えるため、下半分の帯として敷く。
-
-        帯を 50svh 取ると、原寸 16:9 が縦いっぱいで収まり、作品が丸ごと立つ
-        （40% では作品が帯の高さで切れ、その上に足元の暗幕が重なって見えなくなっていた）。
-        寄せは右端 — 作品の右の余白は原稿に 5% しかないので、右へ振り切ったときだけ
-        左右の余白が釣り合う。上端は断ち切り —— 以前はグラデーションでにじませていたが、
-        原稿の上端は地より暗い（輝度 12.9 対 23.4）ので、切り口はもともと見えない。
-      */}
       <figure
         data-image-role="hero-campaign"
         data-image-ratio="16/9"
         data-hero-frame
-        className="pointer-events-none absolute inset-x-0 bottom-0 top-1/2 m-0 md:top-0"
+        className="pointer-events-none absolute inset-x-0 bottom-0 top-1/2 m-0 overflow-hidden md:top-0"
       >
-        <div data-hero-image className="absolute inset-0">
+        <div data-hero-image className="absolute inset-0 will-change-transform">
           <Image
             src="/images/scenes/hero-weave.webp"
             alt="A handwoven tatami-beri bag standing in the low light of the temple"
@@ -147,26 +171,27 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
 
       <div aria-hidden className="hero-grain pointer-events-none absolute inset-0" />
 
-      {/* 紙に覆われる間、部屋を落とす層。載せるのは GSAP だけ（初期値は透明）。 */}
+      {/* 最初に一本だけ走る「縁」。ローダーではなく、写真を開く合図。 */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute inset-x-0 top-[47%] z-20 overflow-hidden"
+      >
+        <span
+          data-hero-thread
+          className="block h-px w-full bg-ivory/55 opacity-0"
+        />
+      </div>
+
       <div
         aria-hidden
         data-hero-dim
         className="pointer-events-none absolute inset-0 z-20 bg-[#120e08] opacity-0"
       />
 
-      {/*
-        スマホは下半分が写真なので、版面の下端を 50svh で止める。
-        こうすると足元の罫（01 — Honmyoji）が写真の上端に載るキャプションになり、
-        作品の上に暗幕を敷かずに済む。md 以上は従来どおり画面の下端まで使う。
-      */}
       <div
         data-hero-fade
-        className={`${SHELL} relative z-10 flex flex-1 flex-col pt-16 max-md:pb-[50svh] sm:pt-[72px] md:pt-[80px]`}
+        className={SHELL + " relative z-10 flex flex-1 flex-col pt-16 max-md:pb-[50svh] sm:pt-[72px] md:pt-[80px]"}
       >
-        {/*
-          md 以上は一本の左列 — 縦組みが余白の真ん中に浮き、情報は下端に沈む。
-          md 未満は横並び（縦組みが罫の代わりに立ち、その右に見出しと導線）。
-        */}
         <div
           data-hero-copy
           className="flex flex-1 items-center gap-7 sm:gap-10 md:flex-col md:items-stretch md:gap-0"
@@ -180,13 +205,7 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
             </p>
           </div>
 
-          {/*
-            42ch は見出しのための幅。クレジット行（397px）と CTA 行（356px）はそこに
-            収まらず二行に折り返していた —— 折り返した meta 行は「そう組んだ」ではなく
-            「入りきらなかった」に見える。lg 以上だけ 26rem まで開けて、どちらも一行で
-            収める（作品は画面の 57% から先なので、416px は写真に掛からない）。
-          */}
-          <div className="max-w-[42ch] lg:max-w-[26rem]">
+          <div className="max-w-[44rem]">
             <ul className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
               {CREDITS.map((credit, i) => (
                 <li
@@ -202,18 +221,17 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
 
             <h1
               data-hero-title
-              className="mt-5 font-display text-[clamp(30px,3.3vw,50px)] font-light leading-[1.04] tracking-[-0.015em] text-ivory max-sm:text-[clamp(34px,9.2vw,42px)] sm:mt-6"
+              className="mt-5 max-w-[8.4ch] font-display text-[clamp(44px,6.8vw,102px)] font-light leading-[0.9] tracking-[-0.035em] text-ivory max-sm:text-[clamp(42px,11.5vw,56px)] sm:mt-6"
             >
-              Made to be
+              Made to
               <br />
-              held.
+              be held.
             </h1>
 
-            <div data-hero-cta className="mt-6 flex flex-wrap items-center gap-x-9 gap-y-3 sm:mt-8">
+            <div data-hero-cta className="mt-7 flex flex-wrap items-center gap-x-9 gap-y-3 sm:mt-9">
               <Button href="/collection" variant="link-light" arrow>
                 Enter the collection
               </Button>
-              {/* 二番目は同じ形のまま一段落とす。別の書体や大きさにすると導線が二種類に見える。 */}
               <span className="inline-flex opacity-65 transition-opacity duration-500 hover:opacity-100">
                 <Button href={materialHref} variant="link-light">
                   On the material
@@ -224,7 +242,9 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
         </div>
 
         <div data-hero-rail className="flex items-center gap-4 pb-6 pt-8 md:pb-8">
-          <span className="font-sans text-[10px] tabular-nums tracking-[0.2em] text-ivory/70">01</span>
+          <span className="font-sans text-[10px] tabular-nums tracking-[0.2em] text-ivory/70">
+            01
+          </span>
           <span aria-hidden className="h-px w-10 bg-ivory/30 md:w-16" />
           <p className="font-sans text-[9.5px] uppercase leading-[1.8] tracking-[0.22em] text-ivory/70">
             <span className="sm:hidden">Honmyoji · Fuji, Japan</span>
