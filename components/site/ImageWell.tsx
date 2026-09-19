@@ -5,7 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import "@/components/motion/register";
 
-export type WellReveal = "wipe" | "band" | "none";
+export type WellReveal = "wipe" | "band" | "weave" | "none";
 
 type Props = {
   className?: string;
@@ -20,7 +20,7 @@ type Props = {
  * 写真の井戸。写真は「フェードイン」ではなく「開く」。
  *
  *  wipe — 下端から上へマスクが開き、中の像は 1.12 倍から実寸へ落ち着く（スクロール時）
- *  band — 中央の細い帯が左右へ広がって全面になる（読み込み時。ヒーロー用）
+ *  band — 中央の細い帯が左右へ広がって全面になる（読み込み時。ヒーロー用）\n *  weave — 縦の帯が横へほどける。素材・生活・手仕事の大きな写真だけに使う
  *
  * マスクは井戸そのものではなく内側の層に掛ける。井戸ごと切ると、
  * 上に載せた見出しまで一緒に切れてしまう。
@@ -46,6 +46,35 @@ export function ImageWell({ className = "", children, overlay, reveal = "wipe" }
           { clipPath: "inset(0% 0% 0% 0%)", duration: 1.5, ease: "expo.out" },
         );
         if (img) tl.fromTo(img, { scale: 1.16 }, { scale: 1, duration: 1.9, ease: "expo.out" }, 0);
+        return;
+      }
+
+      if (reveal === "weave") {
+        const tl = gsap.timeline({
+          scrollTrigger: { trigger: el, start: "top 86%", toggleActions: "play none none none" },
+        });
+        tl.fromTo(
+          mask,
+          { clipPath: "inset(0% 100% 0% 0%)" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.45, ease: "expo.inOut" },
+        );
+        if (img) {
+          tl.fromTo(
+            img,
+            { scale: 1.1, xPercent: 4 },
+            { scale: 1.02, xPercent: 0, duration: 1.7, ease: "expo.out" },
+            0,
+          );
+        }
+        gsap.fromTo(
+          mask,
+          { yPercent: 1.5 },
+          {
+            yPercent: -1.5,
+            ease: "none",
+            scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 1.1 },
+          },
+        );
         return;
       }
 
