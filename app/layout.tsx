@@ -54,6 +54,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
+      /*
+        入場の幕を「もう見たか」の印（`data-entered`）は、SiteChrome が body の先頭に置く
+        一行の script が**塗る前に**付ける。サーバの HTML には無い属性なので、
+        これが無いと二度目の訪問で毎回 hydration mismatch が出る（実際に踏んだ）。
+        抑えるのは html 自身の属性だけで、子孫の不一致は今までどおり報告される。
+      */
+      suppressHydrationWarning
       className={`${newsreader.variable} ${sourceSans.variable} ${shippori.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-sumi text-ivory">{children}</body>

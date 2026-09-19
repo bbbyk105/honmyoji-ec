@@ -42,7 +42,7 @@ export default async function StudioLoginPage({
             ) : null}
           </>
         ) : (
-          <div className="mt-10 border border-clay/60 bg-lacquer px-5 py-5">
+          <div className="mt-10 border border-clay/60 bg-sumi px-5 py-5">
             <p className="font-sans text-[13px] leading-[1.9] text-clay">
               まだアカウントが設定されていません。
               <code className="mx-1 font-mono">npm run studio:secrets</code>

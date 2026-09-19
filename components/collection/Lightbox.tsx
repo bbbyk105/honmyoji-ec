@@ -72,10 +72,12 @@ export function Zoomable({ index, children }: { index: number; children: ReactNo
   return (
     <div className="relative">
       {children}
+      {/* `data-cursor` は CursorMark が読む。透明な button は形が無いので、語で押せると言う。 */}
       <button
         type="button"
         onClick={() => open(index)}
         aria-label="写真を拡大する"
+        data-cursor="Zoom"
         className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ivory/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sumi"
       />
     </div>
@@ -366,7 +368,7 @@ function Viewer({
                 }}
                 aria-label={s.caption}
                 aria-current={i === index ? "true" : undefined}
-                className={`relative h-14 w-12 shrink-0 overflow-hidden bg-onyx outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ivory/30 ${
+                className={`relative h-14 w-12 shrink-0 overflow-hidden bg-sumi outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ivory/30 ${
                   i === index ? "opacity-100" : "opacity-50 hover:opacity-85"
                 }`}
               >

@@ -28,7 +28,7 @@ export function StillTile({ product, ratio = "4/5", priority = false, className 
         className="block no-underline outline-none focus-visible:ring-2 focus-visible:ring-ivory/25"
       >
         <ImageWell
-          className={`relative overflow-hidden bg-onyx ${RATIO[ratio]}`}
+          className={`relative overflow-hidden bg-sumi ${RATIO[ratio]}`}
           reveal="wipe"
         >
           <Image

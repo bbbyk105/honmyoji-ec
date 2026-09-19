@@ -61,7 +61,7 @@ export default async function StudioOrdersPage() {
                 <li key={order.id} className="border-b border-line">
                   <Link
                     href={`/studio/orders/${order.id}`}
-                    className="grid grid-cols-[14px_1fr] items-center gap-x-5 gap-y-1.5 py-4 no-underline transition-colors hover:bg-lacquer md:grid-cols-[14px_96px_80px_1fr_150px_100px]"
+                    className="grid grid-cols-[14px_1fr] items-center gap-x-5 gap-y-1.5 py-4 no-underline transition-colors hover:bg-sumi md:grid-cols-[14px_96px_80px_1fr_150px_100px]"
                   >
                     <span
                       aria-hidden

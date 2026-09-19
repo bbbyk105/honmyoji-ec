@@ -122,6 +122,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               href="/collection"
               variant="link"
               arrow={false}
+              morph
               className="hero-settle w-fit text-mist hover:text-ivory"
             >
               Collection

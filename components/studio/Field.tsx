@@ -6,7 +6,7 @@ import type { ReactNode, SelectHTMLAttributes } from "react";
  * ——むしろ一日に何度も触る画面のほうが効く。
  */
 export const fieldClass =
-  "w-full border border-line bg-lacquer px-4 py-3 font-sans text-[15px] leading-[1.6] text-ivory outline-none transition-colors placeholder:text-mist/70 hover:border-bark focus:border-ivory focus:ring-1 focus:ring-ivory/15 aria-[invalid=true]:border-clay";
+  "w-full border border-line bg-sumi px-4 py-3 font-sans text-[15px] leading-[1.6] text-ivory outline-none transition-colors placeholder:text-mist/70 hover:border-bark focus:border-ivory focus:ring-1 focus:ring-ivory/15 aria-[invalid=true]:border-clay";
 
 export const labelClass =
   "block font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-bone";
@@ -65,7 +65,7 @@ export function Notice({ error, saved }: { error?: string; saved?: string }) {
     return (
       <p
         role="alert"
-        className="border border-clay/60 bg-lacquer px-4 py-3 font-sans text-[13px] leading-[1.7] text-clay"
+        className="border border-clay/60 bg-sumi px-4 py-3 font-sans text-[13px] leading-[1.7] text-clay"
       >
         {error}
       </p>

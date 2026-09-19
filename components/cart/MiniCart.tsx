@@ -50,7 +50,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
         type="button"
         aria-label="Close cart"
         onClick={() => setOpen(false)}
-        className={`absolute inset-0 bg-onyx/70 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
+        className={`absolute inset-0 bg-sumi/70 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
       />
       <aside
         role="dialog"

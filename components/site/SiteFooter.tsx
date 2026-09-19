@@ -11,7 +11,7 @@ const footerNav = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-20 border-t border-line bg-onyx md:mt-28">
+    <footer className="mt-20 border-t border-line bg-sumi md:mt-28">
       <div className={`${SHELL} grid gap-14 py-16 md:grid-cols-[1.3fr_0.8fr_1.1fr] md:gap-16 md:py-20`}>
         <div>
           <p className="font-sans text-[13px] font-medium tracking-[0.42em] text-ivory">MIROKU</p>
