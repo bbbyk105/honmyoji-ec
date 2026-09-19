@@ -51,30 +51,26 @@ export function ImageWell({ className = "", children, overlay, reveal = "wipe" }
 
       if (reveal === "weave") {
         const tl = gsap.timeline({
-          scrollTrigger: { trigger: el, start: "top 86%", toggleActions: "play none none none" },
+          scrollTrigger: { trigger: el, start: "top 88%", toggleActions: "play none none none" },
         });
         tl.fromTo(
           mask,
-          { clipPath: "inset(0% 100% 0% 0%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.45, ease: "expo.inOut" },
+          { clipPath: "inset(5% 0% 5% 0%)", autoAlpha: 0.15 },
+          {
+            clipPath: "inset(0% 0% 0% 0%)",
+            autoAlpha: 1,
+            duration: 1.18,
+            ease: "power3.out",
+          },
         );
         if (img) {
           tl.fromTo(
             img,
-            { scale: 1.1, xPercent: 4 },
-            { scale: 1.02, xPercent: 0, duration: 1.7, ease: "expo.out" },
+            { scale: 1.035 },
+            { scale: 1, duration: 1.35, ease: "power3.out" },
             0,
           );
         }
-        gsap.fromTo(
-          mask,
-          { yPercent: 1.5 },
-          {
-            yPercent: -1.5,
-            ease: "none",
-            scrollTrigger: { trigger: el, start: "top bottom", end: "bottom top", scrub: 1.1 },
-          },
-        );
         return;
       }
 
