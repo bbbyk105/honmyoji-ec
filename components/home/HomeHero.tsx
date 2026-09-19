@@ -150,7 +150,7 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
 
             <h1
               data-hero-title
-              className="mt-5 max-w-[9.8ch] font-display text-[clamp(42px,5.15vw,74px)] font-normal leading-[0.96] tracking-[-0.035em] text-ivory max-sm:text-[clamp(40px,10.6vw,52px)] sm:mt-6"
+              className="mt-5 max-w-[10.5ch] font-display text-[clamp(44px,5.4vw,76px)] font-normal leading-[0.94] tracking-[-0.028em] text-ivory max-sm:text-[clamp(42px,10.8vw,54px)] sm:mt-6"
             >
               Made to be
               <br />
