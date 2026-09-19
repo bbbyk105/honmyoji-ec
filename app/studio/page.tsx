@@ -69,7 +69,7 @@ export default async function StudioOverviewPage() {
                 <li key={order.id} className="border-b border-line">
                   <Link
                     href={`/studio/orders/${order.id}`}
-                    className="grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-1 py-4 no-underline transition-colors hover:bg-lacquer"
+                    className="grid grid-cols-[auto_1fr_auto] items-center gap-x-5 gap-y-1 py-4 no-underline transition-colors hover:bg-sumi"
                   >
                     <span
                       aria-hidden

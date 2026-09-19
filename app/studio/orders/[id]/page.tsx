@@ -75,7 +75,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
               ) : (
                 pieces.map((piece) => (
                   <li key={piece.slug} className="flex items-center gap-4">
-                    <div className="relative h-11 w-11 shrink-0 bg-onyx">
+                    <div className="relative h-11 w-11 shrink-0 bg-sumi">
                       <Image
                         src={productCutout(piece.folder)}
                         alt=""

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { ImageWell, type WellReveal } from "./ImageWell";
+import { ImageWell, type WellFrom, type WellReveal } from "./ImageWell";
 
 export type ImageRole =
   | "hero-campaign"
@@ -48,6 +48,10 @@ type Props = {
   showRole?: boolean;
   /** 写真の出方。既定は下端から開く wipe。ヒーローだけ band（中央から左右へ）。 */
   reveal?: WellReveal;
+  /** マスクが開く向き。**版面のどの端に着いている写真か**で決める（`ImageWell` の註）。 */
+  from?: WellFrom;
+  /** 隣り合う写真をずらす（ms）。同時に開くと一組の仕掛けに見える。 */
+  revealDelay?: number;
 };
 
 /**
@@ -69,12 +73,16 @@ export function Frame({
   children,
   showRole = false,
   reveal = "wipe",
+  from = "bottom",
+  revealDelay = 0,
 }: Props) {
   return (
     <figure className={className} data-image-role={role} data-image-ratio={ratio}>
       <ImageWell
-        className={`relative overflow-hidden bg-onyx ${wellClass ?? RATIO[ratio]}`}
+        className={`relative overflow-hidden bg-sumi ${wellClass ?? RATIO[ratio]}`}
         reveal={src ? reveal : "none"}
+        from={from}
+        delay={revealDelay}
         overlay={children}
       >
         {src ? (
@@ -87,7 +95,7 @@ export function Frame({
             className={crop}
           />
         ) : (
-          <div className="absolute inset-0 flex flex-col items-start justify-end bg-onyx p-6 ring-1 ring-inset ring-line">
+          <div className="absolute inset-0 flex flex-col items-start justify-end bg-sumi p-6 ring-1 ring-inset ring-line">
             <p className="font-sans text-[9px] uppercase tracking-[0.28em] text-mist">{ROLE_LABEL[role]}</p>
             <p className="mt-2 font-display text-[22px] font-light italic text-bone/50">{ratio.replace("/", "∶")}</p>
           </div>

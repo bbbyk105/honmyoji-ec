@@ -2,6 +2,7 @@ import Link from "next/link";
 import { DriftBand } from "@/components/site/DriftBand";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
+import { ChapterRail, type Chapter } from "@/components/site/ChapterRail";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { SwipeStrip } from "@/components/site/SwipeStrip";
@@ -21,6 +22,22 @@ import { founder, phrases } from "@/data/site";
   自分の内側に上下の余白を持ち、それ以外は上だけ持つ。
 */
 
+/*
+  章。長い一枚を、番号の付いた節として読ませる（`ChapterRail`）。
+  一つ目はヒーローで、sticky なので ScrollTrigger では測れない —— レール側は
+  「二つ目より上にいるなら一つ目」で決めるので、ここに id は要らない。
+  節を足したら必ずここにも足すこと（id が無い章は黙って飛ばされる）。
+*/
+const CHAPTERS: Chapter[] = [
+  { id: "ch-opening", label: "Opening" },
+  { id: "ch-atelier", label: "Atelier" },
+  { id: "ch-pieces", label: "Pieces" },
+  { id: "ch-material", label: "Material" },
+  { id: "ch-in-place", label: "In place" },
+  { id: "ch-making", label: "Making" },
+  { id: "ch-blog", label: "Blog" },
+];
+
 export default async function HomePage() {
   /* トップに出す四点。カタログ経由で引くので、管理画面で直した価格と
      ステータスがそのまま出る（folder 名は写真のフォルダなので変わらない）。 */
@@ -34,24 +51,23 @@ export default async function HomePage() {
 
   return (
     <>
+      <ChapterRail chapters={CHAPTERS} />
       <HomeHero materialHref={materialHref} />
 
       {/*
         ヒーローの上に上がってくる面。ヒーローは sticky で貼り付いたままなので、
         第一画面が上へ抜けるのではなく、この面がそれを覆っていく。
-        ヒーローの地（#1b1710）より版の地（sumi）のほうが一段深いので、
-        上がってくると部屋が沈む —— 明暗の切り替えではなく「照明が落ちる」に見せる。
-        差は 7 しかないので、上辺に ivory の細い罫を一本引いて縁を立たせ、
-        その下に影を落とす。罫だけだと切り口に、影だけだと境目が読めない。
+        地は一色になったので（2026-09-20）明暗の段は無い —— 覆われた合図は
+        **上辺の罫一本**が全部背負う。黒い面が黒い写真を覆うのは、線が無いと見えない。
         z-10 は必須 — 素の（position を持たない）セクションは sticky の下に潜って消える。
       */}
       <div
         data-page-sheet
-        className="relative z-10 border-t border-ivory/10 bg-sumi shadow-[0_-40px_90px_-40px_rgba(0,0,0,0.85)]"
+        className="relative z-10 border-t border-line bg-sumi"
       >
 
         {/* 2. Intro — text as a page, not a marketing block */}
-        <section className="washi-grain relative">
+        <section id="ch-atelier">
           <div className={`${SHELL} grid gap-12 py-16 md:grid-cols-12 md:gap-8 md:py-24`}>
             <Reveal className="md:col-span-7 lg:col-span-6">
               <p className="eyebrow">Atelier note</p>
@@ -76,7 +92,7 @@ export default async function HomePage() {
         </section>
 
         {/* 3. Featured — chosen, not a row of equal cards */}
-        <section>
+        <section id="ch-pieces">
           <div className={SHELL}>
             <Reveal className="flex items-end justify-between gap-6 border-b border-line pb-5">
               <div>
@@ -113,7 +129,7 @@ export default async function HomePage() {
         </section>
 
         {/* 4. Material essay */}
-        <section className="pt-24 md:pt-32">
+        <section id="ch-material" className="pt-24 md:pt-32">
           <div className={`${SHELL} grid gap-12 md:grid-cols-12 md:items-start md:gap-8`}>
             <Reveal className="md:col-span-5 md:sticky md:top-28">
               <p className="eyebrow">Material</p>
@@ -136,6 +152,7 @@ export default async function HomePage() {
                   role="material-macro"
                   ratio="4/5"
                   caption="Ai — weave, close"
+                  from="right"
                   className="max-w-[400px]"
                   sizes="(min-width: 768px) 400px, 100vw"
                 />
@@ -176,7 +193,7 @@ export default async function HomePage() {
         />
 
         {/* 5. Campaign / living objects */}
-        <section className={`${SHELL} pt-4 md:pt-6`}>
+        <section id="ch-in-place" className={`${SHELL} pt-4 md:pt-6`}>
           <Reveal className="md:max-w-[36ch]">
             <p className="eyebrow">In place</p>
             <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.6vw,46px)] font-light leading-[1.1] text-ivory">
@@ -189,6 +206,12 @@ export default async function HomePage() {
             タブレットでは文章の段を 4 → 5 カラムに広げる。768px の 4 カラムは 215px しかなく、
             30px の見出しが一行三語で折れて、文章に見えなくなる。
           */}
+          {/*
+            マスクの開く向きは、写真が版面のどの端に着いているかで決める（`ImageWell` の註）。
+            回廊は左端いっぱいなので左から。下の二枚は左端と右端に分かれているので、
+            左は左から・右は右から開き、**互いに向き合って開く**。
+            以前は三枚とも下から同時に開いていて、一組の仕掛けに見えた（2026-09-20）。
+          */}
           <div className="mt-12 grid gap-8 md:grid-cols-12 md:gap-10">
             <Reveal className="md:col-span-7 lg:col-span-8">
               <Frame
@@ -197,6 +220,7 @@ export default async function HomePage() {
                 role="lifestyle"
                 ratio="16/10"
                 caption="Corridor, Honmyoji"
+                from="left"
                 sizes="(min-width: 1024px) 64vw, (min-width: 768px) 56vw, 100vw"
               />
             </Reveal>
@@ -223,6 +247,7 @@ export default async function HomePage() {
                 role="lifestyle"
                 ratio="4/5"
                 caption="Window light"
+                from="left"
                 wellClass="aspect-[4/5] md:aspect-auto md:h-[clamp(420px,40vw,620px)]"
                 sizes="(min-width: 768px) 40vw, 100vw"
               />
@@ -234,6 +259,8 @@ export default async function HomePage() {
                 role="lifestyle"
                 ratio="3/4"
                 caption="Bamboo grove behind the hall"
+                from="right"
+                revealDelay={120}
                 wellClass="aspect-[3/4] md:aspect-auto md:h-[clamp(420px,40vw,620px)]"
                 sizes="(min-width: 768px) 40vw, 100vw"
               />
@@ -242,7 +269,8 @@ export default async function HomePage() {
         </section>
 
         {/* 6. Craft */}
-        <section className="mt-20 bg-onyx/70 md:mt-28">
+        {/* 以前はここだけ一段深い地を敷いていた。地が一色になったので、節は余白で分ける。 */}
+        <section id="ch-making" className="mt-20 md:mt-28">
           <div className={`${SHELL} grid gap-12 py-16 md:grid-cols-12 md:gap-8 md:py-24`}>
             <Reveal className="md:col-span-5">
               <Frame
@@ -251,6 +279,7 @@ export default async function HomePage() {
                 role="process"
                 ratio="3/4"
                 caption="After making — the hall"
+                from="left"
                 sizes="(min-width: 768px) 40vw, 100vw"
               />
             </Reveal>
@@ -279,7 +308,7 @@ export default async function HomePage() {
         </section>
 
         {/* 7. The blog as a publication, not a blog widget */}
-        <section className={`${SHELL} py-16 md:py-24`}>
+        <section id="ch-blog" className={`${SHELL} py-16 md:py-24`}>
           {/*
             一覧は 1040px で読める幅を保つ。ただし版面が 1384px まで開く xl 以上では
             右に 344px の空白が残るので、そこで見出しを左の段へ出して版面を埋める
@@ -333,15 +362,21 @@ export default async function HomePage() {
 
         {/* quiet closing piece, not a CTA banner */}
         <section className={`${SHELL} pb-8`}>
-          <Reveal className="grid gap-8 border-t border-line pt-10 md:grid-cols-12">
+          {/*
+            文章と写真は別の Reveal にする。同居させると、写真を含むブロックは
+            フェードしない決まり（`Reveal` の註）に文章まで巻き込まれて素で現れる。
+          */}
+          <div className="grid gap-8 border-t border-line pt-10 md:grid-cols-12">
             {/* 一文を 7 カラム（800px）に置くと一行で流れて、締めの言葉に見えない。折って、写真と同じ高さの中央に置く。 */}
-            <p className="self-center font-display text-[clamp(22px,2.6vw,32px)] font-light leading-[1.35] text-ivory md:col-span-6 lg:col-span-5">
-              {phrases.noTwo.en}
-            </p>
-            <div className="md:col-span-4 md:col-start-9">
+            <Reveal className="self-center md:col-span-6 lg:col-span-5">
+              <p className="font-display text-[clamp(22px,2.6vw,32px)] font-light leading-[1.35] text-ivory">
+                {phrases.noTwo.en}
+              </p>
+            </Reveal>
+            <Reveal className="md:col-span-4 md:col-start-9">
               <StillTile product={musubi} ratio="1/1" />
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </section>
       </div>
     </>

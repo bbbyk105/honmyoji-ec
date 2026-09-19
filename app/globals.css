@@ -2,27 +2,32 @@
 
 /* ------------------------------------------------------------------
    MIROKU — rooms, not storefronts.
-   展示室は暗い。地はヒーローの写真と同じ暖かい黒（#1b1710 の族）で、
-   純黒（#000）は一度も使わない — 冷たい黒の上では、畳の縁の赤も藍も濁る。
+   展示室は暗い。**地は一色の黒（#000）**。以前は暖かい黒を三段（onyx < sumi <
+   lacquer）持っていたが、黒に茶が差しているのが目に付くので中立の黒へ寄せ、
+   段そのものを畳んだ（2026-09-20）。
 
-   トークンは色の名前ではなく役どころ。地は三段（onyx < sumi < lacquer）、
-   文字は二段（ivory / bone）、その下に meta の mist と罫の line。
+   段が無くなったぶん、**面の境目は罫一本が全部背負う**。これは新しい話ではなく、
+   DESIGN.md の「黒の上では影は地にならない、だから地は線」をそのまま面にも
+   広げただけ。入力欄も写真の井戸もフッターも、地は同じ黒で、周りの罫で立つ。
+
+   トークンは色の名前ではなく役どころ。地は一つ（sumi）、文字は二段（ivory / bone）、
+   その下に meta の mist と罫の line。
    ------------------------------------------------------------------ */
 @theme {
-  /* 地 — 深い順。段差は 6〜11 と小さい。大きく開けると黒が灰に見える */
-  --color-onyx: #0b0806;    /* 地より深いところ：写真の井戸、接地の影、フッターの土台 */
-  --color-sumi: #14100b;    /* 版の地 */
-  --color-lacquer: #1f1a13; /* 持ち上がる面：入力欄、注記、パネル */
-  --color-ash: #2a241b;     /* やわらかい面 */
-  --color-bark: #4a4133;    /* 暖かい支え：hover の罫 */
+  /* 地 — サイト中これ一つ。持ち上がる面も沈む面も作らない */
+  --color-sumi: #000000;    /* 版の地。入力欄・写真の井戸・フッターも同じ */
+  --color-bark: #4d4d4d;    /* 支え：hover で立ち上がる罫 */
 
-  /* 文字 */
-  --color-ivory: #f2ece0;   /* 光 — 見出し・罫・塗りのボタン */
-  --color-bone: #cfc6b4;    /* 本文。見出しより一段落として、黒地のにじみを抑える */
-  --color-mist: #9c9280;    /* メタ・キャプション（sumi 上で 6.2:1） */
-  --color-line: #37301f;    /* ヘアライン */
+  /* 文字。黒地の上での明度差は暖色版と同じに保ってある（測って合わせた） */
+  --color-ivory: #ffffff;   /* 光 — 見出し・罫・塗りのボタン */
+  --color-bone: #c7c7c7;    /* 本文。見出しより一段落として、黒地のにじみを抑える */
+  --color-mist: #8b8b8b;    /* メタ・キャプション（黒地で 6.2:1） */
+  --color-line: #303030;    /* ヘアライン。面の境目はこれ一本で作る */
 
-  /* 織りの色。黒地では沈むので、明度だけ上げて彩度は足していない */
+  /*
+    織りの色。**状態表示にだけ使う**（在庫の状態は一覧を流し見して数えられないと
+    意味がないので、ここだけは色で言う）。地が中立の黒になったぶん、以前より濁らない。
+  */
   --color-moss: #92a37b;    /* available */
   --color-indigo: #8a9cb4;  /* coming soon */
   --color-clay: #c89771;    /* made to order / エラー */
@@ -39,6 +44,16 @@
 
 :root {
   color-scheme: dark;
+
+  /*
+    記事の一行の長さ。本文 17px で約 70 文字 —— 読みやすい 60〜75 の真ん中。
+    **版面（980px）と行長は別物**。以前ここを分けずに本文を版面いっぱいに流していたので、
+    1 行が 119 文字あり、行を折り返すたびに目が左端を見失っていた（実測）。
+    写真と引用は measure の外へ食み出して版面いっぱいに出る —— 文章だけが短い、が正しい。
+    px で持つのは、本文（Source Sans）と見出し（Newsreader）で `ch` の実寸が違うから。
+    同じ `62ch` を両方に書くと右端が揃わない。
+  */
+  --blog-measure: 560px;
 }
 
 html {
@@ -57,13 +72,13 @@ body {
 }
 
 ::selection {
-  background: rgba(242, 236, 224, 0.2);
+  background: rgba(255, 255, 255, 0.2);
   color: var(--color-ivory);
 }
 
 /* 黒い部屋に白い帯が一本走らないように。Firefox と WebKit の両方へ。 */
 * {
-  scrollbar-color: var(--color-bark) var(--color-onyx);
+  scrollbar-color: var(--color-bark) var(--color-sumi);
   scrollbar-width: thin;
 }
 
@@ -73,26 +88,20 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: var(--color-onyx);
+  background: var(--color-sumi);
 }
 
 ::-webkit-scrollbar-thumb {
   background: var(--color-bark);
 }
 
-/* 地の肌理。never give this class a position; parents decide.
-   multiply は黒の上では何も起きない（掛けるほど黒くなるだけ）。
-   明るい粒を soft-light で薄く乗せて、黒の面が印刷面に見えるところで止める。
-   0.22 では節そのものが一段明るくなり、粒ではなく「明るい長方形」の上辺が見えた。 */
-.washi-grain::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.1;
-  mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.84 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
+/*
+  地の肌理は持たない（2026-09-20）。地が純黒になったぶん、`.washi-grain` / `.hero-grain` の
+  soft-light / overlay は**黒の上では数学的に no-op** —— どちらの式も backdrop が 0 なら 0 を返す
+  ので、粒は一画素も出ていなかった（実測して 0,0,0）。効かない規則と DOM を残すと、次に触る人が
+  「粒がある前提」で明るさを調整してしまうので外した。地に肌理を戻したいなら、
+  ブレンドではなく地そのものを黒から離すことになる —— それは単色をやめる判断。
+*/
 
 .tategaki {
   writing-mode: vertical-rl;
@@ -174,9 +183,8 @@ body {
 
 /* ------------------------------------------------------------------
    Home hero — 第一画面だけの層。ほかの節では使わない。
-   ヒーローの地（#1b1710）は版の地 sumi より一段明るい。ここだけ写真が照らしている
-   部屋で、下から上がってくる紙の面（sumi）が room を一段沈める合図になる。
-   粒子は washi-grain より強い overlay。独自クラスに position は書かない（親が決める）。
+   ヒーローの地は版と同じ黒（2026-09-20 に段を畳んだ）。覆われる合図は、上がってくる
+   面の上辺に引いた罫一本が持つ。
 
    **写真に暗幕は掛けない。** 以前は左の余白を沈める 100deg のグラデーションと、
    スマホで上端を地ににじませる継ぎ目を敷いていたが、二つとも外した。原稿を実測すると
@@ -185,31 +193,32 @@ body {
    写真のほうが地より暗い（輝度 12.9 対 23.4）ので、にじませる継ぎ目も要らなかった。
    読めるようにするぶんは文字の不透明度で払う —— 写真を曇らせて払わない。
    ------------------------------------------------------------------ */
-.hero-grain {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.9 0 0 0 0 0.82 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
-  background-size: 180px 180px;
-  mix-blend-mode: overlay;
-  opacity: 0.13;
-}
 
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文 17px / 1.9、見出しは Newsreader。行長は親の 980px 版面に合わせる
-  （内側で 62ch / 24ch を切ると右が空洞になる — DESIGN.md「列は文字幅」）。
+   本文 17px / 1.9、見出しは Newsreader。**行長は版面ではなく `--blog-measure`**。
+   以前ここを「内側で切ると右が空洞になる」という理由で版面いっぱいに流していたが、
+   逆だった —— DESIGN.md の「列は文字幅」は*列を狭くしろ*であって、*文字を広げろ*ではない。
+   空くのは穴ではなく余白で、そこへ写真と引用が食み出す。
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
 .blog-prose {
   color: var(--color-bone);
 }
 
+/*
+  段落の間は**行間より広く**する。1.7em（28.9px）は行送り 1.9（32.3px）より狭く、
+  段落の切れ目が行の切れ目より目立たなかった —— これだと文章が一枚の壁に見える。
+*/
 .blog-prose > * + * {
-  margin-top: 1.7em;
+  margin-top: 2.1em;
 }
 
 .blog-prose p,
 .blog-prose ul,
 .blog-prose ol {
+  max-width: var(--blog-measure);
   font-family: var(--font-sans);
   font-size: 17px;
   line-height: 1.9;
@@ -223,6 +232,7 @@ body {
 .blog-prose h1,
 .blog-prose h2,
 .blog-prose h3 {
+  max-width: var(--blog-measure);
   margin-top: 2.6em;
   font-family: var(--font-display);
   font-weight: 300;
@@ -235,6 +245,14 @@ body {
   font-size: clamp(24px, 2.6vw, 31px);
 }
 
+/*
+  見出しは上に離し、下は詰める。上下が同じだとどの文章に掛かる見出しなのか読めない
+  （近接の原則）。見出しは次に来るものの持ち物。
+*/
+.blog-prose :is(h1, h2, h3, h4, h5, h6) + * {
+  margin-top: 1em;
+}
+
 .blog-prose h3 {
   font-size: clamp(20px, 2vw, 24px);
 }
@@ -242,6 +260,7 @@ body {
 .blog-prose h4,
 .blog-prose h5,
 .blog-prose h6 {
+  max-width: var(--blog-measure);
   margin-top: 2.4em;
   font-family: var(--font-sans);
   font-size: 11px;
@@ -324,7 +343,7 @@ body {
   height: auto;
   margin-top: 2.4em;
   margin-bottom: 2.4em;
-  background: var(--color-onyx);
+  background: var(--color-sumi);
 }
 
 .blog-prose figcaption {
@@ -368,13 +387,13 @@ body {
 
 .blog-prose code {
   font-size: 0.9em;
-  background: var(--color-onyx);
+  background: var(--color-sumi);
   padding: 0.1em 0.35em;
 }
 
 .blog-prose pre {
   overflow-x: auto;
-  background: var(--color-onyx);
+  background: var(--color-sumi);
   padding: 1.2em;
   font-size: 13px;
   line-height: 1.7;
@@ -497,10 +516,77 @@ body {
   }
 }
 
+/*
+  ページの移り変わり。**前のページが奥へ退き、新しいページが中央から左右へ開く。**
+  ヒーローの写真と同じ `band` の語彙で、版そのものを一枚の写真のように開ける。
+
+  以前は黒い板を下から上へ走らせていた（`RouteCurtain`）。サイト中の所作が
+  ほぼ全部「下から上」で、いちばん大きい動きまで同じ向きだったのをやめた（2026-09-20）。
+  向きは所作の大きさで分ける —— 入場は左右に**割れる**、ページは中央から**開く**、
+  節の中の見出しだけが**上がる**。同じ向きを three 回重ねない。
+
+  新しい面が上に載るので、開いていくあいだ、その隙間から退いていく前のページが見える。
+*/
+::view-transition-old(.page) {
+  animation: 380ms cubic-bezier(0.55, 0, 1, 0.45) both page-recede;
+}
+
+::view-transition-new(.page) {
+  animation: 620ms var(--ease-morph) both page-open;
+}
+
+@keyframes page-recede {
+  to {
+    transform: scale(0.985);
+    opacity: 0;
+  }
+}
+
+@keyframes page-open {
+  from {
+    clip-path: inset(0 50% 0 50%);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/*
+  作品のモーフのときだけ、地は静かに入れ替えるだけにする。
+  720ms かけて像が動いているのに、その下で版が開いたり縮んだりしたら主役が二つになる。
+  印は `PageTransition` が押された瞬間に置く。
+
+  **`html[data-morph]` と `::view-transition-*` のあいだに空白を入れないこと。**
+  疑似要素は html の「子孫」ではなく html 自身に付くので、子孫結合子にすると一つも
+  一致しない —— 書いたのに効かず、モーフの下で版が開き続ける（実際に踏んだ）。
+*/
+html[data-morph]::view-transition-old(.page) {
+  animation: 400ms var(--ease-morph) both page-out;
+}
+
+html[data-morph]::view-transition-new(.page) {
+  animation: 500ms var(--ease-morph) both page-in;
+}
+
+@keyframes page-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes page-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/*
+  root はヘッダーとフッター（本文は `.page` が持っていく）。左右のページで同じものなので
+  動かす必要はない。短く入れ替えるだけにして、`.page` の所作を邪魔しない。
+*/
 ::view-transition-old(root),
 ::view-transition-new(root) {
-  animation-duration: 480ms;
-  animation-timing-function: cubic-bezier(0.22, 0.61, 0.36, 1);
+  animation-duration: 200ms;
 }
 
 ::view-transition-group(site-header) {
@@ -546,5 +632,22 @@ body {
   .group:hover .bag-lift,
   .group:focus-within .bag-lift {
     transform: translateY(-4px);
+  }
+}
+
+/* ------------------------------------------------------------------
+   入場の幕。開き方は `components/motion/EntryCurtain.tsx`（二枚が左右へ退く）。
+   ページの移り変わりは幕を使わない —— 上の ::view-transition-* を読むこと。
+   ------------------------------------------------------------------ */
+
+/* 二度目の訪問。印は body 先頭の一行が塗る前に付ける（SiteChrome）。 */
+[data-entered] .entry-curtain {
+  display: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* 入場の幕は演出なので、動きを減らす設定では出さない。 */
+  .entry-curtain {
+    display: none;
   }
 }

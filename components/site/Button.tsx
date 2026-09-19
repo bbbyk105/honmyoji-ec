@@ -39,6 +39,11 @@ type Common = {
 type AsLink = Common & {
   href: ComponentProps<typeof Link>["href"];
   transitionTypes?: string[];
+  /**
+   * 一覧 ⇄ 商品ページの導線。遷移の幕（`RouteCurtain`）を出さずに、
+   * 720ms の bag morph に任せる。幕を掛けるとモーフが幕の下で終わる。
+   */
+  morph?: boolean;
 };
 
 type AsButton = Common & {
@@ -66,7 +71,12 @@ export function Button(props: AsLink | AsButton) {
 
   if (props.href !== undefined) {
     return (
-      <Link href={props.href} transitionTypes={props.transitionTypes} className={cls}>
+      <Link
+        href={props.href}
+        transitionTypes={props.transitionTypes}
+        data-morph={props.morph ? "" : undefined}
+        className={cls}
+      >
         {body}
       </Link>
     );

@@ -6,6 +6,9 @@ import { Reveal } from "@/components/site/Reveal";
 import { formatBlogDate, blogMeta } from "@/data/blog";
 import { getBlogPosts } from "@/lib/microcms";
 
+/** 記事側と同じ行長（`--blog-measure`）。一覧と本文で折り返し位置を揃える。 */
+const MEASURE = "max-w-[var(--blog-measure)]";
+
 export const metadata: Metadata = {
   title: "Blog",
   description: "Notes on material, making, care, and place — from Honmyoji Temple, Fuji.",
@@ -38,7 +41,7 @@ function LeadCopy({
       </h2>
       {titleJa ? <p className="mt-2 font-jp text-[12px] tracking-[0.16em] text-mist">{titleJa}</p> : null}
       {dek ? (
-        <p className="mt-5 max-w-[42ch] font-sans text-[15px] leading-[1.85] text-bone">{dek}</p>
+        <p className={`mt-5 ${MEASURE} font-sans text-[15px] leading-[1.85] text-bone`}>{dek}</p>
       ) : null}
       <Button href={`/blog/${slug}`} variant="link" className="mt-7">
         Read this note
@@ -128,12 +131,17 @@ export default async function BlogIndexPage() {
                     {entry.topic}
                     <span className="block text-mist/75">{formatBlogDate(entry.date)}</span>
                   </p>
-                  <div className="md:col-span-9">
-                    <h2 className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-[1.2] text-ivory">
+                  {/*
+                    見出しと説明は同じ右端で止める。以前は見出しが 9 カラム（660px）まで
+                    流れ、説明だけ 54ch（394px）で折り返していたので、一行読むたびに
+                    目の折り返し位置が 270px ずれていた。記事本文と同じ measure に揃える。
+                  */}
+                  <div className={`md:col-span-9 ${MEASURE}`}>
+                    <h2 className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-[1.25] text-ivory">
                       {entry.title}
                     </h2>
                     {entry.dek ? (
-                      <p className="mt-2 max-w-[54ch] font-sans text-[14px] leading-[1.75] text-bone/80">
+                      <p className="mt-2.5 font-sans text-[14px] leading-[1.8] text-bone/80">
                         {entry.dek}
                       </p>
                     ) : null}

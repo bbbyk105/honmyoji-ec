@@ -38,7 +38,7 @@ export default async function StudioPiecePage({
         </Link>
         <div className="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-4">
           <div className="flex items-end gap-5">
-            <div className="relative h-[76px] w-[76px] shrink-0 bg-onyx">
+            <div className="relative h-[76px] w-[76px] shrink-0 bg-sumi">
               <Image
                 src={productCutout(base.folder)}
                 alt=""
@@ -76,7 +76,7 @@ export default async function StudioPiecePage({
         <PieceForm base={base} override={override} disabled={!dbEnabled} />
 
         <aside className="lg:pt-2">
-          <div className="border border-line bg-lacquer px-5 py-5">
+          <div className="border border-line bg-sumi px-5 py-5">
             <p className="eyebrow">コード側の値</p>
             <dl className="mt-4 space-y-2.5 font-sans text-[13px] leading-[1.6]">
               <div className="flex justify-between gap-4">

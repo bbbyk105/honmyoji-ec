@@ -6,7 +6,7 @@
  */
 export function DbNotice() {
   return (
-    <div className="mt-10 border border-line bg-lacquer px-6 py-7">
+    <div className="mt-10 border border-line bg-sumi px-6 py-7">
       <p className="font-display text-[24px] font-light leading-[1.25] text-ivory">
         データベースに繋がっていません
       </p>

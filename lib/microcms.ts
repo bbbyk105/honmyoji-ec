@@ -1,4 +1,5 @@
 import { createClient, type MicroCMSImage, type MicroCMSListContent } from "microcms-js-sdk";
+import { site } from "@/data/site";
 import {
   byNewest,
   blogSeed,
@@ -76,8 +77,26 @@ function pick<T extends string>(value: string | string[] | undefined, allowed: T
   return (allowed as string[]).includes(v) ? (v as T) : fallback;
 }
 
+/**
+ * タイトル末尾の「 | MIROKU」を落とす。
+ *
+ * SEO ツールが出す `<title>` をそのまま title 欄に貼る運用になっているので、ブランド名が
+ * 接尾辞で入ってくる。これを素通しすると二箇所で壊れる —— H1 に「| MIROKU」が出て見出しに
+ * 見えなくなり、`app/layout.tsx` の template が `— MIROKU` を足すので `<title>` では
+ * ブランドが二度出る（実際に「… | MIROKU — MIROKU」になっていた）。
+ * 落とすのは末尾の区切り＋ブランド名だけ。本文中の MIROKU や、タイトル途中の `|` は触らない。
+ */
+const BRAND_SUFFIX = new RegExp(
+  `\\s*[|｜–—-]\\s*${site.name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\s*$`,
+  "i",
+);
+
+function cleanTitle(raw: string): string {
+  return raw.replace(BRAND_SUFFIX, "").trim() || raw;
+}
+
 function toPost(content: BlogContent & MicroCMSListContent): BlogPost {
-  const title = content.title?.trim() || "Untitled";
+  const title = cleanTitle(content.title?.trim() || "Untitled");
   const html = content.content?.trim();
 
   return {

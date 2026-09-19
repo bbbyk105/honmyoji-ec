@@ -22,8 +22,9 @@ const CREDITS = ["Handwoven", "Tatami-beri / paper band", "One of a kind"];
  * 第一画面。DESIGN.md の「ヒーローは刻まれた写真であって、左コピー / 右写真ではない」は
  * ここでも守っている — 版を割らず、一枚の写真そのものが持つ左の余白に文字を刻む。
  * **写真には何も掛けない**（暗幕も継ぎ目も外した理由は globals.css の Home hero の節）。
- * 地はサイト全体と同じ暖かい黒だが、この節だけ一段明るい（#1b1710 / 版の地は #14100b）。
- * 写真が部屋を照らしている、という差。下の面が上がってくると照明が落ちる。
+ * 地はサイト全体と同じ一色の黒。以前はこの節だけ一段明るくして（#1b1710）「写真が部屋を
+ * 照らしている」差を作っていたが、地を一色に畳んだので段は無い（2026-09-20）。覆われる合図は
+ * **上がってくる面の上辺に引いた罫一本**が持つ —— 黒が黒を覆うのは、線が無いと見えない。
  *
  * 縦組みの一行が主役。英語の見出しは支え。写真は原寸で右に置き、左の余白は空けておく。
  * 版面は SHELL — 写真だけが画面いっぱいに出るので、文字の左端は下のセクションと揃う。
@@ -115,7 +116,7 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
     <section
       ref={root}
       data-dark-hero
-      className="sticky top-0 z-0 isolate flex min-h-[100svh] flex-col overflow-hidden bg-[#1b1710] text-ivory"
+      className="sticky top-0 z-0 isolate flex min-h-[100svh] flex-col overflow-hidden bg-sumi text-ivory"
     >
       {/*
         写真は画面いっぱい。左に余白のある一枚なので、切らずにそのまま置ける。
@@ -145,13 +146,11 @@ export function HomeHero({ materialHref = "/blog" }: Props) {
         </div>
       </figure>
 
-      <div aria-hidden className="hero-grain pointer-events-none absolute inset-0" />
-
-      {/* 紙に覆われる間、部屋を落とす層。載せるのは GSAP だけ（初期値は透明）。 */}
+      {/* 紙に覆われる間、写真を落とす層。載せるのは GSAP だけ（初期値は透明）。 */}
       <div
         aria-hidden
         data-hero-dim
-        className="pointer-events-none absolute inset-0 z-20 bg-[#120e08] opacity-0"
+        className="pointer-events-none absolute inset-0 z-20 bg-sumi opacity-0"
       />
 
       {/*

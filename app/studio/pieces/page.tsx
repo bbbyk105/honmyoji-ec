@@ -56,9 +56,9 @@ export default async function StudioPiecesPage() {
             return (
               <li
                 key={piece.slug}
-                className="grid grid-cols-[52px_1fr] items-center gap-x-5 gap-y-3 border-t border-line py-4 transition-colors hover:bg-lacquer md:grid-cols-[52px_1fr_120px_100px_200px_64px] md:gap-y-0"
+                className="grid grid-cols-[52px_1fr] items-center gap-x-5 gap-y-3 border-t border-line py-4 transition-colors hover:bg-sumi md:grid-cols-[52px_1fr_120px_100px_200px_64px] md:gap-y-0"
               >
-                <div className="relative h-13 w-13 bg-onyx">
+                <div className="relative h-13 w-13 bg-sumi">
                   <Image
                     src={productCutout(piece.folder)}
                     alt=""

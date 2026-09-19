@@ -55,8 +55,16 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
 
   return (
     <article className="group flex h-full flex-col">
+      {/*
+        `data-morph` は遷移の幕を出さない印（RouteCurtain）。一覧 ⇄ 商品ページは
+        720ms のモーフが主役なので、そこに幕を掛けるとモーフが見えなくなる。
+        `data-cursor` は像の上に灯る語 —— カットアウトは台に浮いているだけで、
+        リンクにもボタンにも見えない。押せることは形では言えないので、語で言う。
+      */}
       <Link
         href={productPath(product)}
+        data-morph
+        data-cursor="View"
         className="block w-full no-underline outline-none focus-visible:ring-2 focus-visible:ring-ivory/25"
         aria-label={`${product.name} — ${aud.format(product.priceAud)}`}
       >
@@ -102,7 +110,7 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
       <div className="mt-6 w-full">
         <StatusPill status={product.status} />
         <div className="mt-3 flex items-baseline justify-between gap-4">
-          <Link href={productPath(product)} className="no-underline">
+          <Link href={productPath(product)} data-morph className="no-underline">
             <h3 className="font-display text-[27px] font-light leading-none tracking-[0.02em] text-ivory">
               {product.name}
               <span className="ml-2 align-middle font-jp text-[13px] tracking-[0.24em] text-mist">{product.kanji}</span>

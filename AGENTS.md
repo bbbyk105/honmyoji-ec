@@ -26,7 +26,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `data/site.ts` — ブランドコピー・FAQ・創業者・特商法/返品ポリシー。
 - `data/blog.ts` — Blog の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Blog が空にならないようにするための seed で、記事を足す場所ではない。
 - `lib/microcms.ts` — **Blog の記事はここから来る**。入稿の手順・スキーマ・Webhook は `docs/microcms.md`。
-- `components/blog/BlogArticle.tsx` — 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。
+- `components/blog/BlogArticle.tsx` — 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。**版面（980px）と行長（`--blog-measure` = 560px ≒ 70 文字）は別物** — 文章は measure で止め、写真だけが版面いっぱいに出る。両方 980px にすると 1 行 119 文字になる（2026-09-20 に直した）。`ch` で共有しないこと：Newsreader と Source Sans で `0` の幅が 15% 違うので、同じ `62ch` でも右端が揃わない。
+- `components/blog/ArticleToc.tsx` — 記事の目次。版面の右の余白に絶対配置＋sticky、`xl` 以上・**見出し三つ以上**のときだけ。見出しは `[data-article-body]` の `h2` を**描かれた DOM から**拾う（本文は microCMS のリッチエディタ HTML と手書きブロックの二系統で、揃うのは描画後だけ）。id は CMS が振っていればそれを使い、無ければ見出しの文字から作る。送りは `scrollToChapter()`。
 - `app/(site)/` — 公開サイト。`/` `/collection` `/collection/[slug]` `/about` `/blog` `/blog/[slug]` `/blog/preview` `/faq` `/legal` `/contact`（Server Action）`/checkout/thank-you`。**route group なので URL には `(site)` は出ない** — 外枠を `/studio` と分けるためだけの括り。
 - `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
 - `app/api/` — `revalidate`（microCMS Webhook）と `stripe/webhook`（決済の確定）。
@@ -41,8 +42,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `components/site/Frame.tsx` — 写真井戸。`data-image-role` / `data-image-ratio` 属性付き。差し替えは `src` だけ。role・比率のキャプション表示は `showRole`（既定 off）。
 - `components/cart/` — Cart（localStorage）と MiniCart。決済は Contact へ手渡し。slug と旧 folder 名の両方を `getProduct` で解決する。**表示は Cart だが localStorage キーは `miroku-held` のまま**（変えると既存のカートが空になる）。UI 上の「Hold / Held」は 2026-08-31 に全て Cart 系の語へ置換済み。
 - `components/site/` — Header（GSAP ハンバーガー, viewTransitionName=site-header）/ Footer / Reveal（ScrollTrigger）/ BeriBand / Newsletter。**Button は全ページ共通**（`solid` / `outline` / `outline-light` / `link` / `link-light`、href があれば Link・無ければ button）。CTA を新しく置くときは素の `<Link className="link-line">` ではなく Button を使う — `link-line` は hover で初めて罫が出るので、CTA には弱い。
-- `components/motion/` — Lenis + GSAP 登録。`SmoothScroll` がルートを包む。メニュー／カート中は `stopLenis()`。
-- `components/site/ImageWell.tsx` — 写真の「開き方」。`Frame` / `StillTile` の井戸はこれ。`wipe`（下端から開く・既定）と `band`（中央から左右へ・ヒーローのみ）。マスクは井戸ではなく内側の層に掛かるので、上に載せた見出しは開いている間も動かない。
+- `components/motion/` — Lenis + GSAP 登録。`SmoothScroll` がルートを包む。メニュー／カート中は `stopLenis()`。章の送りは `scrollToChapter()`（Lenis があれば Lenis に頼む — ネイティブ smooth と慣性は引っ張り合う）。
+- `components/motion/EntryCurtain.tsx` — **入場の幕**。同じセッションで一度だけ（`sessionStorage` の `miroku-entered`）。開き方は**二枚が左右へ退く**（上へ滑らせない — サイト中の所作が全部同じ向きになると安く見える。2026-09-20）。合わせ目にだけ ivory の罫を引く。**「もう見たか」は `SiteChrome` が body 先頭に置く一行の script が塗る前に決める** — mount 後の effect で判定すると、二度目以降に一瞬だけ幕が見える。その代償として `app/layout.tsx` の `<html>` に `suppressHydrationWarning` が要る（サーバの HTML に `data-entered` が無いので、無いと毎回 hydration mismatch が出る。実際に踏んだ）。
+- `components/motion/PageTransition.tsx` — **ページの移り変わり**。見た目は `app/globals.css` の `::view-transition-*(.page)`（前のページが退き、新しいページが中央から左右へ開く）。この部品は「モーフかどうか」の印を `html` に置くだけ。**`main` は `SiteChrome` で `<ViewTransition default="page">` に包んである** — React は `<ViewTransition>` が関与する更新でしか遷移を開始しないので、包まないと CSS が一度も走らない（包む前は作品のモーフ以外で死んでいた）。`data-morph` が付いた導線（`Button` は `morph` prop）では地を静かに入れ替えるだけにする。**`html[data-morph]::view-transition-old(…)` に空白を入れないこと** — 疑似要素は html の子孫ではなく html 自身に付くので、子孫結合子だと一つも一致せず、モーフの下で版が開き続ける（実際に踏んだ）。
+- `components/site/CursorMark.tsx` — **カーソルに灯る語**。`data-cursor="View"` / `"Zoom"` を持つものの上だけ（`FloatingBag` のリンクと `Lightbox` の `Zoomable`）。`lg` 以上かつ `pointer: fine` のときだけ。**`gsap.killTweensOf(el)` を使わないこと** — 追従を持っている `quickTo` のトゥイーンごと死に、語は出るのに印が画面の左上から動かなくなる（実際に踏んだ）。重なりの解決は `overwrite: "auto"` で。
+- `components/site/ChapterRail.tsx` — **章の柱**。番号は `app/(site)/page.tsx` の `CHAPTERS` が持ち、`id` は各 `<section>` と一致させる（**節を足したら両方直す** — id の無い章は黙って飛ばされる）。ヒーローは sticky で ScrollTrigger が測れないので監視せず、「二つ目より上なら一つ目」で決める。**表紙にいるあいだは引く**（第一画面には縦組みと `01 — Honmyoji` が既にあり、重ねると 01 が二つ並ぶ）。
+- `components/site/ImageWell.tsx` — 写真の「開き方」。`Frame` / `StillTile` の井戸はこれ。`wipe`（既定）と `band`（中央から左右へ・ヒーローのみ）。マスクは井戸ではなく内側の層に掛かるので、上に載せた見出しは開いている間も動かない。
+  - **開く向きは `from`**（`bottom` / `left` / `right` / `top`）。**写真が版面のどの端に着いているかで決める** — 並んだ二枚が互いに向き合って開く。隣り合うときは `revealDelay` でずらす（同時に開くと一組の仕掛けに見える）。
+  - **像の倍率は動かさない**（2026-09-20）。動くのはマスクの端と、4% 遅れて追いつく平行移動だけ。倍率 1.06 は平行移動で端が欠けないための余白なので、**クラスではなく effect で置く** — クラスで固定すると、写真の無い空の井戸の四辺の罫が枠の外へ出て消える。
+  - **`Reveal` は井戸を含むブロックをフェードさせない**（キャプションだけ動かす）。写真と文章を一つの `Reveal` に同居させないこと — 同居すると文章が素で現れる。
 - `components/site/DriftBand.tsx` — 縦スクロールに紐付けて横に流れる写真の帯。自走マーキーにはしない。**並べるのはバッグが主役の写真だけ**（風景・堂内のカットは入れない）。
 - 価格の表記は `data/products.ts` の `aud` ひとつ（`A$220`）。ロケールを `en-AU` にすると記号が素の `$` に戻り、どの国のドルか分からなくなる。値段の隣に通貨名を書き足さない（記号が言っている）。
 - 商品 URL は読みやすい複合 slug（`sakura-cherry`）。画像フォルダは `folder`（`sakura`）。旧 URL は `next.config.ts` で恒久リダイレクト。
@@ -121,7 +129,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, spacing, image roles, and what not to build (feature-card rows, gold luxury, centered CTA stacks) live there.
 
-**地は暖かい黒**（2026-09-16 にヒーローの色へ全ページを合わせた）。色トークンは色名ではなく役どころで、面は深さ順に `onyx` < `sumi`（版の地）< `lacquer`（入力欄・注記）、文字は `ivory`（見出し・罫・塗り）と `bone`（本文）、その下に `mist` と罫の `line`。**`ink` / `charcoal` / `paper` / `parchment` / `sand` はもう無い** — 反転で名前が意味と逆さまになるので付け替えた。`#000` は使わない（冷たい黒の上では縁の赤も藍も濁る）。
+**地は純黒の一色**（2026-09-20）。暖かい黒（`#14100b` 族）はやめた —— 黒に差した茶が最初に目に入り、UI が色を持っている状態で布と競っていた。トークンは色名ではなく役どころで、**面は `sumi`（`#000`）一つだけ**、文字は `ivory`（`#fff`・見出し・罫・塗り）→ `bone`（本文）→ `mist`（メタ・完売）、罫は `line`（`#303030`）と hover の `bark`。
+
+**`onyx` / `lacquer` / `ash` はもう無い**（`ink` / `charcoal` / `paper` / `parchment` / `sand` も同様）。持ち上がる面も沈む面も作らないので、**面の境目は罫一本が全部背負う** —— 入力欄は全周の罫、フッターは横切る罫、トップで覆う面は上辺の罫。塗りで二つを分けたくなったら、それは二つ目の黒を戻している。`moss` / `indigo` / `clay` / `rose` は**状態表示にだけ**残してある。
 
 ## 未着手 / 次フェーズ
 

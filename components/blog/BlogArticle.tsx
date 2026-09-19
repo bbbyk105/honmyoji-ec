@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
+import { ArticleToc } from "./ArticleToc";
 import { formatBlogDate, blogMeta, type BlogPost } from "@/data/blog";
 
 type Props = {
@@ -15,7 +16,15 @@ type Props = {
  * 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。
  * 見出しも本文も同じ左端に揃える — 読み始めるたびに視線が横に飛ばないように。
  * サムネは任意。無いときはプレースホルダを出さず、本文までの余白だけ詰める。
+ *
+ * **版面（980px）と行長（`--blog-measure`）は別物。** 文章は measure で止め、写真だけが
+ * 版面いっぱいに出る。両方を 980px にすると 1 行が 119 文字になり、折り返すたびに
+ * 目が左端を見失う（実測して直した）。右に空くのは穴ではなく、写真が食み出すための余白。
  */
+
+/** 文章の列。写真・引用はこれを使わず版面いっぱいに出る。 */
+const MEASURE = "max-w-[var(--blog-measure)]";
+
 export function BlogArticle({ entry, next }: Props) {
   const hasImage = Boolean(entry.image);
 
@@ -59,12 +68,18 @@ export function BlogArticle({ entry, next }: Props) {
         ) : null}
       </header>
 
-      {/* 写真があるときは写真の下、無いときは日付の下で本文を始める。空の井戸は出さない。 */}
+      {/*
+        写真があるときは写真の下、無いときは日付の下で本文を始める。空の井戸は出さない。
+        `relative` は目次のため —— 目次は版面の右端に絶対配置で立つ（本文は measure で
+        止まっているので重ならない）。`data-article-body` は目次が見出しを拾う目印。
+      */}
       <div
-        className={`mx-auto w-full max-w-[980px] px-5 ${
+        data-article-body
+        className={`relative mx-auto w-full max-w-[980px] px-5 ${
           hasImage ? "mt-16" : "mt-12 border-t border-line pt-12"
         }`}
       >
+        <ArticleToc />
         {entry.pull ? (
           <Reveal>
             <p className="mb-16 max-w-[28ch] font-display text-[clamp(28px,3.4vw,40px)] font-light italic leading-[1.28] text-ivory md:mb-20">
@@ -73,7 +88,8 @@ export function BlogArticle({ entry, next }: Props) {
           </Reveal>
         ) : null}
 
-        <div className="space-y-7">
+        {/* 段落の間は行間（32.3px）より広く。space-y-7（28px）だと段落の切れ目が読めない。 */}
+        <div className="space-y-9">
           {entry.body.map((block, i) => {
             if (block.type === "html" && block.html) {
               /* microCMS のリッチエディタ。組みは globals.css の .blog-prose。 */
@@ -86,7 +102,10 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "h" && block.text) {
               return (
                 <Reveal key={i}>
-                  <h2 className="pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ivory">
+                  {/* 上は離し、下は詰める（`space-y` を打ち消す `-mb-2`）。見出しは次に来る文章の持ち物。 */}
+                  <h2
+                    className={`${MEASURE} -mb-2 pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ivory`}
+                  >
                     {block.text}
                   </h2>
                 </Reveal>
@@ -97,7 +116,7 @@ export function BlogArticle({ entry, next }: Props) {
                 <Reveal key={i} className="py-8">
                   <figure>
                     <div
-                      className={`relative overflow-hidden bg-onyx ${
+                      className={`relative overflow-hidden bg-sumi ${
                         block.ratio === "16/10"
                           ? "aspect-[16/10]"
                           : block.ratio === "1/1"
@@ -123,7 +142,9 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "p" && block.text) {
               return (
                 <Reveal key={i}>
-                  <p className="font-sans text-[17px] leading-[1.9] text-bone">{block.text}</p>
+                  <p className={`${MEASURE} font-sans text-[17px] leading-[1.9] text-bone`}>
+                    {block.text}
+                  </p>
                 </Reveal>
               );
             }

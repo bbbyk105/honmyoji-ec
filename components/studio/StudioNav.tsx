@@ -21,7 +21,7 @@ export function StudioNav() {
   const pathname = usePathname();
 
   return (
-    <header className="border-b border-line bg-lacquer">
+    <header className="border-b border-line bg-sumi">
       <div className={`${STUDIO_SHELL} flex h-16 items-center gap-8`}>
         <Link href="/studio" className="shrink-0 no-underline">
           <span className="font-display text-[19px] font-light leading-none tracking-[0.02em] text-ivory">

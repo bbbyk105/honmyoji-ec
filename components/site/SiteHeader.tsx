@@ -169,6 +169,11 @@ export function SiteHeader() {
     地は全ページ同じ暖かい黒なので、ヘッダーの文字色はどこでも一定。
     変わるのは帯を敷くかどうかだけ — ヒーローの写真の上に半透明の帯と罫を走らせると、
     第一画面に横線が一本入って見える。メニューが開いている間も帯は要らない（面が全部覆う）。
+
+    **帯は不透明（`bg-sumi`）。** 以前は 92% だったが、記事の引用（40px の ivory）が
+    その 8% を通して読めてしまい、ナビの語と重なって両方読めなくなっていた（実際に踏んだ）。
+    地と同じ色なので、不透明にしても「板を貼った」には見えない —— 同じ部屋の、手前の面。
+    ぼかし（backdrop-blur）は使わない。DESIGN.md がガラスを否定している。
   */
   const overHero = onDarkHero && !open;
   const tone = "text-ivory";
@@ -180,7 +185,7 @@ export function SiteHeader() {
       style={{ viewTransitionName: "site-header" }}
       className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-500 ${
         scrolled && !open && !overHero
-          ? "border-b border-line bg-sumi/92"
+          ? "border-b border-line bg-sumi"
           : "border-b border-transparent bg-transparent"
       }`}
     >

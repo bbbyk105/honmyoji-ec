@@ -23,6 +23,26 @@ export function startLenis() {
   lenis?.start();
 }
 
+/**
+ * 章のレールから送る。Lenis が居るときは Lenis に頼む —— ネイティブの smooth と
+ * 慣性スクロールは同時に走ると引っ張り合う（`html { scroll-behavior }` を auto に
+ * してあるのと同じ理由）。`id` が null ならページの先頭（ヒーロー）。
+ */
+export function scrollToChapter(id: string | null) {
+  const target = id ? document.getElementById(id) : null;
+  if (id && !target) return;
+
+  if (lenis) {
+    lenis.scrollTo(target ?? 0, { offset: target ? -HEADER_OFFSET : 0, force: true });
+    return;
+  }
+  if (target) {
+    target.scrollIntoView({ behavior: "smooth" });
+  } else {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+}
+
 function jumpToHash(hash: string): boolean {
   const target = hash.length > 1 ? document.querySelector(hash) : null;
   if (!target) return false;
