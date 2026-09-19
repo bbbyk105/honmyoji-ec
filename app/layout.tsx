@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Bodoni_Moda, Manrope, Shippori_Mincho } from "next/font/google";
+import { Instrument_Serif, Inter, Noto_Serif_JP } from "next/font/google";
 import "./globals.css";
 import { site } from "@/data/site";
 
@@ -11,24 +11,23 @@ import { site } from "@/data/site";
  * ここに置くと `/studio` にもサイトの外枠が付いてきて、親 layout は子から外せない。
  */
 
-const bodoni = Bodoni_Moda({
-  variable: "--font-bodoni",
+const instrument = Instrument_Serif({
+  variable: "--font-instrument",
   subsets: ["latin"],
-  weight: ["400", "500", "600"],
+  weight: ["400"],
   style: ["normal", "italic"],
   display: "swap",
 });
 
-const manrope = Manrope({
-  variable: "--font-manrope",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
-const shippori = Shippori_Mincho({
-  variable: "--font-shippori",
-  subsets: ["latin"],
+const notoSerifJP = Noto_Serif_JP({
+  variable: "--font-noto-serif-jp",
   weight: ["400", "500"],
   display: "swap",
   preload: false,
@@ -54,7 +53,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${bodoni.variable} ${manrope.variable} ${shippori.variable} h-full antialiased`}
+      className={`${instrument.variable} ${inter.variable} ${notoSerifJP.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-sumi text-ivory">{children}</body>
     </html>
