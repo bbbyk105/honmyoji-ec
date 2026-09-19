@@ -15,20 +15,20 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 
 - **Direction:** Editorial / material-first. A dark room hung with lit objects. Quiet luxury without gold, black marble, or zen cliché.
 - **Decoration:** Intentional and rare. Grain on the ground, a beri band used as a section edge, thin rules. No cards, icons, glass — and no gradients anywhere (see Color).
-- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large Bodoni Moda italic at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
+- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large Instrument Serif italic at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
 - **Mood:** Neutral charcoal room, lit from the front. The UI carries almost no hue; colour lives in the cloth. Type is fashion-editorial, not “Japanese luxury” styling.
 - **What we refused:** 3-up feature rows, centered manifesto + CTA stacks, pill buttons, drop shadows, Shopify grids, beige Instagram boutique, startup landing structure.
 
 ## Typography
 
-- **Display:** Bodoni Moda (400 / italic) — narrow contrast and sharper vertical stress; use at controlled sizes, never as oversized “luxury” wallpaper.
-- **UI / body:** Manrope (300–600) — neutral, contemporary, and deliberately non-editorial so the serif carries the brand voice.
-- **Japanese:** Shippori Mincho — for secondary lines only. Never dump bilingual pairs on every heading.
+- **Display:** Instrument Serif (400 / italic) — narrow contrast and sharper vertical stress; use at controlled sizes, never as oversized “luxury” wallpaper.
+- **UI / body:** Inter (300–600) — neutral, contemporary, and deliberately non-editorial so the serif carries the brand voice.
+- **Japanese:** Noto Serif JP — for secondary lines only. Never dump bilingual pairs on every heading.
 - **Scale (approx.):**
   - Hero: clamp(42px, 5.15vw, 74px), leading ~0.96
   - Page title: clamp(38px, 5vw, 76px)
   - Section: clamp(30px, 3.8vw, 50px)
-  - Deck: 22–26px Bodoni Moda
+  - Deck: 22–26px Instrument Serif
   - Body: 14–17px / 1.85
   - Meta: 9.5–10.5px uppercase, tracking 0.14–0.20em
 - **Loading:** `next/font/google`, `display: "swap"`. Shippori `preload: false`.
@@ -184,7 +184,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 
 | Date | Decision | Rationale |
 |---|---|---|
-| 2026-09-19 | Bodoni Moda + Manrope + Shippori | Remove the café / wa-modern softness of Newsreader + Source Sans and move the brand toward a sharper fashion-editorial register |
+| 2026-09-19 | Instrument Serif + Inter + Shippori | Use Instrument Serif only for editorial display moments; keep logo and UI in Inter so the site does not read as a luxury-template serif system |
 | 2026-08-30 | Drop gold / sumi footer | Avoid fake-luxury signals; moss/indigo from the cloth |
 | 2026-08-30 | Hold / inquiry instead of cart checkout | Matches one-of-a-kind making and current ops |
 | 2026-08-30 | Frame roles + ratios in captions | Photography can be swapped without layout work |
