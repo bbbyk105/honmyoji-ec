@@ -1,37 +1,34 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   MIROKU — rooms, not storefronts.
-   展示室は暗い。地はヒーローの写真と同じ暖かい黒（#1b1710 の族）で、
-   純黒（#000）は一度も使わない — 冷たい黒の上では、畳の縁の赤も藍も濁る。
-
-   トークンは色の名前ではなく役どころ。地は三段（onyx < sumi < lacquer）、
-   文字は二段（ivory / bone）、その下に meta の mist と罫の line。
+   MIROKU — contemporary craft, not "Japanese luxury" styling.
+   茶・生成りへ寄せすぎず、無彩色に近い charcoal と mineral white で組む。
+   色はバッグそのものに任せ、UI はほぼ色を持たない。
    ------------------------------------------------------------------ */
 @theme {
-  /* 地 — 深い順。段差は 6〜11 と小さい。大きく開けると黒が灰に見える */
-  --color-onyx: #0b0806;    /* 地より深いところ：写真の井戸、接地の影、フッターの土台 */
-  --color-sumi: #14100b;    /* 版の地 */
-  --color-lacquer: #1f1a13; /* 持ち上がる面：入力欄、注記、パネル */
-  --color-ash: #2a241b;     /* やわらかい面 */
-  --color-bark: #4a4133;    /* 暖かい支え：hover の罫 */
+  /* Ground — almost neutral. Depth comes from luminance, not brown hue. */
+  --color-onyx: #080808;
+  --color-sumi: #0e0e0d;
+  --color-lacquer: #151514;
+  --color-ash: #1d1d1b;
+  --color-bark: #393834;
 
-  /* 文字 */
-  --color-ivory: #f2ece0;   /* 光 — 見出し・罫・塗りのボタン */
-  --color-bone: #cfc6b4;    /* 本文。見出しより一段落として、黒地のにじみを抑える */
-  --color-mist: #9c9280;    /* メタ・キャプション（sumi 上で 6.2:1） */
-  --color-line: #37301f;    /* ヘアライン */
+  /* Type — mineral white, not cream. */
+  --color-ivory: #f1efe9;
+  --color-bone: #c8c5bd;
+  --color-mist: #85827b;
+  --color-line: #2a2926;
 
-  /* 織りの色。黒地では沈むので、明度だけ上げて彩度は足していない */
-  --color-moss: #92a37b;    /* available */
-  --color-indigo: #8a9cb4;  /* coming soon */
-  --color-clay: #c89771;    /* made to order / エラー */
-  --color-rose: #cf9d92;    /* 桜のときだけ */
+  /* Status colours are muted so the product remains the only saturated object. */
+  --color-moss: #8c9885;
+  --color-indigo: #8490a0;
+  --color-clay: #ad8c76;
+  --color-rose: #ae8580;
 
-  --font-display: var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
+  --font-display: var(--font-bodoni), "Bodoni Moda", "Bodoni 72", Didot, serif;
   --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
     "Yu Mincho", serif;
-  --font-sans: var(--font-source), "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-manrope), Manrope, "Helvetica Neue", Arial, sans-serif;
 
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-morph: cubic-bezier(0.33, 1, 0.68, 1);
@@ -57,7 +54,7 @@ body {
 }
 
 ::selection {
-  background: rgba(242, 236, 224, 0.2);
+  background: rgba(241, 239, 233, 0.16);
   color: var(--color-ivory);
 }
 
@@ -91,7 +88,7 @@ body {
   pointer-events: none;
   opacity: 0.1;
   mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.95 0 0 0 0 0.92 0 0 0 0 0.84 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 0 0.94 0 0 0 0.42 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 .tategaki {
@@ -186,16 +183,16 @@ body {
    読めるようにするぶんは文字の不透明度で払う —— 写真を曇らせて払わない。
    ------------------------------------------------------------------ */
 .hero-grain {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.9 0 0 0 0 0.82 0 0 0 0.55 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.93 0 0 0 0 0.93 0 0 0 0 0.93 0 0 0 0.46 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
   background-size: 180px 180px;
   mix-blend-mode: overlay;
-  opacity: 0.13;
+  opacity: 0.095;
 }
 
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文 17px / 1.9、見出しは Newsreader。行長は親の 980px 版面に合わせる
+   本文 17px / 1.9、見出しは Bodoni Moda。行長は親の 980px 版面に合わせる
   （内側で 62ch / 24ch を切ると右が空洞になる — DESIGN.md「列は文字幅」）。
    引用に border-l を付けない（DESIGN.md）。position も書かない。
    ------------------------------------------------------------------ */
@@ -576,7 +573,7 @@ body {
   pointer-events: none;
   opacity: 0.045;
   mix-blend-mode: soft-light;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cg fill='none' stroke='%23f2ece0' stroke-opacity='.34' stroke-width='.55'%3E%3Cpath d='M24 0v192M72 0v192M120 0v192M168 0v192'/%3E%3Cpath d='M0 40h192M0 104h192M0 168h192' stroke-opacity='.16'/%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='192' height='192' viewBox='0 0 192 192'%3E%3Cg fill='none' stroke='%23f1efe9' stroke-opacity='.34' stroke-width='.55'%3E%3Cpath d='M24 0v192M72 0v192M120 0v192M168 0v192'/%3E%3Cpath d='M0 40h192M0 104h192M0 168h192' stroke-opacity='.16'/%3E%3C/g%3E%3C/svg%3E");
   background-size: 192px 192px;
 }
 
@@ -612,7 +609,7 @@ body {
   top: 5%;
   bottom: 2%;
   width: 1px;
-  background: rgba(242, 236, 224, 0.045);
+  background: rgba(241, 239, 233, 0.045);
   pointer-events: none;
 }
 
