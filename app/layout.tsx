@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Newsreader, Source_Sans_3, Shippori_Mincho } from "next/font/google";
+import { Bodoni_Moda, Manrope, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
 import { site } from "@/data/site";
 
@@ -11,16 +11,16 @@ import { site } from "@/data/site";
  * ここに置くと `/studio` にもサイトの外枠が付いてきて、親 layout は子から外せない。
  */
 
-const newsreader = Newsreader({
-  variable: "--font-newsreader",
+const bodoni = Bodoni_Moda({
+  variable: "--font-bodoni",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  weight: ["400", "500", "600"],
   style: ["normal", "italic"],
   display: "swap",
 });
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source",
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600"],
   display: "swap",
@@ -54,7 +54,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="en"
-      className={`${newsreader.variable} ${sourceSans.variable} ${shippori.variable} h-full antialiased`}
+      className={`${bodoni.variable} ${manrope.variable} ${shippori.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-sumi text-ivory">{children}</body>
     </html>
