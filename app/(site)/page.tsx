@@ -55,7 +55,7 @@ export default async function HomePage() {
         {/* 2. Intro — text as a page, not a marketing block */}
         <section className="washi-grain relative">
           <div className={`${SHELL} grid gap-12 py-16 md:grid-cols-12 md:gap-8 md:py-24`}>
-            <Reveal direction="left" className="md:col-span-7 lg:col-span-6">
+            <Reveal className="md:col-span-7 lg:col-span-6">
               <p className="eyebrow">Atelier note</p>
               <h2 data-split-lines className="mt-5 font-display text-[clamp(32px,4.2vw,56px)] font-light leading-[1.08] text-ivory">
                 Objects woven from
@@ -64,7 +64,7 @@ export default async function HomePage() {
               </h2>
             </Reveal>
             {/* 段は文章の幅ぶんだけ。38ch で止めると 4 カラムの右側に穴が空く。 */}
-            <Reveal direction="right" delay={120} className="flex flex-col justify-end md:col-span-5 md:col-start-8 lg:col-span-4 lg:col-start-9">
+            <Reveal delay={120} className="flex flex-col justify-end md:col-span-5 md:col-start-8 lg:col-span-4 lg:col-start-9">
               <p className="font-sans text-[15px] leading-[1.85] text-bone/90">
                 One-of-a-kind bags, made at a temple in Fuji City, from tatami-beri remnants and paper
                 band recycled in the same streets. Each piece is finished by hand, blessed at the temple,
@@ -104,13 +104,7 @@ export default async function HomePage() {
             >
               {[sakura, ai, wakaba].map((piece, i) => (
                 <div key={piece.slug} className="exhibition-piece relative">
-                  <span
-                    aria-hidden
-                    className="pointer-events-none absolute right-2 top-2 z-0 font-display text-[clamp(72px,8vw,126px)] font-light leading-none text-ivory/[0.035]"
-                  >
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
-                  <Reveal delay={i * 80} className="relative z-[1]">
+                  <Reveal delay={i * 70}>
                     <FloatingBag product={piece} index={i} priority={i < 2} />
                     <p className="mt-3 max-w-[36ch] font-sans text-[12.5px] leading-[1.75] text-bone/75">
                       {piece.note}
@@ -125,7 +119,7 @@ export default async function HomePage() {
         {/* 4. Material essay */}
         <section className="material-scene relative z-[1] pt-24 md:pt-32">
           <div className={`${SHELL} grid gap-12 md:grid-cols-12 md:items-start md:gap-8`}>
-            <Reveal direction="left" className="md:col-span-5 md:sticky md:top-28">
+            <Reveal className="md:col-span-5 md:sticky md:top-28">
               <p className="eyebrow">Material</p>
               <h2 data-split-lines className="mt-4 font-display text-[clamp(34px,4vw,52px)] font-light leading-[1.08] text-ivory">
                 A fabric that
@@ -212,7 +206,7 @@ export default async function HomePage() {
                 sizes="(min-width: 1024px) 64vw, (min-width: 768px) 56vw, 100vw"
               />
             </Reveal>
-            <Reveal direction="right" delay={100} className="flex flex-col justify-center md:col-span-5 lg:col-span-4">
+            <Reveal delay={100} className="flex flex-col justify-center md:col-span-5 lg:col-span-4">
               <p className="font-display text-[clamp(24px,2.3vw,30px)] font-light leading-[1.3] text-ivory">
                 Not styled for a season. Made to be carried — to a tea room, to the market, to the
                 front door and back.
@@ -228,7 +222,7 @@ export default async function HomePage() {
           </div>
 
           <div className="mt-8 grid gap-8 md:mt-10 md:grid-cols-12 md:gap-10">
-            <Reveal direction="left" className="md:col-span-5">
+            <Reveal className="md:col-span-5">
               <Frame
                 src="/images/scenes/kimono-window.webp"
                 alt="Seated at the temple window with two bags"
@@ -239,7 +233,7 @@ export default async function HomePage() {
                 sizes="(min-width: 768px) 40vw, 100vw"
               />
             </Reveal>
-            <Reveal direction="right" delay={80} className="md:col-span-5 md:col-start-8">
+            <Reveal delay={80} className="md:col-span-5 md:col-start-8">
               <Frame
                 src="/images/scenes/bamboo-trio.webp"
                 alt="Three bags standing in the bamboo grove"
@@ -267,7 +261,7 @@ export default async function HomePage() {
                 sizes="(min-width: 768px) 40vw, 100vw"
               />
             </Reveal>
-            <Reveal direction="right" delay={100} className="flex flex-col justify-center md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8">
+            <Reveal delay={100} className="flex flex-col justify-center md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8">
               <p className="eyebrow">Making</p>
               <h2 data-split-lines className="mt-4 font-display text-[clamp(32px,3.8vw,48px)] font-light leading-[1.08] text-ivory">
                 One pair of hands,
