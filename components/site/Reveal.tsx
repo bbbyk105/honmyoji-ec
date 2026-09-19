@@ -47,25 +47,25 @@ export function Reveal({
       });
 
       const offset =
-        direction === "left"
-          ? { x: -34, y: 0 }
-          : direction === "right"
-            ? { x: 34, y: 0 }
-            : direction === "none"
-              ? { x: 0, y: 0 }
-              : { x: 0, y: 26 };
+        direction === "none"
+          ? { x: 0, y: 0 }
+          : { x: 0, y: 18 };
 
       tl.from(el, {
         ...offset,
         autoAlpha: 0,
-        duration: direction === "none" ? 0.85 : 1.08,
-        ease: "power3.out",
+        duration: direction === "none" ? 0.7 : 0.92,
+        ease: "power2.out",
       });
 
       for (const head of heads) {
         const split = SplitText.create(head, { type: "lines", mask: "lines" });
         splits.push(split);
-        tl.from(split.lines, { yPercent: 108, duration: 1.1, stagger: 0.09, ease: "power3.out" }, 0.06);
+        tl.from(
+          split.lines,
+          { yPercent: 58, autoAlpha: 0, duration: 0.95, stagger: 0.06, ease: "power3.out" },
+          0.04,
+        );
       }
 
       return () => {
