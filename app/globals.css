@@ -35,17 +35,20 @@
   --color-rose: #cf9d92;    /* 桜のときだけ */
 
   /*
-    書体は二役（2026-09-25）。見出しの Newsreader は**光学サイズ軸を開けて**読み込む
-    （layout.tsx の `axes: ["opsz"]`）。以前は本文用の opsz 16 の一枚で 80px の見出しまで
-    組んでいて、字が太く間延びしていた。大きい字は opsz 72 の細いコントラストで立つ。
-    本文と UI は Albert Sans。Source Sans 3 は幅が詰まっていて書類の字に見えた。
-    Satoshi が第一候補だったが、ITF FFL が公開リポジトリでの配布を禁じており、
-    このリポジトリは公開なので同じ系統の OFL 書体にした。
+    書体は三役（2026-09-25 に入れ替え）。見出しは Poppins Light、本文と UI は Nunito Sans、
+    ワードマークの MIROKU だけ Prompt Light。以前は見出し Newsreader（セリフ）・本文 Albert Sans。
+    経緯は DESIGN.md の Typography。
+    Satoshi は ITF FFL が公開リポジトリでの配布を禁じているので使わない（このリポジトリは公開）。
+
+    日本語は**端末の明朝**（Mac / iPhone はヒラギノ明朝、Windows は游明朝、Android は Noto Serif CJK）。
+    Web フォントの Shippori Mincho は、宣言だけで 184KB の CSS が全ページの描画を止めていたのでやめた
+    （layout.tsx の註）。和文を Web フォントに戻すなら、使う字だけに絞った一枚にすること。
   */
-  --font-display: var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
-  --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
-    "Yu Mincho", serif;
-  --font-sans: var(--font-albert), "Albert Sans", "Helvetica Neue", Arial, sans-serif;
+  --font-display: var(--font-poppins), "Poppins", "Helvetica Neue", Arial, sans-serif;
+  --font-mark: var(--font-prompt), "Prompt", "Helvetica Neue", Arial, sans-serif;
+  --font-jp: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", YuMincho,
+    "Noto Serif JP", "Noto Serif CJK JP", serif;
+  --font-sans: var(--font-nunito), "Nunito Sans", "Helvetica Neue", Arial, sans-serif;
 
   /*
     文字の段。**ページごとに clamp を手で書かない** —— 同じ役の見出しが節ごとに 2〜4px
@@ -55,15 +58,20 @@
       section  節の見出し（42–62px）
       title    小見出し・用語・一覧の題
       piece    作品の名前（一覧のタイル）
-      deck     見出しに添える一段落（明朝ではなく Newsreader）
+      deck     見出しに添える一段落（明朝ではなく見出しの Poppins）
       body     本文。17px を天井に、スマホで 16px
       small    脇の本文（表の中・補足）
       meta     日付・区分・状態
       caps     大文字のラベル。ナビ・CTA・完売の帯**だけ**（`@utility caps`）
     11px を下限にする。
   */
-  /* 最長の句（woven by hand・6.36em）が左 5 段の 85–90% に収まる上限。1440px で約 72px */
-  --text-hero: clamp(42px, 4.6vw + 6px, 76px);
+  /*
+    最長の句（woven by hand）が左 5 段の 87% に収まる大きさ。Poppins ではこの句が 7.36em あり
+    （Newsreader は 6.36em だった）、5 段の幅は lg〜1480px で「0.4135 × 画面幅 − 55px」の直線に乗る
+    ので、そこから逆算して `4.9vw − 6.5px`、上限 66px（1440px で 64px）。
+    スマホは 42px を天井に 11vw —— 320px 幅でも句が一行に収まる。
+  */
+  --text-hero: max(min(42px, 11vw), min(4.9vw - 6.5px, 66px));
   --text-hero--line-height: 1.02;
   --text-hero--letter-spacing: -0.022em;
   --text-display: clamp(46px, 6vw, 96px);
@@ -127,7 +135,7 @@
     **版面（980px）と行長は別物**。以前ここを分けずに本文を版面いっぱいに流していたので、
     1 行が 119 文字あり、行を折り返すたびに目が左端を見失っていた（実測）。
     写真と引用は measure の外へ食み出して版面いっぱいに出る —— 文章だけが短い、が正しい。
-    px で持つのは、本文（Albert Sans）と見出し（Newsreader）で `ch` の実寸が違うから。
+    px で持つのは、本文（Nunito Sans）と見出し（Poppins）で `ch` の実寸が違うから。
     同じ `62ch` を両方に書くと右端が揃わない。
   */
   --blog-measure: 580px;
@@ -209,7 +217,7 @@ body {
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
-  /* Albert Sans の数字は既定だと幅が揃わない。価格と番号の列が波打たないように */
+  /* 本文の数字は既定だと幅が揃わない。価格と番号の列が波打たないように */
   font-variant-numeric: lining-nums;
 }
 
@@ -381,7 +389,7 @@ body {
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文は `--text-body` / 1.85、見出しは Newsreader。**行長は版面ではなく `--blog-measure`**。
+   本文は `--text-body` / 1.85、見出しは Poppins。**行長は版面ではなく `--blog-measure`**。
    以前ここを「内側で切ると右が空洞になる」という理由で版面いっぱいに流していたが、
    逆だった —— DESIGN.md の「列は文字幅」は*列を狭くしろ*であって、*文字を広げろ*ではない。
    空くのは穴ではなく余白で、そこへ写真と引用が食み出す。
@@ -517,8 +525,14 @@ body {
   font-weight: 600;
 }
 
+/*
+  本文の斜体。Nunito Sans の italic は先読みしない別の呼び出し（`--font-nunito-italic`、layout.tsx）で
+  読んでいて、使われたページでだけ取りに行く。いまの next/font は家族名がどちらも「Nunito Sans」なので
+  font-style だけでも当たるが、呼び出しごとに家族名が分かれる版もあるので、変数で家族ごと指定しておく
+  （分かれたときに font-style だけだと、立体の家族の中で合成の斜体になる）。
+*/
 .blog-prose em {
-  font-family: var(--font-display);
+  font-family: var(--font-nunito-italic), var(--font-sans);
   font-style: italic;
 }
 

@@ -15,37 +15,45 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 
 - **Direction:** Editorial / material-first. A dark room hung with lit objects. Quiet luxury without gold, black marble, or zen cliché.
 - **Decoration:** Intentional and rare. A beri band used as a section edge, thin rules. No cards, icons, glass — no gradients anywhere, and no grain on the ground (see Color).
-- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large upright Newsreader light at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
+- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large upright Poppins light at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
 - **Mood:** A temple hall and a catalogue. Candle-lit photographs hang in a sumi room; daylit pieces and everything you read sit on warm paper. Colour lives in the cloth — the weave is the only saturated thing on the page. Type is literary, not “luxury template.”
 - **Luxury is made of four things only:** typography, photographs, space, material. Never by adding decoration — no gold, no glow, no gradients, no badges, no pills, no glass.
 - **What we refused:** 3-up feature rows, centered manifesto + CTA stacks, pill buttons, drop shadows, Shopify grids, beige Instagram boutique, startup landing structure.
 
 ## Typography
 
-Two roles for Latin, one for Japanese (2026-09-25).
+Three roles for Latin, one for Japanese (2026-09-25). The Latin faces follow the pairing on
+jimotofoods.com.au, which the client pointed to. All three are OFL on Google Fonts and self-hosted by `next/font`:
+nothing is fetched from Google or from that shop's CDN.
 
-- **Display:** Newsreader, **loaded as a variable font with its optical-size axis** (`axes: ["opsz"]`), weight 300,
-  upright only. Until 2026-09-25 it was loaded as fixed weights, which ships only the opsz-16 *text* cut — every
-  80px heading was set in a face drawn for 16px: heavy, loose, bookish. With the axis open the browser picks the
-  display cut at display sizes (hairline contrast, tighter fit). Compared on the page against Literata, Source
-  Serif 4, Fraunces and Instrument Serif: the first two read as book faces, the last two as this year's trend.
-  The italic stays loaded only so emphasis in CMS text is not faux-slanted; it is never used for headings or quotes.
-- **Neutral grotesk (body + UI):** Albert Sans. Source Sans 3 was narrow and read as documentation UI. The brief
-  asked for a Satoshi-like sans; **Satoshi itself is not used** — its ITF Free Font License forbids making the font
-  files available through a public repository, and this repository is public. Albert Sans (OFL) is the closest
-  geometric-grotesk on Google Fonts and is self-hosted by `next/font`.
-- **Japanese:** Shippori Mincho — secondary lines only, at 13–16px with **0.04–0.08em** tracking. The old
-  0.2–0.34em spacing on every Japanese line was part of the template look.
+- **Display (`font-display`):** Poppins 300, upright only. Poppins is not a variable font, so `layout.tsx` loads
+  the 300 file alone: every `font-display` carries `font-light`. No italic is loaded.
+  Poppins is wider than the Newsreader it replaced (“woven by hand” is 7.36em against 6.36em) and its line box
+  carries 0.16em above the cap height, so the hero is sized and pulled up for it (see the `--text-hero` note).
+  Its descenders run 0.09–0.11em below a 1.02–1.05 line box: split-line masks must come from `splitLines()`
+  (`components/motion/split-lines.ts`), which adds that room, or the g, p and y are cut off.
+- **Body + UI (`font-sans`):** Nunito Sans, variable. Its italic (emphasis in CMS text) is a separate,
+  non-preloaded load, fetched only on a page that uses it.
+  **Satoshi is not used** — its ITF Free Font License forbids making the font files available through a public
+  repository, and this repository is public.
+- **Wordmark (`font-mark`):** Prompt 300, for MIROKU only (header, footer, entry curtain, studio).
+- **Preload only what the first screen needs:** Poppins 300, Nunito Sans upright, Prompt 300 — three files,
+  about 50KB. Every preload competes with the hero photograph for the connection.
+- **Japanese:** the device's own Mincho (Hiragino Mincho on Apple, Yu Mincho on Windows, Noto Serif CJK on
+  Android) — secondary lines only, at 13–16px with **0.04–0.08em** tracking. The old 0.2–0.34em spacing on
+  every Japanese line was part of the template look. No Japanese web font: Shippori Mincho came as ~120
+  unicode-range slices per weight, and their 245 `@font-face` rules were a 184KB stylesheet that held back first
+  paint on every page. If a Japanese web font returns, it must be one file subset to the characters in use.
 - **Scale — tokens, not per-page clamps** (`@theme` in `app/globals.css`, used as `text-hero`, `text-section`…):
 
 | Token | Size | Leading / tracking | Use |
 |---|---|---|---|
-| `hero` | 42px → 84px (≈67px at 1440) | 1.02 / −0.022em | The home H1 only |
+| `hero` | ≤42px on phones (11vw), 44px → 66px from 1024 (≈64px at 1440) | 1.02 / −0.022em | The home H1 only |
 | `display` | 46px → 96px | 0.98 / −0.024em | Page titles, piece name on the PDP |
 | `section` | 34px → 62px (≈57px at 1440) | 1.05 / −0.018em | Section headings |
 | `title` | 24px → 34px | 1.16 / −0.01em | Sub-heads, defined terms, list titles |
 | `piece` | 20px → 23px | 1.1 | Piece name under a photograph |
-| `deck` | 20px → 25px | 1.42 | Serif lead paragraph |
+| `deck` | 20px → 25px | 1.42 | Lead paragraph, in the display face |
 | `body` | 16px → 17px | 1.8 | Body |
 | `small` | 15px | 1.75 | Secondary body, table cells |
 | `meta` | 13px | 1.6 | Dates, kinds, status, form labels |
@@ -56,8 +64,8 @@ Two roles for Latin, one for Japanese (2026-09-25).
 - **No label above a heading.** A tiny uppercase kicker (“ATELIER NOTE”, “EXHIBITION · 2026”) over every heading,
   plus a letter-spaced Japanese line under it, was the single most template-looking habit on the site. A heading
   stands on its own; chapter numbers live in `ChapterRail`.
-- **Wordmark:** MIROKU in Newsreader 400 (not 300 — at 21–23px the light weight read as a heading fragment),
-  0.24em tracking with the trailing space pulled back (`mr-[-0.24em]`), over `HONMYOJI · FUJI` in 11px caps at
+- **Wordmark:** MIROKU in Prompt 300 — a face of its own, so it reads as a mark rather than a fragment of a
+  Poppins heading — 0.24em tracking with the trailing space pulled back (`mr-[-0.24em]`), over `HONMYOJI · FUJI` in 11px caps at
   0.16em — the two lines come out the same width, like a temple plaque.
 
 ## Color
@@ -120,14 +128,15 @@ invisible here, and a soft pool of light is just a radial gradient. Every floati
   `breath`, and either side of a change of ground takes `pause`. **Vertical space is carried on one side only**
   — a section that paints its own ground owns its inner `py`; everything else takes `pt`. `mt-40` stacked on
   `py-24` is 256px, which no one chose and which reads as the page coming apart.
-- **Measure:** body ~56ch (≈65 characters). Japanese is measured in `em`, never `ch` — `ch` is the width of “0”, so `42ch` of Shippori wraps at about 20 characters and becomes unreadable.
+- **Measure:** body ~56ch (≈65 characters). Japanese is measured in `em`, never `ch` — `ch` is the width of “0”, so `42ch` of Japanese wraps at about 20 characters and becomes unreadable.
 - **The page column and the line length are two different things.** `--blog-measure` (560px, ≈70
   characters at 17px) is the article's *line*; 980px is its *page*. Running body text to the page edge
   gave 119 characters a line — at that length the eye loses the left margin on every return sweep, which
   is the one typographic failure a reader feels without being able to name. Photographs, pull quotes and
   the table of contents live in the space the measure leaves; **that space is a margin, not a hole.**
-  `ch` is unusable for sharing a right edge across fonts: Newsreader's `0` is ~0.55em and the body sans's
-  ~0.47em, so the same `62ch` lands 15 % apart. Share a px token instead.
+  `ch` is unusable for sharing a right edge across fonts: each face has its own `0` (Newsreader's ~0.55em
+  against Albert Sans's ~0.47em put the same `62ch` 15 % apart; Poppins and Nunito Sans are 0.62 / 0.60em
+  today, and the next change of face moves them again). Share a px token instead.
 - **A paragraph break must be bigger than a line break.** Body runs 17px / 1.9 (32.3px between lines), so
   a `1.7em` (28.9px) paragraph gap made the breaks *smaller* than the leading and the page read as one
   block. Paragraph spacing is `2.1em`. A heading, conversely, belongs to what comes **after** it: 2.6em
@@ -394,3 +403,5 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-09-25 | Section spacing tokens `beat` / `breath` / `pause` | `pt-28 md:pt-40` repeated on every section gave one rhythm. Three steps, chosen by how far the subject moves |
 | 2026-09-25 | Leftover screenshot bars trimmed at the source | `trim_bars()` stopped at the first row carrying menu-bar text, leaving 37px of black on 33 photographs. Invisible on black, a hard line on paper |
 | 2026-09-25 | Hero recomposed: centred crop, 7 columns, title top / caption bottom | It read cheap for four measurable reasons. The crop sat at 10 % although the three bags stand at 33–63 % of the frame, so they were pushed to the right edge and the drum and sutra books on the left became the subject — a symmetric altar turned into a cluttered snapshot. The photograph took 8 columns of candles and gold. The headline broke wherever it ran out of room (“…at a temple in / Fuji.”). And the frame sat on unrelated margins (24 / 32 / 48px). Now: `object-[48%_50%]`, 7 columns, a 48px mat on three sides (the page margin), the headline broken by phrase and sized so the longest phrase fills 85–90 % of five columns, its ink top on the photograph's top edge (measured to 1px) and the CTA rule on its bottom edge |
+| 2026-09-25 | Poppins / Nunito Sans / Prompt replace Newsreader / Albert Sans | The client asked for the type of jimotofoods.com.au: Poppins Light for headings, Nunito Sans for body and UI, Prompt Light for the wordmark. Taken from Google Fonts (OFL) through `next/font`, not from that shop's CDN. Three things moved with the face: the hero is re-sized for Poppins's wider phrase (`4.9vw − 6.5px`, capped at 66px, so “woven by hand” fills 87 % of five columns; it had been wrapping to “woven by / hand” at 1024, 1280 and 1920) and pulled up 0.16em to keep its cap height on the photograph's top edge; split-line masks get 0.15em of room below (`splitLines()`), because Poppins's descenders were cut off; the hero is four phrases at every width (SplitText breaks at a `display:none` `<br>`, so the three-line tablet setting only ever appeared with reduced motion) |
+| 2026-09-25 | No Japanese web font; three preloads | The site read as heavy. Measured on the production build (Lighthouse, mobile): the largest cost was not the new Latin faces but Shippori Mincho — 245 `@font-face` rules in a render-blocking 184KB stylesheet on every page, and up to 36 font files on the collection. Japanese now uses the device's Mincho; Poppins loads 300 only; Nunito Sans italic is no longer preloaded. Collection: 1,193KB → 569KB, first paint 3.5s → 1.1s, LCP 5.3s → 3.6s, score 73 → 90 (home 75 → 91, piece 69 → 90) |

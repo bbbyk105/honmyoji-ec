@@ -75,7 +75,7 @@ export default function AboutPage() {
               <dl className="mt-8 border-t border-line">
                 {founder.timeline.map((t) => (
                   <div key={t.years} className="grid gap-x-8 gap-y-2 border-b border-line py-7 sm:grid-cols-[96px_1fr]">
-                    <dt className="font-display text-[18px] tabular-nums leading-[1.5] text-ivory">{t.years}</dt>
+                    <dt className="font-display text-[18px] font-light tabular-nums leading-[1.5] text-ivory">{t.years}</dt>
                     <dd className="max-w-[52ch] font-sans text-small text-bone">{t.en}</dd>
                   </div>
                 ))}
@@ -171,7 +171,7 @@ export default function AboutPage() {
             <p className="max-w-[52ch] font-sans text-body text-bone">{founder.handmade.en}</p>
             {/*
               創業者の言葉。斜体にしない（2026-09-25）—— 細いイタリックは「高級そうに見せる書体」の
-              定番で、ここだけ別の人の声のように浮いていた。見出しと同じ立体の Newsreader で、
+              定番で、ここだけ別の人の声のように浮いていた。見出しと同じ立体の Poppins Light で、
               大きさと余白だけで引用として立てる。
             */}
             <p className="mt-14 max-w-[30ch] font-display text-[clamp(24px,1.4vw+12px,34px)] font-light leading-[1.4] tracking-[-0.01em] text-ivory">

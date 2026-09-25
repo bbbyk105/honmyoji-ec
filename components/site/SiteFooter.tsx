@@ -21,7 +21,7 @@ export function SiteFooter() {
     <footer className="surface-dark border-t border-line">
       <div className={`${SHELL} grid gap-14 pb-16 pt-beat md:grid-cols-12 md:gap-8 md:pb-20`}>
         <div className="md:col-span-5">
-          <p className="mr-[-0.24em] font-display text-[23px] leading-none tracking-[0.24em] text-ivory">MIROKU</p>
+          <p className="mr-[-0.24em] font-mark text-[23px] font-light leading-none tracking-[0.24em] text-ivory">MIROKU</p>
           <p className="mt-10 max-w-[18ch] font-display text-title font-light text-ivory">
             Woven once, at the edge of a tatami room.
           </p>

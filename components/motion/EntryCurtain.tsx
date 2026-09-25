@@ -39,7 +39,7 @@ export function EntryCurtain() {
         <span className="block overflow-hidden">
           <span
             data-entry-mark
-            className="block pl-[0.24em] font-display text-[clamp(30px,5vw,50px)] font-normal leading-none tracking-[0.24em] text-ivory"
+            className="block pl-[0.24em] font-mark text-[clamp(30px,5vw,50px)] font-light leading-none tracking-[0.24em] text-ivory"
           >
             MIROKU
           </span>

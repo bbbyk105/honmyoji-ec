@@ -29,7 +29,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `data/site.ts` — ブランドコピー・FAQ・創業者・特商法/返品ポリシー。
 - `data/blog.ts` — Blog の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Blog が空にならないようにするための seed で、記事を足す場所ではない。
 - `lib/microcms.ts` — **Blog の記事はここから来る**。入稿の手順・スキーマ・Webhook は `docs/microcms.md`。
-- `components/blog/BlogArticle.tsx` — 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。**版面（980px）と行長（`--blog-measure` = 580px ≒ 70 文字）は別物** — 文章は measure で止め、写真だけが版面いっぱいに出る。両方 980px にすると 1 行 119 文字になる（2026-09-20 に直した）。`ch` で共有しないこと：Newsreader と本文の sans で `0` の幅が違うので、同じ `62ch` でも右端が揃わない。
+- `components/blog/BlogArticle.tsx` — 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。**版面（980px）と行長（`--blog-measure` = 580px ≒ 70 文字）は別物** — 文章は measure で止め、写真だけが版面いっぱいに出る。両方 980px にすると 1 行 119 文字になる（2026-09-20 に直した）。`ch` で共有しないこと：見出しと本文の書体で `0` の幅が違うので、同じ `62ch` でも右端が揃わない。
 - `components/blog/ArticleToc.tsx` — 記事の目次。版面の右の余白に絶対配置＋sticky、`xl` 以上・**見出し三つ以上**のときだけ。見出しは `[data-article-body]` の `h2` を**描かれた DOM から**拾う（本文は microCMS のリッチエディタ HTML と手書きブロックの二系統で、揃うのは描画後だけ）。id は CMS が振っていればそれを使い、無ければ見出しの文字から作る（`lib/heading-id.ts`）。現在地は `useScrollSpy`（トップの章のレールと共通）、送りは `scrollToChapter()`。
 - `app/(site)/` — 公開サイト。`/` `/collection` `/collection/[slug]` `/about` `/blog` `/blog/[slug]` `/blog/preview` `/faq` `/legal` `/contact`（Server Action）`/checkout/thank-you`。**route group なので URL には `(site)` は出ない** — 外枠を `/studio` と分けるためだけの括り。
 - `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
@@ -147,7 +147,9 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 - 紙には粒（`--paper-grain`、σ≈1.5/255）が敷いてある。見て粒だと分かる強さにしない。
 - `moss` / `indigo` / `clay` / `rose` は**状態表示にだけ**。紙の上では明度を落とした値に入れ替わる。
 - **文字の段と余白はトークン**（`app/globals.css` の `@theme`）。見出しに clamp を手書きしない: `text-hero` / `text-display` / `text-section` / `text-title` / `text-piece` / `text-deck` / `text-body` / `text-small` / `text-meta`、大文字のラベルは `caps`（ナビ・CTA・完売の帯だけ）。**11px 未満を使わない**。余白は `beat` / `breath` / `pause`（節の間）と `lead`（見出し → 中身）。
-- **書体**: 見出しは Newsreader を `axes: ["opsz"]` で（weight を配列で指定すると本文用 opsz 16 だけが届いて見出しが太る）。本文と UI は Albert Sans。**Satoshi は使わない** —— ITF FFL が公開リポジトリでの配布を禁じていて、このリポジトリは公開。
+- **書体**（2026-09-25 に jimotofoods.com.au に合わせて入れ替え）: 見出しは Poppins 300（`font-display`）、本文と UI は Nunito Sans（`font-sans`）、ワードマークの MIROKU だけ Prompt 300（`font-mark`）。三つとも OFL で `next/font/google` から自前配信（先方の Shopify の CDN から読まない）。Poppins と Prompt は可変フォントではないので `layout.tsx` で使う太さだけを読む（どちらも 300 の一枚）—— **`font-display` には必ず `font-light` を添える**。新しい太さを使うなら weight に足す（足さないと近い太さで代用されるか、合成の太字になる）。**先読みは第一画面に出る三枚だけ**（Poppins 300・Nunito Sans 立体・Prompt 300）。Blog の em に使う Nunito Sans の斜体は `preload: false` の別の呼び出し。
+- **日本語は Web フォントを読まない**（`--font-jp` は端末の明朝：ヒラギノ / 游明朝 / Noto Serif CJK）。2026-09-25 まで Shippori Mincho を読んでいたが、和文は約 120 のファイルに割られて配られ、その `@font-face` 245 個が 184KB の CSS として全ページの描画を止め、一覧では 36 本のフォントを取りに行っていた（「重い」の一番の原因だった。外して一覧の転送量 1,193KB → 569KB、最初の描画 3.5 → 1.1 秒）。戻すなら使う字だけに絞った一枚にすること。**Satoshi は使わない** —— ITF FFL が公開リポジトリでの配布を禁じていて、このリポジトリは公開。
+- **見出しを行マスクで割るときは `splitLines()`（`components/motion/split-lines.ts`）を通す**。`SplitText.create(…, { mask: "lines" })` を直に呼ぶと、マスクが行の箱ちょうどになり、Poppins の g・p・y の足が切れたまま残る（実際に踏んだ）。起点は `LINES_FROM`。また SplitText は `display:none` の `<br>` でも改行するので、幅によって出し入れする改行は動きのある画面では効かない。
 - **動き**は曲線一つ（`--ease-soft` = GSAP `power4.out`、`components/motion/tokens.ts`）。動くのは節の入口（見出しの行・写真のマスク）だけで、一覧・表・コレクションの格子は動かさない。
 
 ## 未着手 / 次フェーズ

@@ -3,9 +3,9 @@
 import { useRef, type ReactNode } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
-import { SplitText } from "gsap/SplitText";
 
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
+import { LINES_FROM, splitLines } from "@/components/motion/split-lines";
 import { DUR, EASE, LINE_STAGGER, TEXT_RISE } from "@/components/motion/tokens";
 import "@/components/motion/register";
 
@@ -27,8 +27,8 @@ export function HomeHeroMotion({ children }: { children: ReactNode }) {
       const title = root.current?.querySelector<HTMLElement>("[data-hero-title]");
       const tl = gsap.timeline({ defaults: { ease: EASE } });
       if (title) {
-        const split = SplitText.create(title, { type: "lines", mask: "lines" });
-        tl.from(split.lines, { yPercent: 100, duration: DUR.lines, stagger: LINE_STAGGER }, 0.5);
+        const split = splitLines(title);
+        tl.from(split.lines, { ...LINES_FROM, duration: DUR.lines, stagger: LINE_STAGGER }, 0.5);
       }
       tl.from("[data-hero-aside]", { autoAlpha: 0, y: TEXT_RISE, duration: DUR.text }, 0.95);
 
