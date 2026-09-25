@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type MouseEvent } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useCart } from "@/components/cart/CartProvider";
+import { scrollToChapter } from "@/components/motion/lenis";
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import { site } from "@/data/site";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -165,6 +166,21 @@ export function SiteHeader() {
     setOpen(false);
   };
 
+  /**
+   * ワードマーク。トップにいるときは URL が変わらず何も起きないので、先頭へ送る。
+   * 他のページからは普通に `/` へ遷移する（先頭に置くのは `SmoothScroll`）。
+   * 新しいタブで開く操作（⌘ / Ctrl / Shift / 中クリック）は奪わない。
+   */
+  const onWordmark = (e: MouseEvent<HTMLAnchorElement>) => {
+    const wasOpen = open;
+    leave();
+    if (pathname !== "/" || e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    e.preventDefault();
+    // メニューが開いていたら、ロックが外れてから送る。Lenis の start() は走っている送りを止める。
+    if (wasOpen) requestAnimationFrame(() => scrollToChapter(null));
+    else scrollToChapter(null);
+  };
+
   /*
     地は全ページ同じ暖かい黒なので、ヘッダーの文字色はどこでも一定。
     変わるのは帯を敷くかどうかだけ — ヒーローの写真の上に半透明の帯と罫を走らせると、
@@ -193,7 +209,7 @@ export function SiteHeader() {
       <div className={`${SHELL} grid h-16 grid-cols-[1fr_auto_1fr] items-center sm:h-[72px] md:h-[80px]`}>
         <Link
           href="/"
-          onClick={leave}
+          onClick={onWordmark}
           className="z-[60] col-start-1 justify-self-start no-underline"
           aria-label={`${site.name} — home`}
         >
