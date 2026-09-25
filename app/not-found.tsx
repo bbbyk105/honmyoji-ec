@@ -1,4 +1,5 @@
 import { Button } from "@/components/site/Button";
+import { SHELL } from "@/components/site/Shell";
 import { SiteChrome } from "@/components/site/SiteChrome";
 
 /**
@@ -8,16 +9,12 @@ import { SiteChrome } from "@/components/site/SiteChrome";
 export default function NotFound() {
   return (
     <SiteChrome>
-      <section className="flex min-h-[70vh] flex-col justify-center px-5 pt-[80px] md:px-12">
-        <h1 className="max-w-[16ch] font-display text-[clamp(40px,5.4vw,68px)] font-light leading-[1.02] text-ivory">
-          This page has gone.
-        </h1>
-        <p className="mt-4 font-jp text-[12px] tracking-[0.24em] text-mist">ページが見つかりません</p>
-        <div className="mt-10">
-          <Button href="/collection" variant="link">
-            The collection
-          </Button>
-        </div>
+      <section className={`${SHELL} flex min-h-[78vh] flex-col justify-center pb-beat pt-[120px]`}>
+        <h1 className="max-w-[14ch] font-display text-display font-light text-ivory">This page has gone.</h1>
+        <p lang="ja" className="mt-5 font-jp text-[15px] tracking-[0.06em] text-mist">ページが見つかりません</p>
+        <Button href="/collection" className="mt-10 w-fit">
+          The collection
+        </Button>
       </section>
     </SiteChrome>
   );

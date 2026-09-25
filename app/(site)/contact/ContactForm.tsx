@@ -15,9 +15,10 @@ type Props = {
  * どこを触ればいいのか分からない（＝手紙用紙の枠がない）ので面を持たせている。
  */
 const field =
-  "w-full border border-line bg-sumi px-4 py-3.5 font-sans text-[15px] leading-[1.6] text-ivory outline-none transition-colors placeholder:text-mist/80 hover:border-bark focus:border-ivory focus:ring-1 focus:ring-ivory/15 aria-[invalid=true]:border-clay";
-const label = "block font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-bone";
-const hint = "mt-2 font-sans text-[12px] leading-[1.6] text-clay";
+  "w-full border border-bark bg-transparent px-4 py-4 font-sans text-[16px] leading-[1.6] text-ivory outline-none transition-colors duration-500 placeholder:text-mist hover:border-ivory/60 focus:border-ivory aria-[invalid=true]:border-clay";
+/* ラベルは文と同じ書き方で。大文字・字間の広い 11px は、フォームを書類に見せていた */
+const label = "block font-sans text-meta font-medium text-bone";
+const hint = "mt-2 font-sans text-meta text-clay";
 
 export function ContactForm({ product, subject, subjects }: Props) {
   const [state, action, pending] = useActionState<ContactState, FormData>(sendInquiry, { status: "idle" });
@@ -25,9 +26,9 @@ export function ContactForm({ product, subject, subjects }: Props) {
 
   if (state.status === "sent") {
     return (
-      <div className="border border-line bg-sumi px-6 py-10 sm:px-10 sm:py-12">
-        <p className="font-display text-[34px] font-light leading-[1.2] text-ivory">Sent.</p>
-        <p className="mt-4 max-w-[44ch] font-sans text-[14px] leading-[1.9] text-bone">{state.message}</p>
+      <div className="border border-line px-6 py-12 sm:px-10 sm:py-14">
+        <p className="font-display text-section font-light text-ivory">Sent.</p>
+        <p className="mt-5 max-w-[44ch] font-sans text-body text-bone">{state.message}</p>
       </div>
     );
   }
@@ -38,13 +39,12 @@ export function ContactForm({ product, subject, subjects }: Props) {
   return (
     <form action={action} className="space-y-7" noValidate>
       {product ? (
-        <div className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border border-line bg-sumi px-4 py-4">
-          <span className="font-sans text-[10.5px] uppercase tracking-[0.2em] text-mist">Piece</span>
-          <span className="font-display text-[22px] font-light text-ivory">
+        <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border border-line px-5 py-5">
+          <span className="font-sans text-meta text-mist">Piece</span>
+          <span className="font-display text-[24px] font-light leading-tight text-ivory">
             {product.name}
-            <span className="ml-2 font-jp text-[12px] tracking-[0.3em] text-mist">{product.kanji}</span>
+            <span lang="ja" className="ml-2.5 font-jp text-[13px] tracking-[0.04em] text-mist">{product.kanji}</span>
           </span>
-          <span className="font-sans text-[12.5px] text-mist">/{product.slug}</span>
           <input type="hidden" name="product" value={`${product.name} (${product.slug})`} />
         </div>
       ) : null}
@@ -68,7 +68,7 @@ export function ContactForm({ product, subject, subjects }: Props) {
           </select>
           <span
             aria-hidden
-            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-sans text-[11px] text-mist"
+            className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 font-sans text-[12px] text-mist"
           >
             ▾
           </span>
@@ -151,16 +151,16 @@ export function ContactForm({ product, subject, subjects }: Props) {
       </div>
 
       {state.status === "error" ? (
-        <p role="alert" className="border border-clay/60 bg-sumi px-4 py-3.5 font-sans text-[13px] leading-[1.7] text-clay">
+        <p role="alert" className="border border-clay/60 px-4 py-4 font-sans text-small text-clay">
           {state.message}
         </p>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-7">
+      <div className="flex flex-wrap items-center gap-x-8 gap-y-4 border-t border-line pt-8">
         <Button type="submit" variant="solid" arrow={!pending} disabled={pending}>
           {pending ? "Sending…" : "Send"}
         </Button>
-        <p className="max-w-[34ch] font-sans text-[12px] leading-[1.7] text-mist">
+        <p className="max-w-[34ch] font-sans text-meta text-mist">
           No account, no newsletter. We only use your address to answer you.
         </p>
       </div>

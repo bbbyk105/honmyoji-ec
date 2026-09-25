@@ -102,7 +102,7 @@ export function SwipeStrip({
       {items.length > 1 ? (
         <div className={`mt-5 flex items-center gap-4 ${HIDE[until]}`}>
           {labels ? (
-            <p className="min-w-0 shrink truncate font-sans text-[12.5px] text-mist">
+            <p className="min-w-0 shrink truncate font-sans text-meta text-mist">
               {labels[index]}
             </p>
           ) : null}
@@ -114,7 +114,7 @@ export function SwipeStrip({
               />
             ))}
           </div>
-          <p className="shrink-0 font-sans text-[9.5px] tabular-nums tracking-[0.22em] text-mist">
+          <p className="shrink-0 font-sans text-[12px] tabular-nums tracking-[0.04em] text-mist">
             {twoDigits(index + 1)} / {twoDigits(items.length)}
           </p>
         </div>

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Frame } from "@/components/site/Frame";
+import { SHELL } from "@/components/site/Shell";
 import { getPieces } from "@/lib/catalog";
 import { site } from "@/data/site";
 import { subjectOptions } from "./subjects";
@@ -28,43 +29,44 @@ export default async function ContactPage({
       : null;
   const initialSubject = subjectOptions.some((s) => s.value === subject) ? (subject as string) : "question";
 
+  /* 手紙の用紙なので紙の面（2026-09-25）。入力欄は紙の上に全周の罫で立つ。 */
   return (
-    <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
-      <div className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
+    <section className="surface-paper pt-16 sm:pt-[72px] md:pt-[80px]">
+      <div className={`${SHELL} pb-pause pt-14 md:pt-24`}>
         {/* 表題は面いっぱいに置き、下の二段組（用件・便箋）と競わせない */}
-        <header className="grid gap-6 border-b border-line pb-10 md:grid-cols-12 md:items-end md:gap-10 md:pb-12">
+        <header className="grid gap-8 border-b border-line pb-12 md:grid-cols-12 md:items-end md:gap-8 md:pb-16">
           <div className="md:col-span-6">
-            <h1 className="font-display text-[clamp(40px,6vw,76px)] font-light leading-[0.98] text-ivory">
+            <h1 className="font-display text-display font-light text-ivory">
               Write to
               <br />
               the table.
             </h1>
           </div>
-          <p className="max-w-[44ch] font-sans text-[15px] leading-[1.85] text-bone md:col-span-5 md:col-start-8 md:pb-2">
+          <p className="max-w-[40ch] font-sans text-body text-bone md:col-span-5 md:col-start-8 md:pb-3">
             To reserve a piece, ask about one, or commission a bag — tell us the shape, size, use and
             colours you have in mind. A person reads every message. A reserved piece is held for a few
             days while payment is arranged.
           </p>
         </header>
 
-        <div className="grid gap-12 pt-12 md:grid-cols-12 md:gap-10 md:pt-16">
+        <div className="grid gap-14 pt-14 md:grid-cols-12 md:gap-8 md:pt-20">
           {/* 用紙が先。スマホでは問い合わせフォームを最初に出す */}
           <div className="md:col-span-7 md:col-start-6 md:row-start-1">
             <ContactForm product={productLabel} subject={initialSubject} subjects={subjectOptions} />
           </div>
 
           <aside className="md:col-span-4 md:col-start-1 md:row-start-1">
-            <dl className="space-y-6 font-sans text-[14px] leading-[1.8] text-bone">
+            <dl className="space-y-7 font-sans text-small text-bone">
               <div>
-                <dt className="font-sans text-[13px] text-mist">Where</dt>
+                <dt className="font-sans text-meta text-mist">Where</dt>
                 <dd className="mt-1.5">{site.location}</dd>
               </div>
               <div>
-                <dt className="font-sans text-[13px] text-mist">Reply</dt>
+                <dt className="font-sans text-meta text-mist">Reply</dt>
                 <dd className="mt-1.5">Within a day or two, in English or Japanese.</dd>
               </div>
               <div>
-                <dt className="font-sans text-[13px] text-mist">Or write directly</dt>
+                <dt className="font-sans text-meta text-mist">Or write directly</dt>
                 <dd className="mt-1.5">
                   <a href={`mailto:${site.email}`} className="link-line text-ivory">
                     {site.email}
@@ -72,7 +74,7 @@ export default async function ContactPage({
                 </dd>
               </div>
             </dl>
-            <div className="mt-10">
+            <div className="mt-12 max-w-[420px]">
               <Frame
                 src="/images/scenes/hands-behind.webp"
                 alt="Hands held behind the back, a woven tatami-beri bottle bag hanging from them"

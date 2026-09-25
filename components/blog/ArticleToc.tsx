@@ -85,7 +85,7 @@ export function ArticleToc() {
                   className="block w-full text-left outline-none"
                 >
                   <span
-                    className={`block font-sans text-[11.5px] leading-[1.55] transition-colors duration-500 ease-[var(--ease-soft)] ${
+                    className={`block font-sans text-[13px] leading-[1.55] transition-colors duration-500 ease-[var(--ease-soft)] ${
                       current ? "text-ivory" : "text-mist hover:text-bone"
                     }`}
                   >

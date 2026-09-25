@@ -113,8 +113,14 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const kind = [LINE_LABEL[product.line].en, product.bottleSize].filter(Boolean).join(" · ");
   const tall = LINE_RATIO[product.line] === "4/5";
 
+  /*
+    商品ページも紙の面（一覧と同じ部屋）。一覧の写真がそのままヒーローへモーフするので、
+    地の色が途中で変わると像より地の入れ替わりのほうが目立つ。拡大表示（Lightbox）も
+    この面の中に開くので、同じ紙の上で見る（一枚だけ別の明るさの部屋に持っていかない）。
+  */
   return (
     <LightboxProvider shots={photos}>
+      <div className="surface-paper pb-beat">
       <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
         <div className={`${SHELL} grid gap-10 pt-6 md:grid-cols-12 md:gap-10 md:pt-10`}>
           {/*
@@ -142,77 +148,78 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             </Button>
 
             <p
-              className="hero-settle mt-10 font-sans text-[13px] text-mist"
+              className="hero-settle mt-12 font-sans text-meta text-mist"
               style={{ "--delay": "60ms" } as React.CSSProperties}
             >
               {kind}
             </p>
             <h1
-              className="hero-settle mt-3 font-display text-[clamp(48px,5.6vw,80px)] font-light leading-[0.94] text-ivory"
+              className="hero-settle mt-4 font-display text-display font-light text-ivory"
               style={{ "--delay": "120ms" } as React.CSSProperties}
             >
               {product.name}
             </h1>
             <p
               lang="ja"
-              className="hero-settle mt-3 font-jp text-[14px] tracking-[0.2em] text-bone/75"
+              className="hero-settle mt-4 font-jp text-[16px] tracking-[0.06em] text-bone"
               style={{ "--delay": "180ms" } as React.CSSProperties}
             >
               {product.kanji}
-              <span className="ml-3 text-[11px] tracking-[0.14em] text-mist">{product.reading}</span>
+              <span className="ml-3 font-sans text-meta tracking-normal text-mist">{product.reading}</span>
             </p>
 
             <div
-              className="hero-settle mt-8 flex items-baseline gap-4 border-t border-line pt-5"
+              className="hero-settle mt-10 flex items-baseline gap-4 border-t border-line pt-6"
               style={{ "--delay": "240ms" } as React.CSSProperties}
             >
               {price ? (
                 <>
-                  <span className="font-display text-[30px] font-light leading-none text-ivory">{price}</span>
-                  <span className="font-sans text-[12.5px] text-mist">Shipping included</span>
+                  <span className="font-display text-[32px] font-light leading-none tabular-nums text-ivory">{price}</span>
+                  <span className="font-sans text-meta text-mist">Shipping included</span>
                 </>
               ) : null}
               <StatusPill status={product.status} className={price ? "ml-auto" : ""} />
             </div>
 
             <p
-              className="hero-settle mt-8 max-w-[34ch] font-display text-[22px] font-light leading-[1.4] text-ivory"
+              className="hero-settle mt-10 max-w-[30ch] font-display text-deck font-light text-ivory"
               style={{ "--delay": "300ms" } as React.CSSProperties}
             >
               {product.note}
             </p>
             <p
-              className="hero-settle mt-5 max-w-[46ch] font-sans text-[14.5px] leading-[1.9] text-bone"
+              className="hero-settle mt-6 max-w-[44ch] font-sans text-body text-bone"
               style={{ "--delay": "340ms" } as React.CSSProperties}
             >
               {product.story}
             </p>
             <p
               lang="ja"
-              className="hero-settle mt-4 max-w-[30em] font-jp text-[12.5px] leading-[2] text-mist"
+              className="hero-settle mt-5 max-w-[28em] font-jp text-[14px] leading-[2] text-mist"
               style={{ "--delay": "380ms" } as React.CSSProperties}
             >
               {product.storyJa}
             </p>
 
+            {/*
+              塗りの四角は「買う・知らせてもらう」の一つだけ。二つ目は語と罫の導線にする —— 同じ重さの
+              四角が二つ並ぶと、どちらを押せばいいのかを読む人に選ばせることになる。
+              もう手に入らないもの（完売・取り置き中）は、主の導線も語と罫に下げる。
+            */}
             <div
-              className="hero-settle mt-10 flex flex-wrap items-center gap-4"
+              className="hero-settle mt-11 flex flex-wrap items-center gap-x-10 gap-y-5"
               style={{ "--delay": "420ms" } as React.CSSProperties}
             >
               <InquiryCta
                 product={product}
                 href={action.primary.href}
                 label={action.primary.label}
-                variant={product.status === "sold_out" || product.status === "reserved" ? "outline" : "solid"}
+                variant={product.status === "sold_out" || product.status === "reserved" ? "link" : "solid"}
               />
-              {action.secondary ? (
-                <Button href={action.secondary.href} variant="outline" arrow={false}>
-                  {action.secondary.label}
-                </Button>
-              ) : null}
+              {action.secondary ? <Button href={action.secondary.href}>{action.secondary.label}</Button> : null}
             </div>
             <p
-              className="hero-settle mt-5 max-w-[46ch] font-sans text-[12.5px] leading-[1.8] text-mist"
+              className="hero-settle mt-6 max-w-[46ch] font-sans text-meta text-mist"
               style={{ "--delay": "460ms" } as React.CSSProperties}
             >
               {action.note}
@@ -223,10 +230,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               一行 4 項目・各 3 行の表は写真の下で読まれず、見出しの大文字だけが目立っていた。
             */}
             <dl
-              className="hero-settle mt-12 divide-y divide-line border-y border-line font-sans text-[13.5px] leading-[1.7]"
+              className="hero-settle mt-14 divide-y divide-line border-y border-line font-sans text-small"
               style={{ "--delay": "500ms" } as React.CSSProperties}
             >
-              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+              <div className="grid grid-cols-[104px_1fr] gap-4 py-5">
                 <dt className="text-mist">Size</dt>
                 <dd className="text-bone">
                   {product.size ? (
@@ -244,7 +251,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                   )}
                 </dd>
               </div>
-              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+              <div className="grid grid-cols-[104px_1fr] gap-4 py-5">
                 <dt className="text-mist">Materials</dt>
                 <dd className="space-y-1 text-bone">
                   {product.materials.map((m) => (
@@ -252,7 +259,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                   ))}
                 </dd>
               </div>
-              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+              <div className="grid grid-cols-[104px_1fr] gap-4 py-5">
                 <dt className="text-mist">Made</dt>
                 <dd className="space-y-1 text-bone">
                   <p>By hand at Honmyoji Temple, Fuji City</p>
@@ -260,7 +267,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                   <p>{product.status === "made_to_order" ? "Made to order, no two the same" : "One of a kind, never remade"}</p>
                 </dd>
               </div>
-              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+              <div className="grid grid-cols-[104px_1fr] gap-4 py-5">
                 <dt className="text-mist">Care</dt>
                 <dd className="space-y-1 text-bone">
                   <p>Spot clean only. Dry it standing or hanging.</p>
@@ -269,7 +276,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
                   </Link>
                 </dd>
               </div>
-              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+              <div className="grid grid-cols-[104px_1fr] gap-4 py-5">
                 <dt className="text-mist">Ref.</dt>
                 <dd className="font-sans tabular-nums text-bone">{product.sku}</dd>
               </div>
@@ -279,7 +286,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       </section>
 
       {extras.length > 0 ? (
-        <section className={`${SHELL} pt-20 md:pt-32`}>
+        <section className={`${SHELL} pt-breath`}>
           {/*
             スマホは横スワイプ（一画面一枚）。md 以上は**撮ったままの比率**で二段に流す。
             縦位置（5:8）と横位置（8:5）が混ざるので、決まった比率の枠に押し込むと持ち手か床が
@@ -289,13 +296,13 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
           <div className="md:hidden">
             <GalleryStrip shots={extras} offset={1} />
           </div>
-          <div className={`hidden md:block ${extras.length > 1 ? "columns-2 gap-6" : ""}`}>
+          <div className={`hidden md:block ${extras.length > 1 ? "columns-2 gap-8" : ""}`}>
             {extras.map((shot, i) => {
               const size = imageSize(shot.src);
               const wide = size ? size.width > size.height : false;
               const lone = extras.length === 1 ? (wide ? "mx-auto max-w-[66%]" : "mx-auto max-w-[44%]") : "";
               return (
-                <div key={shot.src} className={`mb-6 break-inside-avoid ${lone}`}>
+                <div key={shot.src} className={`mb-8 break-inside-avoid ${lone}`}>
                   <Zoomable index={i + 1}>
                     <Frame
                       src={shot.src}
@@ -316,40 +323,41 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
       ) : null}
 
       {related.length > 0 ? (
-        <section className={`${SHELL} pt-24 md:pt-36`}>
-          <Reveal className="flex items-baseline justify-between gap-6 border-t border-line pt-6">
-            <h2 className="font-display text-[clamp(26px,2.6vw,34px)] font-light leading-none text-ivory">
+        <section className={`${SHELL} pt-pause`}>
+          <Reveal className="flex items-end justify-between gap-6 border-t border-line pt-8">
+            <h2 className="font-display text-title font-light text-ivory">
               More {LINE_LABEL[product.line].plural.toLowerCase()}
             </h2>
-            <Button href={`/collection#${product.line}`} variant="link" className="shrink-0">
+            <Button href={`/collection#${product.line}`} className="shrink-0">
               See all
             </Button>
           </Reveal>
           <SwipeStrip
-            className="mt-10"
+            className="mt-12"
             trackClassName={`-mx-4 sm:mx-0 sm:grid sm:snap-none sm:gap-6 sm:overflow-visible md:gap-8 ${
               LINE_RATIO[product.line] === "4/5" ? "sm:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
             }`}
           >
             {related.map((p) => (
-              <PieceTile key={p.slug} product={p} showNote={false} sizes="(min-width: 640px) 25vw, 80vw" />
+              <PieceTile key={p.slug} product={p} reveal="none" sizes="(min-width: 640px) 25vw, 80vw" />
             ))}
           </SwipeStrip>
         </section>
       ) : null}
 
-      <nav className={`${SHELL} mt-24`}>
-        <div className="grid grid-cols-2 border-t border-line">
-          <Link href={productPath(prev)} className="group py-10 pr-5 no-underline">
-            <span className="font-sans text-[12.5px] text-mist">← Previous</span>
-            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">{prev.name}</span>
+      <nav className={`${SHELL} mt-pause`}>
+        <div className="grid grid-cols-2 border-y border-line">
+          <Link href={productPath(prev)} className="group py-10 pr-5 no-underline md:py-12">
+            <span className="font-sans text-meta text-mist transition-colors duration-500 group-hover:text-ivory">Previous</span>
+            <span className="mt-3 block font-display text-title font-light text-ivory">{prev.name}</span>
           </Link>
-          <Link href={productPath(next)} className="group border-l border-line py-10 pl-5 text-right no-underline">
-            <span className="font-sans text-[12.5px] text-mist">Next →</span>
-            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">{next.name}</span>
+          <Link href={productPath(next)} className="group border-l border-line py-10 pl-5 text-right no-underline md:py-12">
+            <span className="font-sans text-meta text-mist transition-colors duration-500 group-hover:text-ivory">Next</span>
+            <span className="mt-3 block font-display text-title font-light text-ivory">{next.name}</span>
           </Link>
         </div>
       </nav>
+      </div>
     </LightboxProvider>
   );
 }

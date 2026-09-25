@@ -16,80 +16,93 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 - **Direction:** Editorial / material-first. A dark room hung with lit objects. Quiet luxury without gold, black marble, or zen cliché.
 - **Decoration:** Intentional and rare. A beri band used as a section edge, thin rules. No cards, icons, glass — no gradients anywhere, and no grain on the ground (see Color).
 - **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large upright Newsreader light at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
-- **Mood:** Warm black room, lit from the front. Colour lives in the cloth — on this ground the weave is the only saturated thing on the page. Type is literary, not “luxury template.”
+- **Mood:** A temple hall and a catalogue. Candle-lit photographs hang in a sumi room; daylit pieces and everything you read sit on warm paper. Colour lives in the cloth — the weave is the only saturated thing on the page. Type is literary, not “luxury template.”
+- **Luxury is made of four things only:** typography, photographs, space, material. Never by adding decoration — no gold, no glow, no gradients, no badges, no pills, no glass.
 - **What we refused:** 3-up feature rows, centered manifesto + CTA stacks, pill buttons, drop shadows, Shopify grids, beige Instagram boutique, startup landing structure.
 
 ## Typography
 
-- **Display:** Newsreader 300, **upright only** — optical, editorial, less costume than display Garamonds used on luxury templates. The light italic was dropped on 2026-09-25: in pull quotes, headings (“answered.”) and year labels it read as the stock “luxury” voice, and the founder's words set in it sounded like someone else speaking. The italic face stays loaded only so emphasis inside CMS text is not faux-slanted.
-- **UI / body:** Source Sans 3 (300–600) — clear, slightly condensed, bilingual-friendly.
-- **Japanese:** Shippori Mincho — for secondary lines only. Never dump bilingual pairs on every heading.
-- **Scale (approx.):**
-  - Hero: clamp(44px, 7vw, 104px), leading ~0.92
-  - Page title: clamp(40px, 6vw, 92px)
-  - Section: clamp(32px, 4vw, 52px)
-  - Deck: 22–26px Newsreader light
-  - Body: 14–17px / 1.85
-  - Meta: 12.5–13px, **sentence case**, no extra tracking (since 2026-09-25). Uppercase-tracked 9.5px is kept only for the header nav, buttons and the `Sold out` band
-- **No label above a heading.** A tiny uppercase kicker (“ATELIER NOTE”, “EXHIBITION · 2026”) over every heading, plus a letter-spaced Japanese line under it, was the single most template-looking habit on the site. A heading stands on its own; chapter numbers live in `ChapterRail`.
-- **Loading:** `next/font/google`, `display: "swap"`. Shippori `preload: false`.
+Two roles for Latin, one for Japanese (2026-09-25).
+
+- **Display:** Newsreader, **loaded as a variable font with its optical-size axis** (`axes: ["opsz"]`), weight 300,
+  upright only. Until 2026-09-25 it was loaded as fixed weights, which ships only the opsz-16 *text* cut — every
+  80px heading was set in a face drawn for 16px: heavy, loose, bookish. With the axis open the browser picks the
+  display cut at display sizes (hairline contrast, tighter fit). Compared on the page against Literata, Source
+  Serif 4, Fraunces and Instrument Serif: the first two read as book faces, the last two as this year's trend.
+  The italic stays loaded only so emphasis in CMS text is not faux-slanted; it is never used for headings or quotes.
+- **Neutral grotesk (body + UI):** Albert Sans. Source Sans 3 was narrow and read as documentation UI. The brief
+  asked for a Satoshi-like sans; **Satoshi itself is not used** — its ITF Free Font License forbids making the font
+  files available through a public repository, and this repository is public. Albert Sans (OFL) is the closest
+  geometric-grotesk on Google Fonts and is self-hosted by `next/font`.
+- **Japanese:** Shippori Mincho — secondary lines only, at 13–16px with **0.04–0.08em** tracking. The old
+  0.2–0.34em spacing on every Japanese line was part of the template look.
+- **Scale — tokens, not per-page clamps** (`@theme` in `app/globals.css`, used as `text-hero`, `text-section`…):
+
+| Token | Size | Leading / tracking | Use |
+|---|---|---|---|
+| `hero` | 42px → 84px (≈67px at 1440) | 1.02 / −0.022em | The home H1 only |
+| `display` | 46px → 96px | 0.98 / −0.024em | Page titles, piece name on the PDP |
+| `section` | 34px → 62px (≈57px at 1440) | 1.05 / −0.018em | Section headings |
+| `title` | 24px → 34px | 1.16 / −0.01em | Sub-heads, defined terms, list titles |
+| `piece` | 20px → 23px | 1.1 | Piece name under a photograph |
+| `deck` | 20px → 25px | 1.42 | Serif lead paragraph |
+| `body` | 16px → 17px | 1.8 | Body |
+| `small` | 15px | 1.75 | Secondary body, table cells |
+| `meta` | 13px | 1.6 | Dates, kinds, status, form labels |
+| `caps` | 11.5px, 500, uppercase | 0.12em | **Nav, CTAs and the Sold-out band only** (`@utility caps`) |
+
+- **Floor is 11px.** `text-[8px]`–`text-[10.5px]` and tracking above 0.16em are gone from the public site. Making
+  type small and spacing it wide is not how this site says “luxury”.
+- **No label above a heading.** A tiny uppercase kicker (“ATELIER NOTE”, “EXHIBITION · 2026”) over every heading,
+  plus a letter-spaced Japanese line under it, was the single most template-looking habit on the site. A heading
+  stands on its own; chapter numbers live in `ChapterRail`.
+- **Wordmark:** MIROKU in Newsreader 400 (not 300 — at 21–23px the light weight read as a heading fragment),
+  0.24em tracking with the trailing space pulled back (`mr-[-0.24em]`), over `HONMYOJI · FUJI` in 11px caps at
+  0.16em — the two lines come out the same width, like a temple plaque.
 
 ## Color
 
-Restrained, dark, and **one colour**. The ground is pure black, and it is the *same* black everywhere: page,
-hero, form field, image well, footer, curtain. Accents are moss, faded indigo and clay — colours already in
-the weave — and they are spent on **status and nothing else**.
+**Two grounds** (2026-09-25): **sumi** (a warm near-black) and **paper** (unbleached). Not pure `#000` / `#fff` —
+beside the cloth they read as screen colours.
 
-The palette was a warm black until 2026-09-20, on the reasoning that a cold black greys out the weave's reds
-and indigos. Built out, the opposite was true: the brown in the black was the first thing anyone saw, so the
-UI carried a tint while the cloth — the only thing that should be coloured — had to compete with it. On a
-neutral black the weave is the single saturated thing on the page, which is what the whole system is for.
+**Which ground a section sits on follows the light of its photograph**, not an alternation:
+candle- and lamp-lit photographs of the hall (home hero, the tatami room, the altar, Fuji at dusk) sit on sumi;
+daylit pieces and portraits, and everything that is *read* or *chosen* (collection, piece pages, notes, FAQ,
+legal, the contact letter) sit on paper. On sumi, the shoji behind every piece glowed like a light box and
+reached the eye before the bag did; on paper the white falls back into the ground and only the piece stands.
 
-Tokens are **roles, not colour names**. One ground, three steps of type, one hairline.
+Home runs sumi → paper → sumi → *(the drift band straddles the seam)* → paper → paper → sumi → paper → sumi footer.
+Uneven lengths, and the one seam that would have read as a stripe is stitched by the procession of bags.
 
-| Token | Hex | Use |
-|---|---|---|
-| sumi | `#000000` | **The ground.** Page, hero, fields, wells, footer, curtains — all of it |
-| line | `#303030` | Hairline. The only thing that divides one surface from another |
-| bark | `#4d4d4d` | The same hairline, standing up on hover |
-| ivory | `#ffffff` | The light: headings, rules, solid button fills |
-| bone | `#c7c7c7` | Body — a step below ivory, so long text does not halate |
-| mist | `#8b8b8b` | Meta, captions, sold out (6.2∶1 on the ground) |
-| moss | `#92a37b` | Available |
-| indigo | `#8a9cb4` | Coming soon |
-| clay | `#c89771` | Made to order, material note, errors |
-| rose | `#cf9d92` | Sakura-related only, if ever |
+Tokens are **roles, not colour names**. Inside `.surface-paper` the same names resolve to paper and ink, so a
+component never has to know which ground it is on — `text-ivory` is ink on paper.
 
-**One ground means the line does all the work.** `onyx`, `lacquer` and `ash` are gone — there is no raised
-surface and no sunk one. A form field is a field because a hairline runs around all four sides of it; the
-footer is the footer because a hairline crosses the page; the page sheet covers the hero because a hairline
-arrives at its top edge. Reach for a fill to separate two things and you have reintroduced the second black.
+| Token | Sumi surface | Paper surface | Use |
+|---|---|---|---|
+| sumi | `#11100E` | `#E9E2D6` | The ground |
+| ivory | `#F2EEE6` (16.4∶1) | `#15130F` (14.4∶1) | Strongest text, solid button fill |
+| bone | `#C8C0B4` (10.6∶1) | `#3B362F` (9.3∶1) | Body |
+| mist | `#918A80` (5.6∶1) | `#5F5850` (5.4∶1) | Meta, sold out |
+| line | ivory at 14 % | ink at 15 % | Hairline |
+| bark | ivory at 32 % | ink at 36 % | Hairline on hover, field borders |
+| moss / indigo / clay / rose | `#92A37B` `#8A9CB4` `#C89771` `#CF9D92` | `#56683F` `#465B78` `#8A5634` `#8E5247` | **Status only** |
 
-**Pure white is the brightest thing on the page, so spend it on the thing to do.** Raising the ground to
-`#000` and the light to `#fff` widened every step at once, and the first casualty was `Sold out`, which had
-been set in ivory and became louder than `Available`. What a reader can buy leads; what is gone is `mist`,
-and the sold-out rule across the piece says it once more.
-
-No gold, no metallic, no second near-black.
-
-**No gradients.** Not on the ground, not over a photograph, not under an object. Depth here is three
-one black and one hairline — a fade is the one move that reads as a template rather than a
-decision, and it smears the only saturated thing on the page. The hero photograph
-carries no scrim: measured, the type zone is 8.3∶1 against ivory at its brightest 5 %, so legibility is
-bought with type opacity (meta at 75 %, never 55 %) rather than by clouding the picture.
+- `surface-paper` / `surface-dark` paint a ground; `tone-paper` / `tone-dark` only swap the roles. Fixed parts
+  (header, chapter rail, cursor word) use `useSurfaceAt()` to take the tone of whatever surface passes under them.
+- **Paper carries a grain you should not be able to see**: an SVG turbulence at ≈3 % (measured σ ≈ 1.5/255).
+  Sumi carries none — blends are near no-ops on a dark ground.
+- **No gradients.** Not on the ground, not over a photograph, not under an object. The drift band's two halves are
+  two flat grounds meeting at a hard edge.
+- **No gold, no metallic, no brown.** The paper is unbleached, not beige-boutique: it is always set with ink-black
+  type and hairlines, never with rounded cards or soft shadows.
+- The one bright block per screen is the solid button (buy / send / notify). Sold out stays `mist`; the band
+  across the photograph says it once more, in the surface's strongest colour.
 
 *(The shelf below applied to the cut-out collection, which was retired on 2026-09-25 — pieces are now shown as the photographer shot them. It is kept here because the reasoning still holds for anything that floats.)*
 
 **On black, a shadow is not a ground — so the ground is a line.** A 12 % drop shadow under a cut-out is
 invisible here, and a soft pool of light is just a radial gradient. Every floating piece stands on a
-**shelf**: a 1px ivory hairline at ~25 %, drawn at the contact line, inset 6 % on the plinth so nine
-pieces read as one board per row with the gutters breaking it. It brightens to 45 % on hover, so the
-piece you touch is the one that is lit. On the PDP the shelf runs the full column width, because the
-widest piece fills the column and any inset would let it overhang its own plinth.
-
-A hard line is only as good as what stands on it. **Cut-outs carry no transparent margin** — the frame is
-sized from the canvas, so padding becomes a piece hovering above its shelf and drifting off centre. See
-`data/products.ts` (`cutoutAspect`).
+**shelf**: a 1px ivory hairline at ~25 %, drawn at the contact line.
 
 ## Spacing
 
@@ -101,17 +114,19 @@ sized from the canvas, so padding becomes a piece hovering above its shelf and d
   section use it. Written by hand it drifts: the hero had no `max-w` at all and sat 236px
   outside the column at 1920px, and half the sections said `px-4 sm:px-5` while the other
   half said `px-5`.
-- **Section gaps:** 80–160px, not a repeated 96px rhythm. **Vertical space is carried on one
-  side only** — a section that also paints a background (Intro, Craft) owns its inner `py`;
-  everything else takes `pt` and nothing else. `mt-40` stacked on `py-24` is 256px, which no
-  one chose and which reads as the page coming apart.
+- **Section gaps are three tokens, not a repeated number** (2026-09-25): `beat` (80 → 136px), `breath`
+  (96 → 168px) and `pause` (112 → 192px), plus `lead` (40 → 72px) from a section heading to its content.
+  Used as `pt-pause`, `py-breath`, `mt-lead`. Closely related sections take `beat`, a change of subject takes
+  `breath`, and either side of a change of ground takes `pause`. **Vertical space is carried on one side only**
+  — a section that paints its own ground owns its inner `py`; everything else takes `pt`. `mt-40` stacked on
+  `py-24` is 256px, which no one chose and which reads as the page coming apart.
 - **Measure:** body ~56ch (≈65 characters). Japanese is measured in `em`, never `ch` — `ch` is the width of “0”, so `42ch` of Shippori wraps at about 20 characters and becomes unreadable.
 - **The page column and the line length are two different things.** `--blog-measure` (560px, ≈70
   characters at 17px) is the article's *line*; 980px is its *page*. Running body text to the page edge
   gave 119 characters a line — at that length the eye loses the left margin on every return sweep, which
   is the one typographic failure a reader feels without being able to name. Photographs, pull quotes and
   the table of contents live in the space the measure leaves; **that space is a margin, not a hole.**
-  `ch` is unusable for sharing a right edge across fonts: Newsreader's `0` is ~0.55em and Source Sans's
+  `ch` is unusable for sharing a right edge across fonts: Newsreader's `0` is ~0.55em and the body sans's
   ~0.47em, so the same `62ch` lands 15 % apart. Share a px token instead.
 - **A paragraph break must be bigger than a line break.** Body runs 17px / 1.9 (32.3px between lines), so
   a `1.7em` (28.9px) paragraph gap made the breaks *smaller* than the leading and the page read as one
@@ -134,12 +149,15 @@ sized from the canvas, so padding becomes a piece hovering above its shelf and d
   the body arrives in two forms (microCMS rich-editor HTML and hand-built blocks) that agree only once
   they are on the page.
 - **Radius:** Essentially none. Objects are cut-outs or flush photographs.
-- **Buttons:** one system, `components/site/Button.tsx`. No pills, no shadows, no radius.
-  - `solid` — the one thing to do here (Add to cart, Send, Send this cart). Ink fill, ivory text
-  - `outline` — the next thing (Ask a question, See the nine, The collection). Hairline rectangle, fills on hover
-  - `outline-light` — the same on a photograph
-  - `link` / `link-light` — inline CTAs. **The rule is a permanent hairline, not a hover one** — an underline that only appears on hover does not tell anyone it is pressable, and at 10px uppercase it reads as body text
-  - Every forward action carries `→`; back links pass `arrow={false}`. All variants are ≥44px tall.
+- **Buttons:** one system, `components/site/Button.tsx`, **two variants** (2026-09-25). No pills, no shadows, no radius.
+  - `solid` — only where money or contact details move: Add to cart, Check out, Send, Notify me. Filled with the
+    surface's strongest colour (ivory on sumi, ink on paper). Hover lowers the fill to 88 %, nothing more.
+  - `link` — everything else: **word · hairline · arrow**. The hairline is always drawn at 28 % (it has to say
+    “pressable” before anyone touches it); on hover a full-strength line draws in from the left, the arrow moves
+    4px and the word goes from 86 % to 100 %. The outlined rectangle that used to sit under every “The collection”
+    and “The maker and the place” is gone — one box per screen at most.
+  - The arrow is a 1px drawn line (`Arrow.tsx`), not the `→` glyph, so it belongs to the same family as the rules.
+  - Back links pass `arrow={false}`. All variants are ≥44px tall.
 
 ## Motion
 
@@ -149,11 +167,20 @@ driven by vertical scroll**. The ground here is dark now too, but that is where 
 buttons, centred CTA stacks and a cold black are still refused.
 
 - **Approach:** Intentional, almost invisible. Lenis for wheel; GSAP (`useGSAP`) for enter, menu, and reveal. Not a showreel.
+- **One curve, few durations** (2026-09-25). Every ease is `cubic-bezier(0.22, 1, 0.36, 1)` — `--ease-soft` in CSS,
+  `power4.out` in GSAP (`components/motion/tokens.ts`). Text blocks 0.9s (opacity + 14px), heading lines 1.0s
+  (clip), photographs 1.1s (mask). What reads as luxury is how things *stop*, and they now all stop the same way.
+- **Stillness is designed.** Only a section's entrance moves: its heading lines and its photographs. Lists, tables,
+  FAQ rows, blog rows and the collection grid do not animate at all — twenty-six tiles opening one after another
+  turn a catalogue into a show.
+- **Removed:** the blur in the collection → piece morph, the 1.1→1.06 zoom on the hero photograph, the scrubbed
+  1.04 scale on the hero as the paper covers it, and the ±20px stagger in the drift band. Hover on a photograph
+  is 2 %, inside its clip.
 - **Photographs open, they do not fade — and only one thing moves.** Every well is an `ImageWell`:
-  - `wipe` (default) — the mask opens from one edge, 1.15s `expo.out`. Inside it the picture lags 4 %
-    behind the sweep and settles, at a **fixed** 1.06 scale that never animates; the scale is only the
+  - `wipe` (default) — the mask opens from one edge, 1.1s on the site curve. Inside it the picture lags 2.5 %
+    behind the sweep and settles, at a **fixed** 1.04 scale that never animates; the scale is only the
     bleed that keeps an edge from going empty while the picture slides. It is not a zoom.
-  - `band` — the hero only: a centre strip widens outward to full frame, 1.5s, on load. The type sits
+  - `band` — the hero only: a centre strip widens outward to full frame, 1.4s, on load, the picture itself still. The type sits
     *outside* the mask and stays put while it opens
 - **A photograph opens from the edge it is anchored to.** `from="left" | "right" | "top" | "bottom"`. A
   picture flush to the page's left edge opens left-to-right, one flush right opens right-to-left — so it
@@ -167,9 +194,9 @@ buttons, centred CTA stacks and a cold black are still refused.
   animates **only its caption**; the picture belongs to `ImageWell`. Do not put a photograph and a
   paragraph inside one `Reveal` — the paragraph then arrives with no move at all.
 - **Headings:** add `data-split-lines` to an `h2` inside a `Reveal` and it rises line by line from behind a mask (`SplitText` with `mask: "lines"`), 0.09s stagger — the hero's move, reused.
-- **Drift band:** `DriftBand` — a strip of photographs travelling left, scrubbed to scroll position. Never a self-running marquee: if the reader stops, it stops. **Bags only** — the band is a procession of the work, not a scrapbook of the precinct; scenery and hall interiors belong in the `lifestyle` / `process` wells, not here.
-- **Enter:** 1.0–1.2s fade/translate, `power3.out`. Home title uses SplitText lines.
-- **Hover:** Image scale 1.03. Cut-out objects lift 10px and scale 1.06 from the ground line (`transform-origin: 50% 100%`) — this is what carries hierarchy now that every plinth is the same size. No shadow bloom.
+- **Drift band:** `DriftBand` — a strip of photographs travelling left, scrubbed to scroll position. Never a self-running marquee: if the reader stops, it stops. **Bags only** — the band is a procession of the work, not a scrapbook of the precinct; scenery and hall interiors belong in the `lifestyle` / `process` wells, not here. The bags stand on **one floor line** (no vertical stagger), and on the home page the band straddles the sumi/paper seam (`bridge`).
+- **Enter:** text blocks 0.9s, opacity + 14px, half a beat after the heading; heading lines 1.0s from behind a clip. Home title uses SplitText lines.
+- **Hover:** Image scale 1.02 inside its clip, 1.1s. No lift, no shadow bloom, no inverted fills.
 - **The cursor names a thing, it is not a thing.** `CursorMark` lights a single word (`View`, `Zoom`) next
   to the pointer, and **only** over elements carrying `data-cursor` — a cut-out floating on a plinth and a
   transparent zoom hit-area are the two places where pressability cannot be read from the shape. It is a
@@ -230,7 +257,7 @@ Every well is a `Frame` (or equivalent) carrying `data-image-role` and `data-ima
 | `lifestyle` | 16∶10, 3∶4, 4∶5 | Campaign clusters |
 | `blog` | as article | Blog posts |
 
-Empty state: an `onyx` well with a `line` hairline on all four sides, plus role label + ratio. On the dark
+Empty state: a `sumi` well with a `line` hairline on all four sides, plus role label + ratio. On the dark
 ground an unfilled well is the same value as the page, so without the hairline it is not a well at all.
 Do not use grey “image coming soon” boxes.
 
@@ -256,13 +283,14 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 
 ## Why this is not a template
 
-1. The hero is one photograph given the full height of the screen, with its words beside it on the black — nothing is printed over the picture.
+1. The hero is one photograph in a 48px mat, cut on the axis of its own symmetric composition, with its title pinned to the photograph's top edge and its caption to the bottom edge — nothing is printed over the picture.
 2. Featured pieces are photographed on the same floor, before the same shoji, cut to the same height — so four different bags read as one room. No card chrome.
 3. Material is an essay with a sticky title, not icon pillars.
 4. The blog is a publication — one column of meaning, an article set at 980px — not a widget of teaser cards.
 5. Collection is set in sections by kind of work (bottle bags, origami bags, handbags, shoulder bags, aprons), each with one sentence on what it is made of — a catalogue with chapters, not one long grid of 26.
-6. Footer is `onyx` — the base the page stands on, one step deeper than the ground. It is not a slab of
-   contrast bolted to the bottom; it is the same room, further from the light.
+6. The footer is always sumi: however a page ends, you leave through the hall. Its links are set in sentence case
+   at reading size, not as a column of tiny tracked capitals.
+7. Two grounds chosen by the light in the photographs, not by alternation.
 
 ## Decisions Log
 
@@ -357,4 +385,12 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-09-25 | PDP gallery at the photographs' own ratios | The old gallery forced 4∶5 / 1∶1 / 16∶10 frames, which cut handles and floors off tall shots. Now two columns of native ratios (portrait 5∶8, landscape 8∶5); a single extra photograph is centred rather than left in half a grid |
 | 2026-09-25 | No italic display type | The founder's closing message was set in Newsreader Light Italic — the one face on the page that looked chosen to seem expensive. Pull quotes (About, Blog), the FAQ heading, year labels and numerals are now upright Newsreader light; quotes are carried by size and leading alone |
 | 2026-09-25 | The material section explains tatami before tatami-beri | Most buyers abroad have never stood in a tatami room, so “the edge of a tatami mat” named nothing. The section now goes room → edge → bag: a wide tatami room, a close view of one mat's edging, and three defined terms (Tatami, Tatami-beri, The bags) in a hairline table rather than three cards. The two photographs are Unsplash stock — the only images on the site not shot at Honmyoji, and never used for the work itself |
-
+| 2026-09-25 | Two grounds: sumi `#11100E` and paper `#E9E2D6` | Pure black and pure white read as screen colours beside the cloth, and a page that never changed brightness had no chapters. The ground follows the photograph's light: candle-lit hall on sumi, daylit pieces and reading on paper. Tokens stay role names and flip inside `.surface-paper` |
+| 2026-09-25 | Newsreader with its opsz axis; Albert Sans for body and UI | Fixed weights shipped only the opsz-16 text cut, so every display heading was set in a text face. Source Sans 3 read as documentation UI. Satoshi was the brief's first choice but its licence forbids distribution through a public repository |
+| 2026-09-25 | Type scale as tokens (`text-hero` … `caps`), floor 11px | Headings of the same role differed by 2–4px from page to page because each carried its own clamp. Tiny uppercase with wide tracking survives only in nav, CTAs and the Sold-out band |
+| 2026-09-25 | Buttons: `solid` and `link` only | The outlined rectangle under every navigational CTA was the most repeated template shape on the site. Word · hairline · drawn arrow, with the rule drawn in on hover |
+| 2026-09-25 | Piece tile = photograph, name, price or status | The one-line note under every tile made the 26-piece grid a wall of text; it lives on the piece page and in the alt |
+| 2026-09-25 | Motion: one curve, and stillness | `power4.out` / `cubic-bezier(0.22,1,0.36,1)` everywhere; lists, tables and the collection grid no longer animate; morph blur, hero zoom and drift stagger removed |
+| 2026-09-25 | Section spacing tokens `beat` / `breath` / `pause` | `pt-28 md:pt-40` repeated on every section gave one rhythm. Three steps, chosen by how far the subject moves |
+| 2026-09-25 | Leftover screenshot bars trimmed at the source | `trim_bars()` stopped at the first row carrying menu-bar text, leaving 37px of black on 33 photographs. Invisible on black, a hard line on paper |
+| 2026-09-25 | Hero recomposed: centred crop, 7 columns, title top / caption bottom | It read cheap for four measurable reasons. The crop sat at 10 % although the three bags stand at 33–63 % of the frame, so they were pushed to the right edge and the drum and sutra books on the left became the subject — a symmetric altar turned into a cluttered snapshot. The photograph took 8 columns of candles and gold. The headline broke wherever it ran out of room (“…at a temple in / Fuji.”). And the frame sat on unrelated margins (24 / 32 / 48px). Now: `object-[48%_50%]`, 7 columns, a 48px mat on three sides (the page margin), the headline broken by phrase and sized so the longest phrase fills 85–90 % of five columns, its ink top on the photograph's top edge (measured to 1px) and the CTA rule on its bottom edge |

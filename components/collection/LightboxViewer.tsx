@@ -149,9 +149,10 @@ export function LightboxViewer({
   if (!shot) return null;
 
   /* 罫は「常に」引く。hover で初めて出る罫は、触るまで押せると分からない
-     （Button.tsx と同じ判断）。色も mist ではなく ink —— 操作は本文ではない。 */
+     （Button.tsx と同じ判断）。色も mist ではなく ink —— 操作は本文ではない。
+     触れたときは塗りを反転させず、面がわずかに沈むだけ（2026-09-25）。 */
   const press =
-    "flex items-center justify-center font-sans leading-none text-ivory outline-none transition-colors hover:bg-ivory hover:text-sumi focus-visible:ring-2 focus-visible:ring-ivory/30 disabled:opacity-30 disabled:hover:bg-transparent disabled:hover:text-ivory";
+    "flex items-center justify-center font-sans leading-none text-ivory outline-none transition-colors duration-500 hover:bg-ivory/[0.07] focus-visible:ring-1 focus-visible:ring-ivory/40 disabled:opacity-30 disabled:hover:bg-transparent";
 
   const zoomBtn = `${press} h-11 w-11 text-[16px]`;
 
@@ -187,7 +188,7 @@ export function LightboxViewer({
               onClick={reset}
               disabled={!zoomed}
               aria-label="等倍に戻す"
-              className={`${press} h-11 w-[72px] border-x border-line text-[11px] font-medium tracking-[0.14em] tabular-nums`}
+              className={`${press} h-11 w-[72px] border-x border-line text-[12px] font-medium tabular-nums`}
             >
               {Math.round(zoom * 100)}%
             </button>
@@ -207,7 +208,7 @@ export function LightboxViewer({
             type="button"
             onClick={onClose}
             aria-label="閉じる"
-            className={`${press} h-11 gap-2.5 border border-ivory px-4 text-[11.5px] font-medium uppercase tracking-[0.2em] md:px-5`}
+            className={`${press} caps h-11 gap-2.5 border border-ivory/60 px-4 md:px-5`}
           >
             <span aria-hidden className="text-[15px]">
               ✕
@@ -283,7 +284,7 @@ export function LightboxViewer({
             <button type="button" onClick={() => go(-1)} aria-label="前の写真" className={pager}>
               ←
             </button>
-            <p className="w-[74px] text-center font-sans text-[12px] tabular-nums tracking-[0.16em]">
+            <p className="w-[74px] text-center font-sans text-[12px] tabular-nums tracking-[0.04em]">
               <span className="font-medium text-ivory">{twoDigits(index + 1)}</span>
               <span className="text-mist"> / {twoDigits(shots.length)}</span>
             </p>

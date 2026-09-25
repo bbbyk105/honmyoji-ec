@@ -21,7 +21,7 @@ const tone: Record<ProductStatus, string> = {
  */
 export function StatusPill({ status, className = "" }: { status: ProductStatus; className?: string }) {
   return (
-    <span className={`font-sans text-[12.5px] leading-none ${tone[status]} ${className}`}>
+    <span className={`font-sans text-meta ${tone[status]} ${className}`}>
       {STATUS_LABEL[status].en}
     </span>
   );

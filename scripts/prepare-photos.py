@@ -165,9 +165,13 @@ def trim_bars(im: Image.Image, pad: int = 4) -> Image.Image:
     a = np.asarray(im.convert("L"), dtype=np.float32)
 
     def run(lines: np.ndarray) -> int:
+        # ほぼ全部の画素が黒い行を帯と見る。以前は「平均 < 14 かつ標準偏差 < 8」で見ていて、
+        # メニューバーの時計や項目名（白い字）が乗った行で標準偏差が 10 を超えて止まり、
+        # 66px の帯のうち下の 37px が写真の上端（縦位置は左端）に黒く残っていた（2026-09-25。
+        # 墨の地では見えず、紙の地に置いて初めて線として見えた）。字は行の数 % しか占めない。
         n = 0
         for line in lines:
-            if line.mean() < 14 and line.std() < 8:
+            if (line < 24).mean() > 0.9:
                 n += 1
             else:
                 break

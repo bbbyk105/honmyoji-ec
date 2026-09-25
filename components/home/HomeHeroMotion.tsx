@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { SplitText } from "gsap/SplitText";
 
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
+import { DUR, EASE, LINE_STAGGER, TEXT_RISE } from "@/components/motion/tokens";
 import "@/components/motion/register";
 
 /**
@@ -24,17 +25,18 @@ export function HomeHeroMotion({ children }: { children: ReactNode }) {
       if (prefersReducedMotion()) return;
 
       const title = root.current?.querySelector<HTMLElement>("[data-hero-title]");
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
+      const tl = gsap.timeline({ defaults: { ease: EASE } });
       if (title) {
         const split = SplitText.create(title, { type: "lines", mask: "lines" });
-        tl.from(split.lines, { yPercent: 110, duration: 1.1, stagger: 0.09 }, 0.55);
+        tl.from(split.lines, { yPercent: 100, duration: DUR.lines, stagger: LINE_STAGGER }, 0.5);
       }
-      tl.from("[data-hero-aside]", { autoAlpha: 0, duration: 1 }, 1.0);
+      tl.from("[data-hero-aside]", { autoAlpha: 0, y: TEXT_RISE, duration: DUR.text }, 0.95);
 
       /*
-        退場。この節は pin されているので、動くのは上から降りてくる版の面のほう。
-        文字は面が届く前に消え、写真だけがわずかに寄って暗くなる —— 節が変わったのではなく
-        照明が落ちたように見せる。
+        退場。この節は pin されているので、動くのは下から上がってくる紙の面のほう。
+        文字は面が届く前に消え、写真は**動かさずに**暗くなる —— 節が変わったのではなく
+        照明が落ちたように見せる。以前は写真を 1.04 倍へ寄せていたが、紙が上がってくる動きと
+        二つ重なるので外した（2026-09-25）。止まっている写真の上を紙が覆うほうが、紙が見える。
 
         trigger は sticky の自分自身ではなく版の面。sticky を trigger にすると、
         resize（スマホのアドレスバー開閉）で走る再計測が、貼り付いた現在位置を
@@ -43,11 +45,6 @@ export function HomeHeroMotion({ children }: { children: ReactNode }) {
       const sheet = document.querySelector<HTMLElement>("[data-page-sheet]");
       if (sheet) {
         const scrub = { trigger: sheet, scrub: true } as const;
-        gsap.to("[data-hero-frame]", {
-          scale: 1.04,
-          ease: "none",
-          scrollTrigger: { ...scrub, start: "top bottom", end: "top top" },
-        });
         gsap.to("[data-hero-fade]", {
           autoAlpha: 0,
           ease: "none",

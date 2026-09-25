@@ -10,6 +10,7 @@ import { scrollToChapter } from "@/components/motion/lenis";
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import { site } from "@/data/site";
 import { useScrollLock } from "@/hooks/useScrollLock";
+import { useSurfaceAt } from "@/hooks/useSurfaceAt";
 import { useWindowEvent } from "@/hooks/useWindowEvent";
 import { twoDigits } from "@/lib/format";
 import { SHELL } from "./Shell";
@@ -36,6 +37,11 @@ export function SiteHeader() {
    * 初期値はパスから決める。最初の描画は必ず先頭なので、effect を待たずに正しく出る。
    */
   const [onDarkHero, setOnDarkHero] = useState(pathname === "/");
+  /*
+    下を流れている面が紙かどうか。ヘッダーの帯の中ほど（40px）で読む。紙の上では字を墨に、
+    帯も紙の色にする —— 生成りの字のまま紙に乗ると消える（2026-09-25 に面を二つにした）。
+  */
+  const onPaper = useSurfaceAt(40, pathname);
   const { slugs, setOpen: setCartOpen } = useCart();
   const root = useRef<HTMLElement>(null);
   const overlay = useRef<HTMLDivElement>(null);
@@ -182,24 +188,25 @@ export function SiteHeader() {
   };
 
   /*
-    地は全ページ同じ暖かい黒なので、ヘッダーの文字色はどこでも一定。
-    変わるのは帯を敷くかどうかだけ — ヒーローの写真の上に半透明の帯と罫を走らせると、
-    第一画面に横線が一本入って見える。メニューが開いている間も帯は要らない（面が全部覆う）。
+    帯を敷くかどうか。ヒーローの写真の上では敷かない —— 第一画面に横線が一本入って見える。
+    メニューが開いている間も要らない（面が全部覆う）。
 
-    **帯は不透明（`bg-sumi`）。** 以前は 92% だったが、記事の引用（40px の ivory）が
-    その 8% を通して読めてしまい、ナビの語と重なって両方読めなくなっていた（実際に踏んだ）。
-    地と同じ色なので、不透明にしても「板を貼った」には見えない —— 同じ部屋の、手前の面。
-    ぼかし（backdrop-blur）は使わない。DESIGN.md がガラスを否定している。
+    **帯は不透明。** 以前は 92% だったが、記事の引用（40px の ivory）がその 8% を通して
+    読めてしまい、ナビの語と重なって両方読めなくなっていた（実際に踏んだ）。
+    地と同じ色なので「板を貼った」には見えない。ぼかし（backdrop-blur）は使わない。
   */
   const overHero = onDarkHero && !open;
-  const tone = "text-ivory";
-  const toneMuted = "text-mist";
+  const tone = onPaper && !open ? "tone-paper" : "";
+  /* 測る前は data-tone を付けない —— そのあいだは CSS が先頭の節の面で決める（`useSurfaceAt` の註） */
+  const measured = onPaper === null ? undefined : onPaper && !open ? "paper" : "dark";
 
   return (
     <header
       ref={root}
+      data-surface-follow
+      data-tone={measured}
       style={{ viewTransitionName: "site-header" }}
-      className={`fixed inset-x-0 top-0 z-50 transition-[background-color,border-color] duration-500 ${
+      className={`fixed inset-x-0 top-0 z-50 text-ivory transition-[background-color,border-color] duration-500 ${tone} ${
         scrolled && !open && !overHero
           ? "border-b border-line bg-sumi"
           : "border-b border-transparent bg-transparent"
@@ -207,25 +214,27 @@ export function SiteHeader() {
     >
       {/* 三分割グリッド。flex + justify-between だと nav が中途半端な位置に落ちる */}
       <div className={`${SHELL} grid h-16 grid-cols-[1fr_auto_1fr] items-center sm:h-[72px] md:h-[80px]`}>
+        {/*
+          ワードマーク。Newsreader 400 を光学サイズの小さい切り口（opsz ≈ 22）で —— 300 の細さは
+          この大きさでは字が痩せて、銘ではなく見出しの断片に見えた。字間は 0.24em、
+          添え書きは大文字 11px・0.16em で、二行の幅がほぼ揃う（銘板の組み）。
+          右に余る字間（最後の U の後ろの 0.24em）は負の margin で戻して、左右の端を字面で揃える。
+        */}
         <Link
           href="/"
           onClick={onWordmark}
           className="z-[60] col-start-1 justify-self-start no-underline"
           aria-label={`${site.name} — home`}
         >
-          <span
-            className={`block font-display text-[20px] font-light leading-none tracking-[0.18em] transition-colors duration-500 sm:text-[23px] ${tone}`}
-          >
+          <span className="mr-[-0.24em] block font-display text-[21px] font-normal leading-none tracking-[0.24em] text-ivory transition-colors duration-500 sm:text-[23px]">
             MIROKU
           </span>
-          <span
-            className={`mt-[7px] block font-sans text-[8px] uppercase tracking-[0.3em] transition-colors duration-500 ${toneMuted}`}
-          >
+          <span className="mt-[9px] hidden font-sans text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-mist transition-colors duration-500 sm:block">
             Honmyoji · Fuji
           </span>
         </Link>
 
-        <nav aria-label="Primary" className="col-start-2 hidden justify-self-center xl:flex xl:items-center xl:gap-10">
+        <nav aria-label="Primary" className="col-start-2 hidden justify-self-center xl:flex xl:items-center xl:gap-11">
           {site.nav.map((item) => {
             const active = pathname === item.href || pathname.startsWith(`${item.href}/`);
             return (
@@ -233,15 +242,15 @@ export function SiteHeader() {
                 key={item.href}
                 href={item.href}
                 aria-current={active ? "page" : undefined}
-                className={`relative font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${
-                  active ? tone : "link-line text-bone/60 hover:text-ivory"
+                className={`caps relative py-2 transition-colors duration-500 ${
+                  active ? "text-ivory" : "link-line text-bone hover:text-ivory"
                 }`}
               >
                 {item.label}
                 {active ? (
                   <span
                     aria-hidden
-                    className="absolute -bottom-[5px] left-0 right-0 h-px bg-ivory"
+                    className="absolute bottom-[3px] left-0 right-0 h-px bg-ivory"
                   />
                 ) : null}
               </Link>
@@ -256,12 +265,12 @@ export function SiteHeader() {
               leave();
               setCartOpen(true);
             }}
-            className={`link-line min-h-11 font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 ${tone}`}
+            className="caps link-line min-h-11 text-ivory transition-colors duration-500"
             aria-label={`Cart, ${slugs.length} ${slugs.length === 1 ? "piece" : "pieces"}`}
           >
             Cart
             {slugs.length > 0 ? (
-              <span className="ml-1.5 tabular-nums text-mist">
+              <span className="ml-1.5 tabular-nums tracking-[0.04em] text-mist">
                 ({slugs.length})
               </span>
             ) : null}
@@ -276,7 +285,7 @@ export function SiteHeader() {
             }}
             aria-expanded={open}
             aria-controls="site-menu"
-            className={`flex min-h-11 min-w-11 items-center justify-end gap-2.5 font-sans text-[10.5px] uppercase tracking-[0.22em] transition-colors duration-500 xl:hidden ${tone}`}
+            className="caps flex min-h-11 min-w-11 items-center justify-end gap-3 text-ivory transition-colors duration-500 xl:hidden"
           >
             <span className="hidden sm:inline">{open ? "Close" : "Menu"}</span>
             <span aria-hidden className="relative block h-[10px] w-6">
@@ -297,7 +306,7 @@ export function SiteHeader() {
         ref={overlay}
         id="site-menu"
         aria-hidden={!open}
-        className="invisible fixed inset-0 z-40 bg-sumi opacity-0 xl:hidden"
+        className="surface-dark invisible fixed inset-0 z-40 opacity-0 xl:hidden"
         inert={!open}
       >
         <div className="flex h-full flex-col justify-between px-5 pb-10 pt-24 sm:px-8 sm:pt-28">
@@ -312,7 +321,7 @@ export function SiteHeader() {
                     className="flex items-baseline justify-between gap-4 border-b border-line/70 py-4 no-underline sm:py-5"
                   >
                     <span className="flex items-baseline gap-4 sm:gap-6">
-                      <span className="font-sans text-[10px] tabular-nums tracking-[0.18em] text-mist">
+                      <span className="font-sans text-[12px] tabular-nums text-mist">
                         {twoDigits(i + 1)}
                       </span>
                       <span
@@ -323,23 +332,23 @@ export function SiteHeader() {
                         {item.label}
                       </span>
                     </span>
-                    <span className="hidden font-jp text-[12px] tracking-[0.2em] text-mist sm:block">{item.ja}</span>
+                    <span className="hidden font-jp text-[13px] tracking-[0.08em] text-mist sm:block">{item.ja}</span>
                   </Link>
                 </li>
               );
             })}
           </ul>
           <div data-menu-foot className="border-t border-line pt-6">
-            <p className="font-sans text-[10px] uppercase tracking-[0.2em] text-mist">{site.location}</p>
+            <p className="font-sans text-meta text-mist">{site.location}</p>
             <button
               type="button"
               onClick={() => {
                 leave();
                 setCartOpen(true);
               }}
-              className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.22em] text-ivory"
+              className="caps mt-4 min-h-11 text-ivory"
             >
-              Cart · {twoDigits(slugs.length)}
+              Cart{slugs.length > 0 ? ` (${slugs.length})` : ""}
             </button>
           </div>
         </div>

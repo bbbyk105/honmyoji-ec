@@ -31,20 +31,29 @@ type Props = {
 export function HomeHero({ count }: Props) {
   return (
     <HomeHeroMotion>
+      {/*
+        lg 以上の組み（2026-09-25 に組み直し）。
+        - 写真は右 7 段。上・右・下の三辺に版の余白と同じ 48px を取る —— 以前は上 24px・下 32px・
+          右 48px とばらばらで、写真が根拠なく浮いた箱に見えていた。
+        - 文字は左 5 段。**見出しは写真の上端に、説明と導線は写真の下端に**揃える（図録の図版と、
+          その脇の題と添え書き）。以前は全部を足元に積んでいて、見出し・説明・ボタンを重ねた
+          ランディングページの定型に見えた。
+      */}
       <div
-        className={`${SHELL} flex flex-1 flex-col pb-6 pt-4 lg:grid lg:min-h-0 lg:grid-cols-12 lg:gap-8 lg:pb-8 lg:pt-6`}
+        className={`${SHELL} flex flex-1 flex-col pb-6 pt-4 lg:grid lg:min-h-0 lg:grid-cols-12 lg:gap-8 lg:pb-12 lg:pt-12`}
       >
         {/*
-          lg 以上は右 8 段に写真を画面の高さいっぱい、左 4 段の足元に文字。版面の幅で横長に
-          切ると 2.7:1 になり、持ち手の先か台の錦が切れる。高さを取れば三本が丸ごと収まる。
-          三本は原稿の左寄り（横 18–58%）に立っているので、どの幅でも左へ寄せて切る。
+          三本は原稿の横 33–63% に立ち、祭壇・花・蝋燭が左右対称に囲んでいる。**中心（48%）で切る**。
+          以前は左へ寄せて（10%）切っていたので、三本が右端へ押しやられ、左の太鼓と経本が主役に
+          写っていた —— 対称の構図が崩れると、寺の写真がただの雑多なスナップになる。
+          7 段・画面の高さで切ると横 20–76% が残り、左右の提灯が枠の外へ出て、三本が画面の半分を占める。
           タブレット縦（md）は写真に残りの高さを全部渡す —— 3:2 のままだと下に 400px の黒が残った。
         */}
         <figure
           data-image-role="hero-campaign"
           data-image-ratio="3/2"
           data-hero-frame
-          className="relative m-0 aspect-[4/5] w-full overflow-hidden sm:aspect-[3/2] md:aspect-auto md:min-h-[360px] md:flex-1 lg:order-2 lg:col-span-8 lg:col-start-5 lg:h-full lg:min-h-0"
+          className="relative m-0 aspect-[4/5] w-full overflow-hidden sm:aspect-[3/2] md:aspect-auto md:min-h-[360px] md:flex-1 lg:order-2 lg:col-span-7 lg:col-start-6 lg:h-full lg:min-h-0"
         >
           <ImageWell reveal="band" className="absolute inset-0">
             <Image
@@ -53,28 +62,40 @@ export function HomeHero({ count }: Props) {
               fill
               priority
               fetchPriority="high"
-              sizes="(min-width: 1024px) 64vw, 100vw"
-              className="object-cover object-[40%_50%] sm:object-center md:object-[30%_50%] lg:object-[10%_50%]"
+              sizes="(min-width: 1024px) 56vw, 100vw"
+              className="object-cover object-[48%_50%]"
             />
           </ImageWell>
         </figure>
 
         <div
           data-hero-fade
-          className="grid gap-6 pt-7 md:grid-cols-12 md:items-end md:gap-8 lg:order-1 lg:col-span-4 lg:flex lg:flex-col lg:items-start lg:justify-end lg:gap-8 lg:pt-0"
+          className="grid gap-7 pt-8 md:grid-cols-12 md:items-end md:gap-8 lg:order-1 lg:col-span-5 lg:flex lg:flex-col lg:items-start lg:justify-between lg:gap-12 lg:pt-0"
         >
-          <h1
-            data-hero-title
-            className="font-display text-[clamp(34px,3.4vw,52px)] font-light leading-[1.04] tracking-[-0.015em] text-ivory md:col-span-7"
-          >
-            Tatami-beri, woven by hand at a temple in Fuji.
+          {/*
+            見出しは**句で改行する**。成り行きで折ると「…at a temple in / Fuji.」「woven by hand at /
+            a temple…」のように句の途中で切れ、偶然の折り返しに見えた。一番長い句（woven by hand、
+            6.36em）が 5 段の 85–90% に収まる大きさにしてある（`--text-hero`）。
+            スマホとタブレットは三行（最後の二句を一行に）、lg 以上は四行。
+            行の箱の上の余りがちょうど字面の上端を写真の上端に揃える（1440 / 1280px で実測 0–2px）ので、
+            margin で引き上げない。
+          */}
+          <h1 data-hero-title className="font-display text-hero font-light text-ivory md:col-span-7">
+            Tatami-beri,
+            <br />
+            woven by hand
+            <br />
+            at a temple{" "}
+            <br className="hidden lg:inline" />
+            in Fuji.
           </h1>
-          <div data-hero-aside className="md:col-span-5 md:col-start-8 md:pb-1.5 lg:pb-0">
-            <p className="max-w-[40ch] font-sans text-[14.5px] leading-[1.8] text-bone">
+          <div data-hero-aside className="md:col-span-5 md:col-start-8 md:pb-2 lg:pb-0">
+            <p className="max-w-[34ch] font-sans text-body text-bone">
               {count} pieces, each made once from the edging of tatami rooms and paper band recycled in
               Fuji City. Photographed at Honmyoji, released one by one.
             </p>
-            <Button href="/collection" variant="link-light" className="mt-5">
+            {/* 罫の下端を写真の下端に揃える（リンクの箱は罫の下に 0.2em の余りを持っている） */}
+            <Button href="/collection" className="mt-8 lg:-mb-[0.2em]">
               View the collection
             </Button>
           </div>

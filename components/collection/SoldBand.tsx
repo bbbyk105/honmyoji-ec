@@ -16,9 +16,13 @@ export function SoldBand({ className = "", style }: { className?: string; style?
       style={style}
       className={`pointer-events-none absolute flex items-center gap-3 ${className}`}
     >
-      <span className="h-px flex-1 bg-ivory/55" />
-      <span className="font-sans text-[10px] font-medium uppercase tracking-[0.28em] text-ivory">Sold out</span>
-      <span className="h-px flex-1 bg-ivory/55" />
+      {/*
+        面の一番強い色で引く。像は 45% に落としてあるので、墨の面では像が暗く沈んで生成りの罫が、
+        紙の面では像が白く褪せて墨の罫が立つ —— どちらも「地の色に像が退いた上に、面の字で書く」。
+      */}
+      <span className="h-px flex-1 bg-ivory/60" />
+      <span className="caps text-[11px] text-ivory">Sold out</span>
+      <span className="h-px flex-1 bg-ivory/60" />
     </span>
   );
 }

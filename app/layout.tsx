@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
-import { Newsreader, Source_Sans_3, Shippori_Mincho } from "next/font/google";
+import { Albert_Sans, Newsreader, Shippori_Mincho } from "next/font/google";
 import "./globals.css";
 import { site } from "@/data/site";
 
@@ -11,18 +11,28 @@ import { site } from "@/data/site";
  * ここに置くと `/studio` にもサイトの外枠が付いてきて、親 layout は子から外せない。
  */
 
+/*
+  見出しの Newsreader は**可変フォントのまま光学サイズ軸（opsz）ごと**読む。
+  weight を配列で指定すると opsz 16（本文用）の一枚だけが届き、80px の見出しまで本文の字で
+  組むことになる —— 太く、間延びして見えていたのはこれ（2026-09-25）。軸を開けておけば
+  ブラウザが字の大きさに合わせて opsz を選ぶ（`font-optical-sizing: auto` が既定）。
+*/
 const newsreader = Newsreader({
   variable: "--font-newsreader",
   subsets: ["latin"],
-  weight: ["300", "400", "500"],
+  axes: ["opsz"],
   style: ["normal", "italic"],
   display: "swap",
 });
 
-const sourceSans = Source_Sans_3({
-  variable: "--font-source",
+/*
+  本文と UI。Satoshi 系の幾何学的なグロテスク。Satoshi そのものは ITF FFL が公開リポジトリでの
+  配布を禁じているので使わない（このリポジトリは公開）。Albert Sans は OFL で、next/font が
+  ビルド時に取り込んで同じオリジンから配る。
+*/
+const albert = Albert_Sans({
+  variable: "--font-albert",
   subsets: ["latin"],
-  weight: ["300", "400", "500", "600"],
   display: "swap",
 });
 
@@ -61,7 +71,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         抑えるのは html 自身の属性だけで、子孫の不一致は今までどおり報告される。
       */
       suppressHydrationWarning
-      className={`${newsreader.variable} ${sourceSans.variable} ${shippori.variable} h-full antialiased`}
+      className={`${newsreader.variable} ${albert.variable} ${shippori.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col bg-sumi text-ivory">{children}</body>
     </html>

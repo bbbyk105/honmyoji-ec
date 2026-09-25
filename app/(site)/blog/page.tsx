@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { Arrow } from "@/components/site/Arrow";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
+import { SHELL } from "@/components/site/Shell";
 import { formatBlogDate, blogMeta } from "@/data/blog";
 import { getBlogPosts } from "@/lib/microcms";
 
@@ -31,19 +33,15 @@ function LeadCopy({
 }) {
   return (
     <>
-      <p className="font-sans text-[10px] uppercase tracking-[0.22em] text-mist">
-        {blogMeta(topic, formatBlogDate(date))}
-      </p>
-      <h2 className="mt-4 font-display text-[clamp(30px,3.2vw,40px)] font-light leading-[1.12] text-ivory">
+      <p className="font-sans text-meta text-mist">{blogMeta(topic, formatBlogDate(date))}</p>
+      <h2 className="mt-4 font-display text-section font-light text-ivory">
         <Link href={`/blog/${slug}`} className="no-underline">
           {title}
         </Link>
       </h2>
-      {titleJa ? <p className="mt-2 font-jp text-[12px] tracking-[0.16em] text-mist">{titleJa}</p> : null}
-      {dek ? (
-        <p className={`mt-5 ${MEASURE} font-sans text-[15px] leading-[1.85] text-bone`}>{dek}</p>
-      ) : null}
-      <Button href={`/blog/${slug}`} variant="link" className="mt-7">
+      {titleJa ? <p lang="ja" className="mt-3 font-jp text-[14px] tracking-[0.06em] text-mist">{titleJa}</p> : null}
+      {dek ? <p className={`mt-6 ${MEASURE} font-sans text-body text-bone`}>{dek}</p> : null}
+      <Button href={`/blog/${slug}`} className="mt-8">
         Read this note
       </Button>
     </>
@@ -54,19 +52,20 @@ export default async function BlogIndexPage() {
   const entries = await getBlogPosts();
   const [lead, ...rest] = entries;
 
+  /* 読むものは紙の面（2026-09-25）。一覧も記事も、同じ紙を繰る。 */
   return (
-    <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
-      <div className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
+    <section className="surface-paper pt-16 sm:pt-[72px] md:pt-[80px]">
+      <div className={`${SHELL} pb-pause pt-14 md:pt-24`}>
         <header className="grid gap-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
-            <h1 className="font-display text-[clamp(40px,11vw,92px)] font-light leading-[0.94] text-ivory">
+            <h1 className="font-display text-display font-light text-ivory">
               Notes from
               <br />
               the table.
             </h1>
-            <p className="mt-4 font-jp text-[13px] tracking-[0.22em] text-mist">手記</p>
+            <p lang="ja" className="mt-5 font-jp text-[15px] tracking-[0.08em] text-mist">手記</p>
           </div>
-          <p className="max-w-[36ch] font-sans text-[14px] leading-[1.85] text-bone/85 md:col-span-4 md:col-start-9">
+          <p className="max-w-[36ch] font-sans text-body text-bone md:col-span-4 md:col-start-9 md:pb-3">
             Materials, care, the temple grounds, and how a piece is made once. A small publication,
             not a marketing feed.
           </p>
@@ -79,8 +78,8 @@ export default async function BlogIndexPage() {
         */}
         {lead ? (
           lead.image ? (
-            <article className="mt-14 grid gap-8 border-t border-line pt-12 md:mt-16 md:grid-cols-12 md:gap-10">
-              <Reveal className="md:col-span-6">
+            <article className="mt-lead grid gap-10 border-t border-line pt-14 md:grid-cols-12 md:gap-8">
+              <div className="md:col-span-6">
                 <Link href={`/blog/${lead.slug}`} className="block no-underline">
                   <Frame
                     src={lead.image}
@@ -90,7 +89,7 @@ export default async function BlogIndexPage() {
                     sizes="(min-width: 768px) 48vw, 100vw"
                   />
                 </Link>
-              </Reveal>
+              </div>
               <Reveal delay={80} className="md:col-span-5 md:col-start-8 md:self-center">
                 <LeadCopy
                   topic={lead.topic}
@@ -103,7 +102,7 @@ export default async function BlogIndexPage() {
               </Reveal>
             </article>
           ) : (
-            <article className="mt-14 max-w-[720px] border-t border-line pt-12 md:mt-16">
+            <article className="mt-lead max-w-[760px] border-t border-line pt-14">
               <Reveal>
                 <LeadCopy
                   topic={lead.topic}
@@ -119,16 +118,16 @@ export default async function BlogIndexPage() {
         ) : null}
 
         {rest.length > 0 ? (
-          <ol className="mt-16 max-w-[1000px] divide-y divide-line border-y border-line">
-            {rest.map((entry, i) => (
-              <Reveal key={entry.slug} as="li" delay={i * 50}>
+          <ol className="mt-beat max-w-[1040px] divide-y divide-line border-y border-line">
+            {rest.map((entry) => (
+              <li key={entry.slug}>
                 <Link
                   href={`/blog/${entry.slug}`}
-                  className="group grid gap-x-8 gap-y-3 py-8 no-underline md:grid-cols-12"
+                  className="group grid gap-x-8 gap-y-3 py-9 no-underline md:grid-cols-12"
                 >
-                  <p className="font-sans text-[10px] uppercase leading-[1.9] tracking-[0.2em] text-mist md:col-span-2">
+                  <p className="font-sans text-meta text-mist md:col-span-2">
                     {entry.topic}
-                    <span className="block text-mist/75">{formatBlogDate(entry.date)}</span>
+                    <span className="block">{formatBlogDate(entry.date)}</span>
                   </p>
                   {/*
                     見出しと説明は同じ右端で止める。以前は見出しが 9 カラム（660px）まで
@@ -136,23 +135,14 @@ export default async function BlogIndexPage() {
                     目の折り返し位置が 270px ずれていた。記事本文と同じ measure に揃える。
                   */}
                   <div className={`md:col-span-9 ${MEASURE}`}>
-                    <h2 className="font-display text-[clamp(24px,2.4vw,30px)] font-light leading-[1.25] text-ivory">
-                      {entry.title}
-                    </h2>
-                    {entry.dek ? (
-                      <p className="mt-2.5 font-sans text-[14px] leading-[1.8] text-bone/80">
-                        {entry.dek}
-                      </p>
-                    ) : null}
+                    <h2 className="font-display text-title font-light text-ivory">{entry.title}</h2>
+                    {entry.dek ? <p className="mt-3 font-sans text-small text-bone">{entry.dek}</p> : null}
                   </div>
-                  <span
-                    aria-hidden
-                    className="hidden font-sans text-[15px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ivory md:col-span-1 md:block md:text-right"
-                  >
-                    →
+                  <span className="hidden justify-end pt-3 text-mist transition-colors duration-500 group-hover:text-ivory md:col-span-1 md:flex">
+                    <Arrow className="cta-arrow" />
                   </span>
                 </Link>
-              </Reveal>
+              </li>
             ))}
           </ol>
         ) : null}
