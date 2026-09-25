@@ -5,6 +5,7 @@ import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
+import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import "@/components/motion/register";
 
 type Props = {
@@ -41,7 +42,7 @@ export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }:
     () => {
       const el = ref.current;
       if (!el) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (prefersReducedMotion()) return;
 
       const heads = gsap.utils.toArray<HTMLElement>(el.querySelectorAll("[data-split-lines]"));
       const splits: SplitText[] = [];

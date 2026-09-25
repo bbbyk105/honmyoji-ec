@@ -1,12 +1,17 @@
 "use client";
 
 import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
-import { getProduct } from "@/data/products";
 
+import type { CartPiece } from "@/data/products";
+import { addPiece, parseCart, removePiece, resolvePieces, samePiece } from "@/lib/cart";
+
+/** 表示は Cart だが、キーは旧名のまま。変えると既存のカートが空になる。 */
 const STORAGE_KEY = "miroku-held";
 
 type CartContextValue = {
   slugs: string[];
+  /** `slugs` をカタログで引いた品。MiniCart はこれを描く。 */
+  pieces: CartPiece[];
   open: boolean;
   setOpen: (v: boolean) => void;
   add: (slug: string) => void;
@@ -32,17 +37,13 @@ function subscribe(onStoreChange: () => void) {
 let cachedRaw: string | null = null;
 let cached: string[] = EMPTY;
 
+/** useSyncExternalStore の snapshot。中身が同じなら同じ配列を返す（返さないと無限に描き直す）。 */
 function readHeld(): string[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw === cachedRaw) return cached;
     cachedRaw = raw;
-    if (!raw) {
-      cached = EMPTY;
-      return cached;
-    }
-    const parsed = JSON.parse(raw) as unknown;
-    cached = Array.isArray(parsed) ? parsed.filter((s): s is string => typeof s === "string") : EMPTY;
+    cached = raw ? parseCart(raw) : EMPTY;
     return cached;
   } catch {
     cached = EMPTY;
@@ -57,38 +58,31 @@ function writeHeld(next: string[]) {
   emit();
 }
 
-function samePiece(stored: string, key: string) {
-  if (stored === key) return true;
-  const a = getProduct(stored);
-  const b = getProduct(key);
-  return Boolean(a && b && a.slug === b.slug);
-}
-
-function canonicalSlug(key: string) {
-  return getProduct(key)?.slug ?? key;
-}
-
-export function CartProvider({ children }: { children: ReactNode }) {
+/**
+ * カタログはサーバー（`SiteChrome`）から、カートが読む項目だけ（`CartPiece`）で受け取る。
+ * 管理画面で直した価格とステータスがそのまま映り、物語や素材はブラウザに送らない。
+ */
+export function CartProvider({ catalog, children }: { catalog: CartPiece[]; children: ReactNode }) {
   const slugs = useSyncExternalStore(subscribe, readHeld, () => EMPTY);
   const [open, setOpen] = useState(false);
 
-  const add = useCallback((slug: string) => {
-    const current = readHeld();
-    const next = canonicalSlug(slug);
-    if (current.some((s) => samePiece(s, next))) return;
-    writeHeld([...current, next]);
-  }, []);
+  const add = useCallback(
+    (slug: string) => {
+      const next = addPiece(readHeld(), catalog, slug);
+      if (next) writeHeld(next);
+    },
+    [catalog],
+  );
 
-  const remove = useCallback((slug: string) => {
-    writeHeld(readHeld().filter((s) => !samePiece(s, slug)));
-  }, []);
+  const remove = useCallback((slug: string) => writeHeld(removePiece(readHeld(), catalog, slug)), [catalog]);
 
   const clear = useCallback(() => writeHeld([]), []);
-  const has = useCallback((slug: string) => slugs.some((s) => samePiece(s, slug)), [slugs]);
+  const has = useCallback((slug: string) => slugs.some((s) => samePiece(catalog, s, slug)), [catalog, slugs]);
+  const pieces = useMemo(() => resolvePieces(catalog, slugs), [catalog, slugs]);
 
   const value = useMemo(
-    () => ({ slugs, open, setOpen, add, remove, has, clear }),
-    [slugs, open, add, remove, has, clear],
+    () => ({ slugs, pieces, open, setOpen, add, remove, has, clear }),
+    [slugs, pieces, open, add, remove, has, clear],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

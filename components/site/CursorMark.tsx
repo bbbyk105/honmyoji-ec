@@ -3,6 +3,7 @@
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import "@/components/motion/register";
 
 /**
@@ -32,7 +33,7 @@ export function CursorMark() {
     const rule = line.current;
     if (!el || !text || !rule) return;
     if (!window.matchMedia("(min-width: 1024px) and (pointer: fine)").matches) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (prefersReducedMotion()) return;
 
     gsap.set(el, { autoAlpha: 0 });
     gsap.set(text, { yPercent: 110 });

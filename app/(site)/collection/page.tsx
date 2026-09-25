@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { CollectionStudio } from "@/components/collection/CollectionStudio";
+import { toShelfPiece } from "@/data/products";
 import { phrases } from "@/data/site";
 import { getCatalog } from "@/lib/catalog";
 
@@ -10,7 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default async function CollectionPage() {
-  const pieces = await getCatalog();
+  /* 一覧は client（絞り込みの state がある）。渡すのは展示台が読む項目だけ。 */
+  const pieces = (await getCatalog()).map(toShelfPiece);
 
   return (
     <section className="pt-16 sm:pt-[72px] md:pt-[80px]">

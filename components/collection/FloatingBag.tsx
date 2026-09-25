@@ -1,15 +1,20 @@
-"use client";
-
 import Image from "next/image";
 import Link from "next/link";
 import { ViewTransition } from "react";
 import type { CSSProperties } from "react";
-import { productCutout, productPath, aud, type Product } from "@/data/products";
+import { cutoutSrc, productPath, aud, type ShelfPiece } from "@/data/products";
 import { SoldBand } from "./SoldBand";
 import { StatusPill } from "./StatusPill";
 
+/*
+  `"use client"` は付けない。state も effect も無い —— トップ（Server Component）から
+  置かれたときはサーバーだけで描かれ、client に載るのは一覧の絞り込み（`CollectionStudio`）
+  の中で使われるときだけになる。hover は CSS（`.bag-lift`）、浮遊も CSS。
+*/
+
 type Props = {
-  product: Product;
+  /** 描くのに要る項目だけ。Product を渡してもよい（上位互換）。 */
+  product: ShelfPiece;
   index?: number;
   priority?: boolean;
 };
@@ -90,7 +95,7 @@ export function FloatingBag({ product, index = 0, priority = false }: Props) {
               <div className={`relative h-full w-full ${sold ? "" : "bag-lift"}`}>
                 <ViewTransition name={`bag-${product.folder}`} share="morph" default="none">
                   <Image
-                    src={productCutout(product.slug)}
+                    src={cutoutSrc(product.folder)}
                     alt={`${product.name} — ${product.note}`}
                     fill
                     priority={priority}

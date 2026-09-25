@@ -1,19 +1,17 @@
-"use client";
-
 import Image from "next/image";
 import { ViewTransition } from "react";
-import { productCutout, type Product } from "@/data/products";
-import { useLightboxSafe } from "./Lightbox";
+import { cutoutSrc, type Product } from "@/data/products";
+import { ZoomHit } from "./Lightbox";
 
 /**
  * 詳細ページのヒーロー。一覧の FloatingBag と同じ view-transition 名で morph する。
  * 像の枠は cutoutAspect でぴったりに切っておく — 一覧側の枠と形が揃っていないと morph が滑らない。
+ *
+ * Server Component。押せるのは像の上の当たり判定（`ZoomHit`）だけなので、client に降りるのはそこだけ。
  */
 export function ProductHero({ product }: { product: Product }) {
   /* 一覧と同じ背丈。横に太い作品は max-w-full が列の幅で受け止める（下の註）。 */
   const bagH = 78;
-  /* 拡大表示は LightboxProvider があるときだけ。ヒーローは単体でも置けるようにしておく。 */
-  const lightbox = useLightboxSafe();
 
   return (
     <div className="relative flex h-[46vh] min-h-[280px] w-full items-end justify-center pb-8 sm:h-[52vh] sm:min-h-[340px] sm:pb-12 lg:h-[calc(100vh-80px)] lg:min-h-[520px]">
@@ -34,7 +32,7 @@ export function ProductHero({ product }: { product: Product }) {
         <div className="bag-shadow-owner absolute inset-0">
           <ViewTransition name={`bag-${product.folder}`} share="morph" default="none">
             <Image
-              src={productCutout(product.slug)}
+              src={cutoutSrc(product.folder)}
               alt={`${product.name} — ${product.note}`}
               fill
               priority
@@ -45,15 +43,9 @@ export function ProductHero({ product }: { product: Product }) {
           </ViewTransition>
         </div>
         {/* 当たり判定は像の枠だけ。ヒーローの領域は画面の高さいっぱいあるので、
-            そこ全部を押せるようにするとスクロール中に誤って開く。 */}
-        {lightbox ? (
-          <button
-            type="button"
-            onClick={() => lightbox.open(0)}
-            aria-label={`${product.name} の写真を拡大する`}
-            className="absolute inset-0 cursor-zoom-in outline-none focus-visible:ring-2 focus-visible:ring-ivory/30 focus-visible:ring-offset-4 focus-visible:ring-offset-sumi"
-          />
-        ) : null}
+            そこ全部を押せるようにするとスクロール中に誤って開く。
+            拡大表示は LightboxProvider があるときだけ（無ければ ZoomHit は何も出さない）。 */}
+        <ZoomHit index={0} label={`${product.name} の写真を拡大する`} className="focus-visible:ring-offset-4" />
       </div>
     </div>
   );

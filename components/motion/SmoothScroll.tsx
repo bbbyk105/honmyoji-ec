@@ -9,43 +9,22 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import "lenis/dist/lenis.css";
 import "./register";
 
-const HEADER_OFFSET = 88;
+import { useWindowEvent } from "@/hooks/useWindowEvent";
+import { HEADER_OFFSET, getLenis, setLenis } from "./lenis";
+import { prefersReducedMotion } from "./reduced-motion";
 
-let lenis: Lenis | null = null;
+/*
+  止める・動かす・章へ送るは `./lenis` にある（`stopLenis` / `startLenis` / `scrollToChapter`）。
+  ここはインスタンスを作って、ページが替わったときの位置を決めるだけ。
+*/
+
 /** Set by popstate so back / forward keeps the reader where they left the page. */
 let returningThroughHistory = false;
-
-export function stopLenis() {
-  lenis?.stop();
-}
-
-export function startLenis() {
-  lenis?.start();
-}
-
-/**
- * 章のレールから送る。Lenis が居るときは Lenis に頼む —— ネイティブの smooth と
- * 慣性スクロールは同時に走ると引っ張り合う（`html { scroll-behavior }` を auto に
- * してあるのと同じ理由）。`id` が null ならページの先頭（ヒーロー）。
- */
-export function scrollToChapter(id: string | null) {
-  const target = id ? document.getElementById(id) : null;
-  if (id && !target) return;
-
-  if (lenis) {
-    lenis.scrollTo(target ?? 0, { offset: target ? -HEADER_OFFSET : 0, force: true });
-    return;
-  }
-  if (target) {
-    target.scrollIntoView({ behavior: "smooth" });
-  } else {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-}
 
 function jumpToHash(hash: string): boolean {
   const target = hash.length > 1 ? document.querySelector(hash) : null;
   if (!target) return false;
+  const lenis = getLenis();
   if (lenis) {
     lenis.scrollTo(target as HTMLElement, { immediate: true, force: true, offset: -HEADER_OFFSET });
   } else {
@@ -55,6 +34,7 @@ function jumpToHash(hash: string): boolean {
 }
 
 function jumpToTop() {
+  const lenis = getLenis();
   if (lenis) {
     lenis.scrollTo(0, { immediate: true, force: true });
   } else {
@@ -68,7 +48,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 
   useGSAP(
     () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (prefersReducedMotion()) return;
 
       const instance = new Lenis({
         duration: 1.15,
@@ -76,7 +56,7 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
         smoothWheel: true,
         touchMultiplier: 1.1,
       });
-      lenis = instance;
+      setLenis(instance);
 
       instance.on("scroll", ScrollTrigger.update);
       const ticker = (time: number) => {
@@ -88,19 +68,15 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
       return () => {
         gsap.ticker.remove(ticker);
         instance.destroy();
-        if (lenis === instance) lenis = null;
+        if (getLenis() === instance) setLenis(null);
       };
     },
     { dependencies: [] },
   );
 
-  useEffect(() => {
-    const onPopState = () => {
-      returningThroughHistory = true;
-    };
-    window.addEventListener("popstate", onPopState);
-    return () => window.removeEventListener("popstate", onPopState);
-  }, []);
+  useWindowEvent("popstate", () => {
+    returningThroughHistory = true;
+  });
 
   useEffect(() => {
     if (!mounted.current) {

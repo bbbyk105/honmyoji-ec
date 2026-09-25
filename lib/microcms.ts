@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createClient, type MicroCMSImage, type MicroCMSListContent } from "microcms-js-sdk";
 import { site } from "@/data/site";
 import {

@@ -8,6 +8,7 @@ import { SmoothScroll } from "@/components/motion/SmoothScroll";
 import { CursorMark } from "@/components/site/CursorMark";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { toCartPiece } from "@/data/products";
 import { getCatalog } from "@/lib/catalog";
 import { stripeEnabled } from "@/lib/stripe";
 
@@ -20,8 +21,11 @@ import { stripeEnabled } from "@/lib/stripe";
  *
  * `/studio` はこの外枠の外にある。管理画面にサイトのヘッダーと慣性スクロールは要らない。
  *
- * カタログをここで一度引いて MiniCart に渡す。カートは client なので DB を読めず、
+ * カタログをここで一度引いて CartProvider に渡す。カートは client なので DB を読めず、
  * data/products.ts を直接見ると管理画面で直した価格が反映されない。
+ * **渡すのはカートが読む項目だけ**（`toCartPiece`）—— ここで渡したものは全ページの
+ * HTML に焼き込まれる。以前は Product を丸ごと渡していて、どのページにも九点ぶんの
+ * 物語（英日）が載っていた。
  *
  * 入場の幕・ページ遷移・カーソルの語もここに置く。`/studio` はこの外枠の外なので、
  * 管理画面には一つも付いてこない（値を直す画面に演出は要らない）。
@@ -37,10 +41,10 @@ import { stripeEnabled } from "@/lib/stripe";
 const ENTERED_FLAG = `try{if(sessionStorage.getItem("miroku-entered"))document.documentElement.dataset.entered="1"}catch(e){}`;
 
 export async function SiteChrome({ children }: { children: ReactNode }) {
-  const catalog = await getCatalog();
+  const catalog = (await getCatalog()).map(toCartPiece);
 
   return (
-    <CartProvider>
+    <CartProvider catalog={catalog}>
       <SmoothScroll>
         <script dangerouslySetInnerHTML={{ __html: ENTERED_FLAG }} />
         <EntryCurtain />
@@ -56,7 +60,7 @@ export async function SiteChrome({ children }: { children: ReactNode }) {
           <main className="flex-1">{children}</main>
         </ViewTransition>
         <SiteFooter />
-        <MiniCart catalog={catalog} canCheckout={stripeEnabled} />
+        <MiniCart canCheckout={stripeEnabled} />
         <PageTransition />
         <CursorMark />
       </SmoothScroll>
