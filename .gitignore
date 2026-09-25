@@ -53,3 +53,6 @@ next-env.d.ts
 # カメラマン撮影の書き出し（PNG・計 500MB 超）— サイトが読むのは scripts/prepare-photos.py の WebP
 /image
 /image/
+
+# Python のバイトコード（scripts/*.py を回すと出る）
+__pycache__/

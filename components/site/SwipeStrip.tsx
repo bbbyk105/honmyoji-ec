@@ -2,6 +2,8 @@
 
 import { Children, useCallback, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
+import { twoDigits } from "@/lib/format";
+
 type Props = {
   children: ReactNode;
   /** 帯の中で一枚が占める割合(%)。残りの (100 - card) / 2 ずつが左右の覗きになる。 */
@@ -113,7 +115,7 @@ export function SwipeStrip({
             ))}
           </div>
           <p className="shrink-0 font-sans text-[9.5px] tabular-nums tracking-[0.22em] text-mist">
-            {String(index + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}
+            {twoDigits(index + 1)} / {twoDigits(items.length)}
           </p>
         </div>
       ) : null}

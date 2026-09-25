@@ -1,10 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useGSAP } from "@gsap/react";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { scrollToChapter } from "@/components/motion/SmoothScroll";
-import "@/components/motion/register";
+import { scrollToChapter } from "@/components/motion/lenis";
+import { useScrollSpy } from "@/hooks/useScrollSpy";
+import { twoDigits } from "@/lib/format";
 
 export type Chapter = {
   /** 節に振った id。`app/(site)/page.tsx` 側と一致させる。 */
@@ -30,28 +28,12 @@ export type Chapter = {
  * それより狭い画面では余白そのものが無いので、出さない。
  *
  * 番号の一つ目はヒーロー。sticky で貼り付いている節は ScrollTrigger が測れないので、
- * 監視するのは二つ目以降だけで、一つ目は「二つ目より上にいる」で決める。
+ * 監視するのは二つ目以降だけで、一つ目は「二つ目より上にいる」で決める（`useScrollSpy` に null を渡す）。
  */
 export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
-  const [active, setActive] = useState(0);
-  const root = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      const triggers = chapters.slice(1).map((chapter, i) => {
-        const el = document.getElementById(chapter.id);
-        if (!el) return null;
-        return ScrollTrigger.create({
-          trigger: el,
-          start: "top 45%",
-          onEnter: () => setActive(i + 1),
-          onLeaveBack: () => setActive(i),
-        });
-      });
-
-      return () => triggers.forEach((trigger) => trigger?.kill());
-    },
-    { dependencies: [chapters], scope: root },
+  const active = useScrollSpy(
+    chapters.map((chapter, i) => (i === 0 ? null : chapter.id)),
+    "top 45%",
   );
 
   /* 表紙（ヒーロー）にいるあいだは引いておく。 */
@@ -59,7 +41,6 @@ export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
 
   return (
     <nav
-      ref={root}
       aria-label="Chapters"
       className={`pointer-events-none fixed left-3 top-1/2 z-40 hidden -translate-y-1/2 transition-opacity duration-700 ease-[var(--ease-soft)] lg:block ${
         onCover ? "opacity-0" : "opacity-100"
@@ -83,7 +64,7 @@ export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
                     current ? "text-ivory" : "text-mist/45"
                   }`}
                 >
-                  {String(i + 1).padStart(2, "0")}
+                  {twoDigits(i + 1)}
                 </span>
                 {/* 現在地は色ではなく罫で言う。番号だけ明るくしても、並ぶと差が読めない。 */}
                 <span

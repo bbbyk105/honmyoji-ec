@@ -30,22 +30,23 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `data/blog.ts` — Blog の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Blog が空にならないようにするための seed で、記事を足す場所ではない。
 - `lib/microcms.ts` — **Blog の記事はここから来る**。入稿の手順・スキーマ・Webhook は `docs/microcms.md`。
 - `components/blog/BlogArticle.tsx` — 記事の組み。`/blog/[slug]`（公開）と `/blog/preview`（下書き）で共有する。**版面（980px）と行長（`--blog-measure` = 560px ≒ 70 文字）は別物** — 文章は measure で止め、写真だけが版面いっぱいに出る。両方 980px にすると 1 行 119 文字になる（2026-09-20 に直した）。`ch` で共有しないこと：Newsreader と Source Sans で `0` の幅が 15% 違うので、同じ `62ch` でも右端が揃わない。
-- `components/blog/ArticleToc.tsx` — 記事の目次。版面の右の余白に絶対配置＋sticky、`xl` 以上・**見出し三つ以上**のときだけ。見出しは `[data-article-body]` の `h2` を**描かれた DOM から**拾う（本文は microCMS のリッチエディタ HTML と手書きブロックの二系統で、揃うのは描画後だけ）。id は CMS が振っていればそれを使い、無ければ見出しの文字から作る。送りは `scrollToChapter()`。
+- `components/blog/ArticleToc.tsx` — 記事の目次。版面の右の余白に絶対配置＋sticky、`xl` 以上・**見出し三つ以上**のときだけ。見出しは `[data-article-body]` の `h2` を**描かれた DOM から**拾う（本文は microCMS のリッチエディタ HTML と手書きブロックの二系統で、揃うのは描画後だけ）。id は CMS が振っていればそれを使い、無ければ見出しの文字から作る（`lib/heading-id.ts`）。現在地は `useScrollSpy`（トップの章のレールと共通）、送りは `scrollToChapter()`。
 - `app/(site)/` — 公開サイト。`/` `/collection` `/collection/[slug]` `/about` `/blog` `/blog/[slug]` `/blog/preview` `/faq` `/legal` `/contact`（Server Action）`/checkout/thank-you`。**route group なので URL には `(site)` は出ない** — 外枠を `/studio` と分けるためだけの括り。
 - `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
 - `app/api/` — `revalidate`（microCMS Webhook）と `stripe/webhook`（決済の確定）。
 - `app/layout.tsx` は html / body / フォントだけ。**ヘッダーやフッターをここに戻さない** — 親 layout は子から外せないので、`/studio` にサイトの外枠が付いてくる。公開サイトの外枠は `components/site/SiteChrome.tsx`（`app/(site)/layout.tsx` と `app/not-found.tsx` が共有する。404 は route group の layout を通らない）。
-- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。
+- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。`import "server-only"` 付き（`lib/microcms.ts` / `supabase.ts` / `stripe.ts` / `orders.ts` も同じ）— client から import するとビルドで止まる。
 - `proxy.ts` — Next 16 で `middleware.ts` から改名。`/studio/*` の `noindex` ヘッダーと、cookie の無い訪問者をログインへ返す処理。**認可の本体はここではない**（Edge に node:crypto が無い）— 検証は `lib/studio-session.ts` の `requireSession()` で、ページと Server Action が毎回通る。
-- `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。ヒーローは `useLightboxSafe()` を使う — Provider が無い場所に置かれても壊れないため。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地はサイトと同じ sumi — 一枚だけ別の明るさの部屋に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。`stopLenis()` はカートと同じ扱い。
+- `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。当たり判定の本体は `ZoomHit` — Provider が無い場所では何も出さないので、Server Component の `ProductHero` もこれを置くだけ。**ビューア本体は `LightboxViewer.tsx` に分けて `next/dynamic` で遅延読み込み**（写真を開かない人の初回 JS に載せない。idle で先読みはする）。倍率と位置の計算は `lib/pan-zoom.ts`（純粋関数・テストあり）。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地はサイトと同じ sumi — 一枚だけ別の明るさの部屋に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。背後のスクロールはカートと同じ `useScrollLock`。
 - **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
 - `components/collection/GalleryStrip.tsx` — **スマホのギャラリー**（`md:hidden`）。snap の横スワイプ + `01 / 05` カウンタ。写真1枚の作品は自動で普通の一枚に落ちる。md 以上は**撮ったままの比率の二段組**（CSS columns。縦 5:8 と横 8:5 が混ざるので、行で組むと縦が一枚余ったときに半分が空く）。比率は `data/image-sizes.json`（`prepare-photos.py` が書く）から引く — 実行時に `fs` で `public/` を読まない。
 - `components/collection/PieceTile.tsx` — **作品の一枚。一覧・トップ・関連作品は全部これ**（2026-09-25 にカットアウトの展示台 `FloatingBag` / `StillTile` / `CollectionStudio` から置き換えた）。写真はカメラマンの撮影そのままで、立つ作品は 4:5 に**背丈を揃えて**切ってある（同じ床・同じ障子の前に並ぶので、一列が一つの部屋に見える）。`bag-{folder}` で `ProductHero` へモーフする（同じ写真・同じ比率）。価格が無いものは右に状態（`StatusPill`）を出す。`SoldBand.tsx` — 完売の帯（写真の縦中央に罫と `Sold out`、写真は 45% に落とす）。**URL slug（`/sakura-cherry`）を画面に出さない** — 2026-09-01 に `PieceSlug` ごと外した。
 - `components/site/Shell.tsx` — **版面の定数 `SHELL`**（`max-w-[1480px]` + 左右余白）。ヘッダー / フッター / ヒーロー / トップの全セクションがこれを使う。新しいセクションで `mx-auto max-w-... px-...` を手書きしない — 手書きに戻すと必ず 16px ずれる。
 - `components/site/Frame.tsx` — 写真井戸。`data-image-role` / `data-image-ratio` 属性付き。差し替えは `src` だけ。`aspect`（数値）を渡すと撮ったままの比率で置く。**公開ページの写真に `caption` を付けない**（2026-09-25。「Corridor, Honmyoji」「Ai · detail」のような 9.5px 大文字の添え書きが一番テンプレートらしく見えていた）— `caption` は Blog の本文の画像説明だけに残してある。
-- `components/cart/` — Cart（localStorage）と MiniCart。決済は Contact へ手渡し。slug と旧 folder 名の両方を `getProduct` で解決する。**表示は Cart だが localStorage キーは `miroku-held` のまま**（変えると既存のカートが空になる）。UI 上の「Hold / Held」は 2026-08-31 に全て Cart 系の語へ置換済み。
+- `components/cart/` — Cart（localStorage）と MiniCart。決済は Contact へ手渡し。slug と旧 folder 名の両方を `findByKey` で解決する（計算は `lib/cart.ts`、テストあり）。カタログは `SiteChrome` がサーバーで引いて `CartProvider` に `CartPiece`（カートが読む項目だけ）で渡し、MiniCart は `useCart().pieces` を描く。写真は `leadSrc(folder)` で組む（`productImage(slug)` はカタログ本体を引くので client から使わない）。`InquiryCta` は Server Component で、client に降りるのは `HoldButton`（slug だけ）。**表示は Cart だが localStorage キーは `miroku-held` のまま**（変えると既存のカートが空になる）。UI 上の「Hold / Held」は 2026-08-31 に全て Cart 系の語へ置換済み。
 - `components/site/` — Header（GSAP ハンバーガー, viewTransitionName=site-header）/ Footer / Reveal（ScrollTrigger）/ BeriBand / Newsletter。**Button は全ページ共通**（`solid` / `outline` / `outline-light` / `link` / `link-light`、href があれば Link・無ければ button）。CTA を新しく置くときは素の `<Link className="link-line">` ではなく Button を使う — `link-line` は hover で初めて罫が出るので、CTA には弱い。
-- `components/motion/` — Lenis + GSAP 登録。`SmoothScroll` がルートを包む。メニュー／カート中は `stopLenis()`。章の送りは `scrollToChapter()`（Lenis があれば Lenis に頼む — ネイティブ smooth と慣性は引っ張り合う）。
+- `components/motion/` — Lenis + GSAP 登録。`SmoothScroll` がルートを包む（インスタンスを作るだけ）。止める・動かす・章へ送るは `components/motion/lenis.ts`（`stopLenis` / `startLenis` / `scrollToChapter`）— Lenis 本体を import しない小さな窓口。章の送りは Lenis があれば Lenis に頼む（ネイティブ smooth と慣性は引っ張り合う）。「動きを減らす」の判定は `prefersReducedMotion()`（`reduced-motion.ts`）— `matchMedia` を手書きしない。
+- `hooks/` — 部品をまたいで繰り返す処理。`useScrollLock(active)`（背後を止める。**数えて止める** — 最後の一人が離れたときだけ外れるので、メニュー→カートの受け渡しでも外れない。命令的に使うなら `lockScroll()` が外す関数を返す）/ `useWindowEvent(type, handler, { enabled })`（handler は `useEffectEvent` で最新を読むので、state が変わっても付け直さない）/ `useScrollSpy(ids, start)`（いまどの節か。`null` の節は監視しない）。メニュー・カート・ビューアで `body.style.overflow` や Lenis を直に触らないこと。
 - `components/motion/EntryCurtain.tsx` — **入場の幕**。同じセッションで一度だけ（`sessionStorage` の `miroku-entered`）。開き方は**二枚が左右へ退く**（上へ滑らせない — サイト中の所作が全部同じ向きになると安く見える。2026-09-20）。合わせ目にだけ ivory の罫を引く。**「もう見たか」は `SiteChrome` が body 先頭に置く一行の script が塗る前に決める** — mount 後の effect で判定すると、二度目以降に一瞬だけ幕が見える。その代償として `app/layout.tsx` の `<html>` に `suppressHydrationWarning` が要る（サーバの HTML に `data-entered` が無いので、無いと毎回 hydration mismatch が出る。実際に踏んだ）。
 - `components/motion/PageTransition.tsx` — **ページの移り変わり**。見た目は `app/globals.css` の `::view-transition-*(.page)`（前のページが退き、新しいページが中央から左右へ開く）。この部品は「モーフかどうか」の印を `html` に置くだけ。**`main` は `SiteChrome` で `<ViewTransition default="page">` に包んである** — React は `<ViewTransition>` が関与する更新でしか遷移を開始しないので、包まないと CSS が一度も走らない（包む前は作品のモーフ以外で死んでいた）。`data-morph` が付いた導線（`Button` は `morph` prop）では地を静かに入れ替えるだけにする。**`html[data-morph]::view-transition-old(…)` に空白を入れないこと** — 疑似要素は html の子孫ではなく html 自身に付くので、子孫結合子だと一つも一致せず、モーフの下で版が開き続ける（実際に踏んだ）。
 - `components/site/CursorMark.tsx` — **カーソルに灯る語**。`data-cursor="View"` / `"Zoom"` を持つものの上だけ（`PieceTile` のリンクと `Lightbox` の `Zoomable`・商品ページのヒーロー）。`lg` 以上かつ `pointer: fine` のときだけ。**`gsap.killTweensOf(el)` を使わないこと** — 追従を持っている `quickTo` のトゥイーンごと死に、語は出るのに印が画面の左上から動かなくなる（実際に踏んだ）。重なりの解決は `overwrite: "auto"` で。
@@ -91,7 +92,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **動きの参照元は cellato.tokyo**。ただし借りるのは所作（マスクで開く／行マスク／スクロール連動の横帯）だけで、黒地・ピル型ボタン・中央CTAは DESIGN.md が明示的に否定しているので持ち込まない。
 - ハンバーガーは `xl:` 未満。2本線→X と clip-path ワイプは GSAP。CSS の rotate で代用しない。
 - **メニューの閉じ方は二種類**（`closeMode`）。行き先を選んだとき（ナビ項目 / ワードマーク / Cart / 戻る進む）は `instant`、閉じるだけのとき（X / Esc）は `reverse` を 2 倍速で。`tl.reverse()` を等速で回すと 1.19 秒かかり、61ms 後に始まる View Transition がヘッダーを固定するので、新しいページの上にメニューが乗ったまま止まって見える。
-- `SiteHeader` の GSAP effect の deps は `open` **だけ**。`closeMode` を足すと、カートを開くとき（`open` は false のまま）に閉じる側が再実行され、`MiniCart` が掛けた `stopLenis` / `body.overflow` を打ち消す。
+- `SiteHeader` の GSAP effect の deps は `open` **だけ**。`closeMode` を足すと、カートを開くとき（`open` は false のまま）に閉じる側の所作が再実行される。（以前はここでスクロールも外していて `MiniCart` のロックを打ち消していた。いまは `useScrollLock` が数えて止めるので構造的に起きない。）
 
 ## microCMS（Blog）
 
@@ -119,6 +120,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `lib/studio-credentials.ts` は Next に依存しない。`node --experimental-strip-types` で直接読めるので、素の Node で照合を確かめられる。
 
 ## 落とし穴
+
+- **client 部品に `Product` を丸ごと渡さない。** client に渡した props は RSC ペイロードとして HTML に焼き込まれる。以前は `MiniCart` に全九点を渡していて、どのページの HTML にも九点ぶんの物語（英日）が載っていた（2026-09-25 に削って、HTML は gzip で 7〜26% 減った）。渡すのは `CartPiece`（`data/products.ts` の `toCartPiece`）か slug だけ。client から `getProduct` / `productImage` を呼ばない（`products` 本体がバンドルに入る）— 画像は `leadSrc(folder)`。一覧（`PieceTile`）と商品ページのヒーローは Server Component なので `Product` をそのまま受けてよい。
+- **state も effect も無い部品に `"use client"` を付けない**（`PieceTile` / `ProductHero` / `InquiryCta` は Server Component）。マークアップが大きくて動きだけが client の部品は、本体（server）+ `XxxMotion`（client、children を受けて `data-*` を探して動かす）に分ける — `HomeHero` / `EntryCurtain` がこの形。ただし `next/image` をサーバーで描くと srcset がペイロードに載るので、生のバイト数は増えることがある（gzip 後で判断する）。
 
 - **`border-l` の引用バーを作らない**（markdown レンダラの既定＝AI感の元。引用は文字サイズと余白で立てる）。入力欄は罫線一本だけにしない（`bg-lacquer` + 全周ヘアライン）。`appearance-none` の `<select>` には矢印を自前で置く。エラー色は `clay`（`moss` は「購入可能」の色なので使わない）。
 - **`globals.css` の独自クラスに `position` を書かない**。レイヤー外の CSS は Tailwind ユーティリティより強く、`fixed` 等を上書きする（モバイルメニューが崩れた原因）。
@@ -150,4 +154,5 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 npm run dev     # localhost:3000
 npm run lint    # eslint
 npm run build   # next build（デプロイ前必須）
+npm test        # jest（__tests__/。変換は next/jest）
 ```

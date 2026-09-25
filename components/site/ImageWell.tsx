@@ -3,6 +3,7 @@
 import { useRef, type CSSProperties, type ReactNode } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import "@/components/motion/register";
 
 export type WellReveal = "wipe" | "band" | "none";
@@ -80,7 +81,7 @@ export function ImageWell({
     () => {
       const el = root.current;
       if (!el || reveal === "none") return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (prefersReducedMotion()) return;
 
       const mask = el.querySelector<HTMLElement>("[data-well-mask]");
       const shift = el.querySelector<HTMLElement>("[data-well-shift]");

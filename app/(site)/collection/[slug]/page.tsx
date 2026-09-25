@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
-import { InquiryCta } from "@/components/cart/HoldButton";
+import { InquiryCta } from "@/components/cart/InquiryCta";
 import { GalleryStrip } from "@/components/collection/GalleryStrip";
 import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
 import { PieceTile } from "@/components/collection/PieceTile";

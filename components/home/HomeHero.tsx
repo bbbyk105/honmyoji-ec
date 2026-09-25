@@ -1,14 +1,8 @@
-"use client";
-
 import Image from "next/image";
-import { useRef } from "react";
-import gsap from "gsap";
-import { useGSAP } from "@gsap/react";
-import { SplitText } from "gsap/SplitText";
 import { Button } from "@/components/site/Button";
 import { ImageWell } from "@/components/site/ImageWell";
 import { SHELL } from "@/components/site/Shell";
-import "@/components/motion/register";
+import { HomeHeroMotion } from "./HomeHeroMotion";
 
 type Props = {
   /** 作品の数。一覧の件数と揃える（焼き込むとカタログを直したときにずれる）。 */
@@ -27,57 +21,13 @@ type Props = {
  *
  * この節は `sticky top-0`。下の面（`[data-page-sheet]`）が z 上位で敷かれていて、
  * スクロールするとそれが下から上がってきてこの部屋を覆う。
+ *
+ * Server Component。ここは描くだけで、入場と退場の動きは `HomeHeroMotion`（client）が
+ * `data-hero-*` を探して付ける。写真・見出し・導線のマークアップは client に載らない。
  */
 export function HomeHero({ count }: Props) {
-  const root = useRef<HTMLElement>(null);
-
-  useGSAP(
-    () => {
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-
-      const title = root.current?.querySelector<HTMLElement>("[data-hero-title]");
-      const tl = gsap.timeline({ defaults: { ease: "power3.out" } });
-      if (title) {
-        const split = SplitText.create(title, { type: "lines", mask: "lines" });
-        tl.from(split.lines, { yPercent: 110, duration: 1.1, stagger: 0.09 }, 0.55);
-      }
-      tl.from("[data-hero-aside]", { autoAlpha: 0, duration: 1 }, 1.0);
-
-      /*
-        退場。この節は pin されているので、動くのは上から降りてくる版の面のほう。
-        文字は面が届く前に消え、写真だけがわずかに寄って暗くなる —— 節が変わったのではなく
-        照明が落ちたように見せる。trigger は sticky の自分ではなく版の面（sticky を trigger に
-        すると resize の再計測で範囲がずれる）。
-      */
-      const sheet = document.querySelector<HTMLElement>("[data-page-sheet]");
-      if (sheet) {
-        const scrub = { trigger: sheet, scrub: true } as const;
-        gsap.to("[data-hero-frame]", {
-          scale: 1.04,
-          ease: "none",
-          scrollTrigger: { ...scrub, start: "top bottom", end: "top top" },
-        });
-        gsap.to("[data-hero-fade]", {
-          autoAlpha: 0,
-          ease: "none",
-          scrollTrigger: { ...scrub, start: "top 96%", end: "top 55%" },
-        });
-        gsap.to("[data-hero-dim]", {
-          opacity: 0.85,
-          ease: "none",
-          scrollTrigger: { ...scrub, start: "top 88%", end: "top top" },
-        });
-      }
-    },
-    { scope: root },
-  );
-
   return (
-    <section
-      ref={root}
-      data-dark-hero
-      className="sticky top-0 z-0 isolate flex min-h-[100svh] flex-col overflow-hidden bg-sumi pt-16 text-ivory sm:pt-[72px] md:pt-[80px] lg:h-[100svh]"
-    >
+    <HomeHeroMotion>
       <div
         className={`${SHELL} flex flex-1 flex-col pb-6 pt-4 lg:grid lg:min-h-0 lg:grid-cols-12 lg:gap-8 lg:pb-8 lg:pt-6`}
       >
@@ -130,6 +80,6 @@ export function HomeHero({ count }: Props) {
 
       {/* 紙に覆われる間、部屋を落とす層。載せるのは GSAP だけ（初期値は透明）。 */}
       <div aria-hidden data-hero-dim className="pointer-events-none absolute inset-0 z-20 bg-sumi opacity-0" />
-    </section>
+    </HomeHeroMotion>
   );
 }

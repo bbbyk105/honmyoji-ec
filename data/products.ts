@@ -676,8 +676,17 @@ export const products: Product[] = [
   },
 ];
 
+/**
+ * slug でも旧 folder 名でも引く。**約束はここ一つ** —— `getProduct`・`lib/catalog.ts`・
+ * カートがそれぞれ同じ比較を手書きしていた。`products` を参照しないので、client から
+ * import してもカタログ本体はバンドルに入らない。
+ */
+export function findByKey<T extends { slug: string; folder: string }>(list: readonly T[], key: string): T | undefined {
+  return list.find((p) => p.slug === key || p.folder === key);
+}
+
 export function getProduct(key: string): Product | undefined {
-  return products.find((p) => p.slug === key || p.folder === key);
+  return findByKey(products, key);
 }
 
 function folderOf(key: string): string {
@@ -685,11 +694,31 @@ function folderOf(key: string): string {
 }
 
 export function productImage(key: string, n: number): string {
-  return `/images/products/${folderOf(key)}/${n}.webp`;
+  return leadSrc(folderOf(key), n);
 }
 
-export function productPath(product: Product): string {
+/** folder 名から直に組む版。カタログを引かないので、client の部品（カート）はこちらを使う。 */
+export function leadSrc(folder: string, n = 1): string {
+  return `/images/products/${folder}/${n}.webp`;
+}
+
+export function productPath(product: Pick<Product, "slug">): string {
   return `/collection/${product.slug}`;
+}
+
+/* ------------------------------------------------------------------
+   client に渡す形。**Product を丸ごと渡さない。**
+
+   client の部品に渡した props は RSC ペイロードとして HTML に焼き込まれる。以前は
+   カートに全九点の Product（物語の英日・素材・寸法）を渡していたので、どのページの
+   HTML にも九点ぶんの物語が載っていた（2026-09-25 に計測）。部品が読む項目だけに削る。
+   ------------------------------------------------------------------ */
+
+/** カート（CartProvider / MiniCart）が読む分。 */
+export type CartPiece = Pick<Product, "slug" | "folder" | "name" | "kanji" | "priceAud" | "status">;
+
+export function toCartPiece(p: Product): CartPiece {
+  return { slug: p.slug, folder: p.folder, name: p.name, kanji: p.kanji, priceAud: p.priceAud, status: p.status };
 }
 
 /**
@@ -715,6 +744,6 @@ export function cm(v: number): string {
 }
 
 /** カートに入れられるか。**価格が無いものは買えない** — 管理画面で Available にしても値段が先。 */
-export function isPurchasable(p: Product): boolean {
+export function isPurchasable(p: Pick<Product, "status" | "priceAud">): boolean {
   return p.status === "available" && p.priceAud != null;
 }

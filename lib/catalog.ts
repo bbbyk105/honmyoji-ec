@@ -1,7 +1,9 @@
+import "server-only";
+
 import { cache } from "react";
 
 import { db } from "@/lib/supabase";
-import { products, type Product, type ProductStatus } from "@/data/products";
+import { findByKey, products, type Product, type ProductStatus } from "@/data/products";
 
 /* ------------------------------------------------------------------
    商品カタログ = data/products.ts + DB のオーバーレイ。
@@ -162,18 +164,15 @@ export const getCatalog = cache(async (): Promise<Product[]> => {
   return products.map((p) => merge(p, overrides.get(p.slug)));
 });
 
-/** slug でも旧 folder 名でも引ける — products.ts の getProduct と同じ約束。 */
+/** slug でも旧 folder 名でも引ける — products.ts の `findByKey` と同じ約束。 */
 export async function getPiece(key: string): Promise<Product | undefined> {
-  const catalog = await getCatalog();
-  return catalog.find((p) => p.slug === key || p.folder === key);
+  return findByKey(await getCatalog(), key);
 }
 
 /** カートの slug 配列 → 商品。見つからない slug は落とす。 */
 export async function getPieces(keys: string[]): Promise<Product[]> {
   const catalog = await getCatalog();
-  return keys
-    .map((k) => catalog.find((p) => p.slug === k || p.folder === k))
-    .filter((p): p is Product => Boolean(p));
+  return keys.map((k) => findByKey(catalog, k)).filter((p): p is Product => Boolean(p));
 }
 
 /** Stripe はセント単位。A$220 → 22000。 */

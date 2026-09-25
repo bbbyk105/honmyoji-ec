@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useRef } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import "@/components/motion/register";
 
 type Shot = { src: string; alt: string };
@@ -25,7 +26,7 @@ export function DriftBand({ shots }: Props) {
     () => {
       const el = root.current;
       if (!el) return;
-      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+      if (prefersReducedMotion()) return;
 
       gsap.fromTo(
         el.querySelector("[data-drift-shots]"),

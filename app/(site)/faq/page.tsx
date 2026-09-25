@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/site/Button";
 import { Reveal } from "@/components/site/Reveal";
 import { faq } from "@/data/site";
+import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "FAQ",
@@ -37,7 +38,7 @@ export default function FaqPage() {
                 <details className="group">
                   <summary className="flex cursor-pointer list-none items-baseline gap-5 py-7 outline-none focus-visible:ring-2 focus-visible:ring-ivory/25 md:gap-8">
                     <span className="font-display text-[15px] italic text-mist">
-                      {String(i + 1).padStart(2, "0")}
+                      {twoDigits(i + 1)}
                     </span>
                     <span className="flex-1">
                       <span className="block font-display text-[clamp(22px,2.2vw,28px)] font-light leading-[1.3] text-ivory">
