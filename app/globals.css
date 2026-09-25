@@ -1,43 +1,111 @@
 @import "tailwindcss";
 
 /* ------------------------------------------------------------------
-   MIROKU — rooms, not storefronts.
-   展示室は暗い。**地は一色の黒（#000）**。以前は暖かい黒を三段（onyx < sumi <
-   lacquer）持っていたが、黒に茶が差しているのが目に付くので中立の黒へ寄せ、
-   段そのものを畳んだ（2026-09-20）。
+   MIROKU — a hall and a catalogue.
 
-   段が無くなったぶん、**面の境目は罫一本が全部背負う**。これは新しい話ではなく、
-   DESIGN.md の「黒の上では影は地にならない、だから地は線」をそのまま面にも
-   広げただけ。入力欄も写真の井戸もフッターも、地は同じ黒で、周りの罫で立つ。
+   地は二つある（2026-09-25）。**墨（sumi）の広間**と、**生成りの紙（paper）**。
+   全ページが同じ黒だった頃は、スクロールしても明るさが一度も変わらず、章が切り替わった
+   ことが体で分からなかった。純黒・純白もデジタルの色で、布の隣に置くと画面の色に見えた。
 
-   トークンは色の名前ではなく役どころ。地は一つ（sumi）、文字は二段（ivory / bone）、
-   その下に meta の mist と罫の line。
+   どちらの面に置くかは**写真の光で決める**。蝋燭と金具の光で撮った堂内（ヒーロー・祭壇・
+   畳の部屋）は墨の上、窓の昼光で撮った作品・着姿と、読むもの（一覧・記事・手紙）は紙の上。
+   交互に塗り分けるのではなく、写真がどちらの部屋にいるかに合わせる。
+
+   **トークンは色の名前ではなく役どころ**。`sumi` はその面の地、`ivory` はその面で一番強い
+   文字、`bone` は本文、`mist` はメタ、`line` は罫。`.surface-paper` の中では同じ名前が
+   紙と墨に入れ替わる —— なので部品は面を知らなくていい（`text-ivory` は紙の上では墨色）。
+   面をまたいでも決して変わらない色が要るときだけ `--sumi` / `--paper` などの素の値を使う。
    ------------------------------------------------------------------ */
 @theme {
-  /* 地 — サイト中これ一つ。持ち上がる面も沈む面も作らない */
-  --color-sumi: #000000;    /* 版の地。入力欄・写真の井戸・フッターも同じ */
-  --color-bark: #4d4d4d;    /* 支え：hover で立ち上がる罫 */
-
-  /* 文字。黒地の上での明度差は暖色版と同じに保ってある（測って合わせた） */
-  --color-ivory: #ffffff;   /* 光 — 見出し・罫・塗りのボタン */
-  --color-bone: #c7c7c7;    /* 本文。見出しより一段落として、黒地のにじみを抑える */
-  --color-mist: #8b8b8b;    /* メタ・キャプション（黒地で 6.2:1） */
-  --color-line: #303030;    /* ヘアライン。面の境目はこれ一本で作る */
+  /* 地と文字（墨の面。紙の面の値は `.surface-paper`）。純黒・純白は使わない */
+  --color-sumi: #11100e;                      /* 地 */
+  --color-ivory: #f2eee6;                     /* 一番強い文字・塗りのボタン（地の上で 16.4:1） */
+  --color-bone: #c8c0b4;                      /* 本文（10.6:1） */
+  --color-mist: #918a80;                      /* メタ・完売（5.6:1） */
+  --color-line: rgb(242 238 230 / 0.14);      /* ヘアライン。面の境目 */
+  --color-bark: rgb(242 238 230 / 0.32);      /* hover で立ち上がる罫 */
+  --color-paper: #e9e2d6;                     /* 紙そのもの（面を切り替えずに紙色が要るとき） */
 
   /*
-    織りの色。**状態表示にだけ使う**（在庫の状態は一覧を流し見して数えられないと
-    意味がないので、ここだけは色で言う）。地が中立の黒になったぶん、以前より濁らない。
+    織りの色。**状態表示にだけ使う**。紙の上では同じ色相のまま明度を落とす（`.surface-paper`）。
   */
   --color-moss: #92a37b;    /* available */
   --color-indigo: #8a9cb4;  /* coming soon */
   --color-clay: #c89771;    /* made to order / エラー */
   --color-rose: #cf9d92;    /* 桜のときだけ */
 
+  /*
+    書体は二役（2026-09-25）。見出しの Newsreader は**光学サイズ軸を開けて**読み込む
+    （layout.tsx の `axes: ["opsz"]`）。以前は本文用の opsz 16 の一枚で 80px の見出しまで
+    組んでいて、字が太く間延びしていた。大きい字は opsz 72 の細いコントラストで立つ。
+    本文と UI は Albert Sans。Source Sans 3 は幅が詰まっていて書類の字に見えた。
+    Satoshi が第一候補だったが、ITF FFL が公開リポジトリでの配布を禁じており、
+    このリポジトリは公開なので同じ系統の OFL 書体にした。
+  */
   --font-display: var(--font-newsreader), "Newsreader", "Iowan Old Style", Georgia, serif;
   --font-jp: var(--font-shippori), "Shippori Mincho", "Hiragino Mincho ProN",
     "Yu Mincho", serif;
-  --font-sans: var(--font-source), "Source Sans 3", "Helvetica Neue", Arial, sans-serif;
+  --font-sans: var(--font-albert), "Albert Sans", "Helvetica Neue", Arial, sans-serif;
 
+  /*
+    文字の段。**ページごとに clamp を手で書かない** —— 同じ役の見出しが節ごとに 2〜4px
+    ずつ違っていたのが、ばらつきの正体だった。
+      hero     第一画面の見出し（64–76px / スマホ 42px〜）
+      display  ページの題（Collection・作品名・About…）
+      section  節の見出し（42–62px）
+      title    小見出し・用語・一覧の題
+      piece    作品の名前（一覧のタイル）
+      deck     見出しに添える一段落（明朝ではなく Newsreader）
+      body     本文。17px を天井に、スマホで 16px
+      small    脇の本文（表の中・補足）
+      meta     日付・区分・状態
+      caps     大文字のラベル。ナビ・CTA・完売の帯**だけ**（`@utility caps`）
+    11px を下限にする。
+  */
+  /* 最長の句（woven by hand・6.36em）が左 5 段の 85–90% に収まる上限。1440px で約 72px */
+  --text-hero: clamp(42px, 4.6vw + 6px, 76px);
+  --text-hero--line-height: 1.02;
+  --text-hero--letter-spacing: -0.022em;
+  --text-display: clamp(46px, 6vw, 96px);
+  --text-display--line-height: 0.98;
+  --text-display--letter-spacing: -0.024em;
+  --text-section: clamp(34px, 3.4vw + 8px, 62px);
+  --text-section--line-height: 1.05;
+  --text-section--letter-spacing: -0.018em;
+  --text-title: clamp(24px, 1.4vw + 10px, 34px);
+  --text-title--line-height: 1.16;
+  --text-title--letter-spacing: -0.01em;
+  --text-piece: clamp(20px, 0.5vw + 15px, 23px);
+  --text-piece--line-height: 1.1;
+  --text-piece--letter-spacing: -0.005em;
+  --text-deck: clamp(20px, 0.8vw + 12px, 25px);
+  --text-deck--line-height: 1.42;
+  --text-deck--letter-spacing: -0.006em;
+  --text-body: clamp(16px, 0.2vw + 14.4px, 17px);
+  --text-body--line-height: 1.8;
+  --text-small: 15px;
+  --text-small--line-height: 1.75;
+  --text-meta: 13px;
+  --text-meta--line-height: 1.6;
+  --text-caps: 11.5px;
+  --text-caps--line-height: 1.4;
+  --text-caps--letter-spacing: 0.12em;
+
+  /*
+    縦の余白。節と節の間は三段だけ。**同じ数字を並べない** —— 関係の近い節は beat、
+    話が変わる節は breath、面（墨 ⇄ 紙）が変わる前後は pause。
+    スマホ 80–112px、1440px で 136–192px。
+    lead は節の見出しから中身までの間。
+  */
+  --spacing-beat: clamp(80px, 5.5vw + 58px, 136px);
+  --spacing-breath: clamp(96px, 7vw + 70px, 168px);
+  --spacing-pause: clamp(112px, 8.5vw + 80px, 192px);
+  --spacing-lead: clamp(40px, 2.4vw + 30px, 72px);
+
+  /*
+    動き。基本は一つの曲線（easeOutQuint）。GSAP では `power4.out` が同じ形
+    （`components/motion/tokens.ts`）。長さは 600–1100ms。
+  */
   --ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-morph: cubic-bezier(0.33, 1, 0.68, 1);
 }
@@ -45,16 +113,89 @@
 :root {
   color-scheme: dark;
 
+  /* 面をまたいで変わらない素の値。役どころのトークンで足りるときは使わない */
+  --sumi: #11100e;
+  --paper: #e9e2d6;
+  --ivory: #f2eee6;
+
+  /* 動きの長さ（CSS 側）。GSAP 側は `components/motion/tokens.ts` と揃える */
+  --dur-hover: 600ms;
+  --dur-reveal: 1000ms;
+
   /*
     記事の一行の長さ。本文 17px で約 70 文字 —— 読みやすい 60〜75 の真ん中。
     **版面（980px）と行長は別物**。以前ここを分けずに本文を版面いっぱいに流していたので、
     1 行が 119 文字あり、行を折り返すたびに目が左端を見失っていた（実測）。
     写真と引用は measure の外へ食み出して版面いっぱいに出る —— 文章だけが短い、が正しい。
-    px で持つのは、本文（Source Sans）と見出し（Newsreader）で `ch` の実寸が違うから。
+    px で持つのは、本文（Albert Sans）と見出し（Newsreader）で `ch` の実寸が違うから。
     同じ `62ch` を両方に書くと右端が揃わない。
   */
-  --blog-measure: 560px;
+  --blog-measure: 580px;
+
+  /*
+    紙の肌理。**見て「粒だ」と分かったら強すぎる**。平均で 3% ほどの濃さの点が散るだけで、
+    紙が画面の塗りではなく紙に見える。墨の面には敷かない（暗い地では出ない）。
+  */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.09 0 0 0 0 0.08 0 0 0 0 0.06 0 0 0 0.075 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
 }
+
+/*
+  面。**紙の面の中では、同じトークン名が紙と墨を指す**（冒頭の註）。
+  `surface-*` は地を塗る節に、`tone-*` は地を塗らずに字の色だけ合わせる部品に。
+  状態の色は同じ色相のまま明度を落として、紙の上でも 4.5:1 を保つ。
+  地を自分で塗るので、面を持つ節は上下の余白も自分の内側に持つ（DESIGN.md の Spacing）。
+*/
+.surface-paper,
+.tone-paper,
+html:has(main > .surface-paper:first-child) [data-surface-follow]:not([data-tone]) {
+  --color-sumi: #e9e2d6;
+  --color-ivory: #15130f;
+  --color-bone: #3b362f;   /* 9.3:1 */
+  --color-mist: #5f5850;   /* 5.4:1 */
+  --color-line: rgb(21 19 15 / 0.15);
+  --color-bark: rgb(21 19 15 / 0.36);
+  --color-moss: #56683f;
+  --color-indigo: #465b78;
+  --color-clay: #8a5634;
+  --color-rose: #8e5247;
+  color-scheme: light;
+}
+
+.surface-paper {
+  background-color: var(--color-sumi);
+  background-image: var(--paper-grain);
+  color: var(--color-ivory);
+}
+
+/* 紙の中に墨の部屋を戻すとき（紙のページの上に開くメニューなど） */
+.surface-dark,
+.tone-dark {
+  --color-sumi: #11100e;
+  --color-ivory: #f2eee6;
+  --color-bone: #c8c0b4;
+  --color-mist: #918a80;
+  --color-line: rgb(242 238 230 / 0.14);
+  --color-bark: rgb(242 238 230 / 0.32);
+  --color-moss: #92a37b;
+  --color-indigo: #8a9cb4;
+  --color-clay: #c89771;
+  --color-rose: #cf9d92;
+  color-scheme: dark;
+}
+
+.surface-dark {
+  background-color: var(--color-sumi);
+  color: var(--color-ivory);
+}
+
+/*
+  `tone-*` は色の役だけを入れ替えて、地は塗らない。`fixed` の部品（ヘッダー・章の柱・
+  カーソルの語）が、下を流れていく面に字の色を合わせるときに使う（`useSurfaceAt`）。
+
+  `[data-surface-follow]:not([data-tone])` は**測る前**の代わり。ページの先頭の節が紙なら、
+  サーバの HTML の時点でヘッダーを紙の色にしておく（hydration を待つと、紙のページで一瞬だけ
+  生成りの字が出てから墨へ変わる）。
+*/
 
 html {
   /* Lenis owns smooth scrolling; native smooth fights the ticker. */
@@ -66,13 +207,27 @@ body {
   color: var(--color-ivory);
   font-family: var(--font-sans);
   font-weight: 400;
-  /* 黒地の細字は antialiased だと痩せて霞む。本文は 300 ではなく 400 で組む */
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Albert Sans の数字は既定だと幅が揃わない。価格と番号の列が波打たないように */
+  font-variant-numeric: lining-nums;
+}
+
+/*
+  大文字のラベル。**ナビ・CTA・完売の帯にだけ**使う。見出しの上に飾りとして置かない。
+  字を小さくして字間を開ければ上品になる、は禁じ手（2026-09-25）—— 11.5px・0.12em が下限と上限。
+*/
+@utility caps {
+  font-family: var(--font-sans);
+  font-size: var(--text-caps);
+  line-height: var(--text-caps--line-height);
+  letter-spacing: var(--text-caps--letter-spacing);
+  font-weight: 500;
+  text-transform: uppercase;
 }
 
 ::selection {
-  background: rgba(255, 255, 255, 0.2);
+  background: color-mix(in oklab, var(--color-ivory) 18%, transparent);
   color: var(--color-ivory);
 }
 
@@ -96,11 +251,9 @@ body {
 }
 
 /*
-  地の肌理は持たない（2026-09-20）。地が純黒になったぶん、`.washi-grain` / `.hero-grain` の
-  soft-light / overlay は**黒の上では数学的に no-op** —— どちらの式も backdrop が 0 なら 0 を返す
-  ので、粒は一画素も出ていなかった（実測して 0,0,0）。効かない規則と DOM を残すと、次に触る人が
-  「粒がある前提」で明るさを調整してしまうので外した。地に肌理を戻したいなら、
-  ブレンドではなく地そのものを黒から離すことになる —— それは単色をやめる判断。
+  地の肌理は紙の面にだけ敷く（`--paper-grain`）。墨の面には敷かない —— soft-light / overlay は
+  暗い地の上ではほぼ no-op で（2026-09-20 に純黒で実測して 0,0,0）、効かない規則を残すと
+  次に触る人が「粒がある前提」で明るさを調整してしまう。
 */
 
 .tategaki {
@@ -125,12 +278,13 @@ body {
 */
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.8125rem;
+  font-size: var(--text-meta);
+  line-height: var(--text-meta--line-height);
   font-weight: 400;
-  letter-spacing: 0.01em;
   color: var(--color-mist);
 }
 
+/* 文中・ナビの語。罫は触れたときだけ左から引かれる（CTA ではないので常設しない）。 */
 .link-line {
   position: relative;
   text-decoration: none;
@@ -141,12 +295,12 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -0.18em;
+  bottom: -0.2em;
   height: 1px;
   background: currentColor;
   transform: scaleX(0);
   transform-origin: right;
-  transition: transform 0.5s var(--ease-soft);
+  transition: transform var(--dur-hover) var(--ease-soft);
 }
 
 .link-line:hover::after,
@@ -155,42 +309,69 @@ body {
   transform-origin: left;
 }
 
-/* CTA の罫は常に見せる。hover で初めて出る罫は、押せることを触るまで伝えない。 */
+/*
+  CTA は「語・罫・矢印」だけで立てる（2026-09-25）。四角い枠のボタンは、買う・送るの
+  一つだけに残した（`Button` の solid）。
+  罫は二本重ねる: 常に見えている薄い罫（押せると分かるため）と、触れたときに左から引かれる
+  濃い罫。矢印は 4px だけ進む。反転も拡大もしない。
+*/
 .link-cta {
   position: relative;
-  padding-bottom: 0.6em;
+  padding-bottom: 0.7em;
 }
 
+.link-cta::before,
 .link-cta::after {
   content: "";
   position: absolute;
   left: 0;
   right: 0;
-  bottom: 0.25em;
+  bottom: 0.2em;
   height: 1px;
   background: currentColor;
-  opacity: 0.4;
-  transition: opacity 0.4s var(--ease-soft);
+}
+
+.link-cta::before {
+  opacity: 0.28;
+}
+
+.link-cta::after {
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 700ms var(--ease-soft);
 }
 
 .link-cta:hover::after,
 .link-cta:focus-visible::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.cta-label {
+  opacity: 0.86;
+  transition: opacity var(--dur-hover) var(--ease-soft);
+}
+
+.cta:hover .cta-label,
+.cta:focus-visible .cta-label {
   opacity: 1;
 }
 
 .cta-arrow {
-  transition: transform 0.5s var(--ease-soft);
+  transition: transform var(--dur-hover) var(--ease-soft);
 }
 
 .cta:hover .cta-arrow,
-.cta:focus-visible .cta-arrow {
+.cta:focus-visible .cta-arrow,
+.group:hover .cta-arrow,
+.group:focus-visible .cta-arrow {
   transform: translateX(4px);
 }
 
 /* ------------------------------------------------------------------
    Home hero — 第一画面だけの層。ほかの節では使わない。
-   ヒーローの地は版と同じ黒（2026-09-20 に段を畳んだ）。覆われる合図は、上がってくる
-   面の上辺に引いた罫一本が持つ。
+   ヒーローは墨の面。上がってくる版の最初の節が紙なので、覆われる合図は紙の縁そのもの
+   （2026-09-25。以前は墨が墨を覆っていたので、上辺に罫を一本引いていた）。
 
    **写真に暗幕は掛けない。そもそも写真の上に文字を置かない**（2026-09-25）。
    カメラマンの一枚は窓の光で明るく、文字を載せると読めない。暗幕で読めるようにする
@@ -200,7 +381,7 @@ body {
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。
    手書き記事（data/blog.ts の seed）の段組みと同じ寸法に合わせてある：
-   本文 17px / 1.9、見出しは Newsreader。**行長は版面ではなく `--blog-measure`**。
+   本文は `--text-body` / 1.85、見出しは Newsreader。**行長は版面ではなく `--blog-measure`**。
    以前ここを「内側で切ると右が空洞になる」という理由で版面いっぱいに流していたが、
    逆だった —— DESIGN.md の「列は文字幅」は*列を狭くしろ*であって、*文字を広げろ*ではない。
    空くのは穴ではなく余白で、そこへ写真と引用が食み出す。
@@ -223,8 +404,8 @@ body {
 .blog-prose ol {
   max-width: var(--blog-measure);
   font-family: var(--font-sans);
-  font-size: 17px;
-  line-height: 1.9;
+  font-size: var(--text-body);
+  line-height: 1.85;
 }
 
 .blog-prose :lang(ja) {
@@ -245,7 +426,8 @@ body {
 
 .blog-prose h1,
 .blog-prose h2 {
-  font-size: clamp(24px, 2.6vw, 31px);
+  font-size: var(--text-title);
+  letter-spacing: var(--text-title--letter-spacing);
 }
 
 /*
@@ -257,7 +439,7 @@ body {
 }
 
 .blog-prose h3 {
-  font-size: clamp(20px, 2vw, 24px);
+  font-size: clamp(20px, 1vw + 12px, 25px);
 }
 
 .blog-prose h4,
@@ -266,9 +448,9 @@ body {
   max-width: var(--blog-measure);
   margin-top: 2.4em;
   font-family: var(--font-sans);
-  font-size: 11px;
+  font-size: var(--text-caps);
   font-weight: 500;
-  letter-spacing: 0.2em;
+  letter-spacing: var(--text-caps--letter-spacing);
   text-transform: uppercase;
   color: var(--color-mist);
 }
@@ -279,9 +461,10 @@ body {
   margin-top: 2.4em;
   margin-bottom: 2.4em;
   font-family: var(--font-display);
-  font-size: clamp(22px, 2.4vw, 28px);
+  font-size: clamp(24px, 1.4vw + 12px, 32px);
   font-weight: 300;
-  line-height: 1.42;
+  line-height: 1.38;
+  letter-spacing: -0.01em;
   color: var(--color-ivory);
 }
 
@@ -352,7 +535,7 @@ body {
 .blog-prose figcaption {
   margin-top: -1.6em;
   font-family: var(--font-sans);
-  font-size: 12.5px;
+  font-size: var(--text-meta);
   line-height: 1.6;
   color: var(--color-mist);
 }
@@ -368,7 +551,7 @@ body {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-sans);
-  font-size: 14px;
+  font-size: 15px;
 }
 
 .blog-prose th,
@@ -380,9 +563,9 @@ body {
 }
 
 .blog-prose th {
-  font-size: 10px;
+  font-size: var(--text-caps);
   font-weight: 500;
-  letter-spacing: 0.2em;
+  letter-spacing: var(--text-caps--letter-spacing);
   text-transform: uppercase;
   color: var(--color-mist);
 }
@@ -409,7 +592,7 @@ body {
 @keyframes hero-settle {
   0% {
     opacity: 0;
-    transform: translateY(16px);
+    transform: translateY(14px);
   }
   100% {
     opacity: 1;
@@ -418,16 +601,16 @@ body {
 }
 
 .hero-settle {
-  animation: hero-settle 1s var(--ease-soft) both;
+  animation: hero-settle var(--dur-reveal) var(--ease-soft) both;
   animation-delay: var(--delay, 0ms);
 }
 
 .reveal {
   opacity: 0;
-  transform: translateY(20px);
+  transform: translateY(14px);
   transition:
-    opacity 0.9s var(--ease-soft),
-    transform 0.9s var(--ease-soft);
+    opacity var(--dur-reveal) var(--ease-soft),
+    transform var(--dur-reveal) var(--ease-soft);
   transition-delay: var(--delay, 0ms);
 }
 
@@ -436,7 +619,11 @@ body {
   transform: none;
 }
 
-/* View Transitions — listed object → detail hero */
+/*
+  View Transitions — listed object → detail hero。
+  像は形と位置だけで移る。途中で掛けていたぼかし（blur 4px）は外した（2026-09-25）——
+  写真がにじむ所作は「エフェクト」に見え、720ms の移動そのものの精度を濁していた。
+*/
 ::view-transition {
   pointer-events: none;
 }
@@ -446,27 +633,11 @@ body {
   animation-timing-function: var(--ease-morph);
 }
 
-::view-transition-image-pair(.morph) {
-  animation: 720ms var(--ease-morph) both morph-blur;
-}
-
 ::view-transition-old(.morph),
 ::view-transition-new(.morph) {
   animation-duration: 720ms;
   animation-timing-function: var(--ease-morph);
   mix-blend-mode: normal;
-}
-
-@keyframes morph-blur {
-  0% {
-    filter: blur(0);
-  }
-  40% {
-    filter: blur(4px);
-  }
-  100% {
-    filter: blur(0);
-  }
 }
 
 /*

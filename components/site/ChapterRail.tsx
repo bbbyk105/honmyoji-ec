@@ -2,6 +2,7 @@
 
 import { scrollToChapter } from "@/components/motion/lenis";
 import { useScrollSpy } from "@/hooks/useScrollSpy";
+import { useSurfaceAt } from "@/hooks/useSurfaceAt";
 import { twoDigits } from "@/lib/format";
 
 export type Chapter = {
@@ -38,13 +39,15 @@ export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
 
   /* 表紙（ヒーロー）にいるあいだは引いておく。 */
   const onCover = active === 0;
+  /* 柱は画面の縦の中ほどに立つので、そこを流れている面に字の色を合わせる。 */
+  const onPaper = useSurfaceAt((vh) => vh / 2);
 
   return (
     <nav
       aria-label="Chapters"
       className={`pointer-events-none fixed left-3 top-1/2 z-40 hidden -translate-y-1/2 transition-opacity duration-700 ease-[var(--ease-soft)] lg:block ${
         onCover ? "opacity-0" : "opacity-100"
-      }`}
+      } ${onPaper === true ? "tone-paper" : ""}`}
       aria-hidden={onCover}
     >
       <ol className="group/rail flex flex-col gap-3.5">
@@ -60,8 +63,8 @@ export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
                 className="pointer-events-auto block outline-none"
               >
                 <span
-                  className={`block font-sans text-[9.5px] tabular-nums leading-none tracking-[0.12em] transition-colors duration-700 ease-[var(--ease-soft)] ${
-                    current ? "text-ivory" : "text-mist/45"
+                  className={`block font-sans text-[11px] tabular-nums leading-none transition-colors duration-700 ease-[var(--ease-soft)] ${
+                    current ? "text-ivory" : "text-mist/70"
                   }`}
                 >
                   {twoDigits(i + 1)}
@@ -78,7 +81,7 @@ export function ChapterRail({ chapters }: { chapters: Chapter[] }) {
                   透明でも場所を取ると本文の上に当たり判定が残るため。
                 */}
                 <span
-                  className={`pointer-events-none absolute left-full top-[3px] ml-2.5 whitespace-nowrap font-sans text-[9px] uppercase leading-none tracking-[0.2em] opacity-0 transition-opacity duration-500 group-hover/rail:opacity-100 ${
+                  className={`pointer-events-none absolute left-full top-0 ml-3 whitespace-nowrap font-sans text-[11px] leading-none opacity-0 transition-opacity duration-500 group-hover/rail:opacity-100 ${
                     current ? "text-ivory" : "text-mist"
                   }`}
                 >

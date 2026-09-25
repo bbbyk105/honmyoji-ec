@@ -7,6 +7,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 
 import { lockScroll } from "@/hooks/useScrollLock";
 import { prefersReducedMotion } from "./reduced-motion";
+import { EASE, EASE_IN_OUT } from "./tokens";
 import "./register";
 
 /**
@@ -52,16 +53,16 @@ export function EntryCurtainMotion({ children }: { children: ReactNode }) {
         ScrollTrigger.refresh();
       };
 
-      const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: done });
+      const tl = gsap.timeline({ defaults: { ease: EASE }, onComplete: done });
 
       tl.from("[data-entry-mark]", { yPercent: 115, duration: 1.1 }, 0.1)
-        .from("[data-entry-rule]", { scaleX: 0, duration: 1, ease: "power3.inOut" }, 0.35)
+        .from("[data-entry-rule]", { scaleX: 0, duration: 1, ease: EASE_IN_OUT }, 0.35)
         .from("[data-entry-meta]", { autoAlpha: 0, duration: 0.8 }, 0.6)
         /* 名前は扉より先に消す。開きながら字を動かすと、割れ目で切られた字が見える。 */
         .to("[data-entry-fade]", { autoAlpha: 0, duration: 0.45, ease: "power2.in" }, 0.95)
         /* 二枚が左右へ退く。等速ではなく、止まりぎわを長く引く。 */
-        .to("[data-entry-leaf-left]", { xPercent: -100, duration: 1.05, ease: "expo.inOut" }, 1.1)
-        .to("[data-entry-leaf-right]", { xPercent: 100, duration: 1.05, ease: "expo.inOut" }, 1.1);
+        .to("[data-entry-leaf-left]", { xPercent: -100, duration: 1.05, ease: "power4.inOut" }, 1.1)
+        .to("[data-entry-leaf-right]", { xPercent: 100, duration: 1.05, ease: "power4.inOut" }, 1.1);
 
       /* 開ききる前に外れたとき（/studio へ移ったなど）にロックを置き去りにしない。 */
       return release;

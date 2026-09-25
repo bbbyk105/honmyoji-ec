@@ -1,31 +1,28 @@
 import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
+import { Arrow } from "./Arrow";
 
-export type ButtonVariant = "solid" | "outline" | "outline-light" | "link" | "link-light";
+export type ButtonVariant = "solid" | "link";
 
 /**
- * サイト共通のボタン。
+ * サイト共通のボタン。**二種類だけ**（2026-09-25）。
  *
- *  solid          その画面で一番やってほしいこと（カートに入れる・送る）。黒地なので塗りは光の側
- *  outline        次点（別の作品を見る・問い合わせる）
- *  outline-light  写真の上。地が黒になってからは罫が 70% 弱いだけの違い —— 写真の上で
- *                 100% の白枠は切り抜きに見えるので、この一段は残してある
- *  link / -light  文中・見出し脇の導線。罫は「常に」引く — hover で初めて出る罫は、
- *                 触るまで押せると分からないので、10px の小さな文字だと本文に埋もれる。
- *                 `-light` は今は link と同値だが、呼び出し側が「写真の上」と言えるよう残す
+ *  solid  買う・送る・知らせてもらう —— その画面でお金か連絡先が動く一つだけ。
+ *         面の一番強い色で塗る（墨の面では生成り、紙の面では墨）
+ *  link   それ以外の全部。語・罫・矢印だけで立つ。罫は常に薄く引いてあり（押せると分かる）、
+ *         触れると濃い罫が左から引かれて矢印が 4px 進む
+ *
+ * 以前は罫で囲った四角（outline）が「The collection」「The maker and the place」など
+ * 案内の導線ごとに並んでいて、四角の数だけテンプレートに見えた。四角は一画面に一つまで。
+ * 角丸・影・反転する塗りは使わない。
  */
 const base =
-  "cta inline-flex items-center justify-center gap-3 font-sans font-medium uppercase no-underline transition-colors duration-300 outline-none focus-visible:ring-2 focus-visible:ring-ivory/30 focus-visible:ring-offset-2 focus-visible:ring-offset-sumi disabled:opacity-55";
-
-const box = "min-h-12 px-9 py-3.5 text-[11.5px] tracking-[0.2em]";
-const inline = "min-h-11 text-[11px] tracking-[0.18em]";
+  "cta inline-flex items-center font-sans no-underline outline-none transition-[color,background-color,border-color,opacity] duration-500 ease-[var(--ease-soft)] focus-visible:ring-1 focus-visible:ring-ivory/40 focus-visible:ring-offset-4 focus-visible:ring-offset-sumi disabled:opacity-50";
 
 const variants: Record<ButtonVariant, string> = {
-  solid: `${box} border border-ivory bg-ivory text-sumi hover:border-bone hover:bg-bone`,
-  outline: `${box} border border-ivory text-ivory hover:bg-ivory hover:text-sumi`,
-  "outline-light": `${box} border border-ivory/70 text-ivory hover:bg-ivory hover:text-sumi`,
-  link: `${inline} link-cta text-ivory`,
-  "link-light": `${inline} link-cta text-ivory`,
+  solid:
+    "caps min-h-[52px] justify-center gap-5 border border-ivory bg-ivory px-8 text-sumi hover:bg-ivory/88",
+  link: "caps link-cta min-h-11 gap-7 text-ivory",
 };
 
 type Common = {
@@ -40,8 +37,8 @@ type AsLink = Common & {
   href: ComponentProps<typeof Link>["href"];
   transitionTypes?: string[];
   /**
-   * 一覧 ⇄ 商品ページの導線。遷移の幕（`RouteCurtain`）を出さずに、
-   * 720ms の bag morph に任せる。幕を掛けるとモーフが幕の下で終わる。
+   * 一覧 ⇄ 商品ページの導線。ページが開く所作を出さずに、720ms の bag morph に任せる
+   * （`PageTransition`）。
    */
   morph?: boolean;
 };
@@ -55,17 +52,13 @@ type AsButton = Common & {
 };
 
 export function Button(props: AsLink | AsButton) {
-  const { variant = "outline", className = "", children, arrow } = props;
-  const showArrow = arrow ?? variant.startsWith("link");
+  const { variant = "link", className = "", children, arrow } = props;
+  const showArrow = arrow ?? variant === "link";
   const cls = `${base} ${variants[variant]} ${className}`;
   const body = (
     <>
-      {children}
-      {showArrow ? (
-        <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
-          →
-        </span>
-      ) : null}
+      <span className={variant === "link" ? "cta-label" : undefined}>{children}</span>
+      {showArrow ? <Arrow className="cta-arrow" /> : null}
     </>
   );
 

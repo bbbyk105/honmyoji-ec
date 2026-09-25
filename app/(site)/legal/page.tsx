@@ -19,34 +19,34 @@ const rows: { k: string; kJa: string; v: string }[] = [
 
 export default function LegalPage() {
   return (
-    <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
-      <div className="mx-auto w-full max-w-[1100px] px-4 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
-        <h1 className="font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] text-ivory">
+    <section className="surface-paper pt-16 sm:pt-[72px] md:pt-[80px]">
+      <div className="mx-auto w-full max-w-[1100px] px-4 pb-pause pt-14 sm:px-5 md:px-8 md:pt-24 lg:px-12">
+        <h1 className="max-w-[18ch] font-display text-section font-light text-ivory">
           Notice under the Act on Specified Commercial Transactions
         </h1>
-        <p className="mt-4 font-jp text-[12px] tracking-[0.3em] text-mist">特定商取引法に基づく表記</p>
+        <p lang="ja" className="mt-5 font-jp text-[15px] tracking-[0.06em] text-mist">特定商取引法に基づく表記</p>
 
-        <dl className="mt-14 divide-y divide-line border-t border-line">
+        <dl className="mt-lead divide-y divide-line border-t border-line">
           {rows.map((r) => (
             <div key={r.k} className="grid gap-2 py-6 md:grid-cols-[240px_1fr] md:gap-8">
               <dt>
-                <span className="block font-sans text-[10.5px] uppercase tracking-[0.3em] text-ivory">{r.k}</span>
-                <span className="mt-1 block font-jp text-[11px] tracking-[0.16em] text-mist">{r.kJa}</span>
+                <span className="block font-sans text-small font-medium text-ivory">{r.k}</span>
+                <span lang="ja" className="mt-1 block font-jp text-[13px] tracking-[0.04em] text-mist">{r.kJa}</span>
               </dt>
-              <dd className="font-sans text-[13px] leading-[1.9] text-bone/85">{r.v}</dd>
+              <dd className="font-sans text-small text-bone">{r.v}</dd>
             </div>
           ))}
         </dl>
 
-        <h2 className="mt-24 font-display text-[clamp(32px,3.6vw,48px)] font-light leading-[1.1] text-ivory">
+        <h2 className="mt-pause font-display text-section font-light text-ivory">
           {legal.returns.title}
         </h2>
-        <p className="mt-3 font-jp text-[12px] tracking-[0.3em] text-mist">{legal.returns.titleJa}</p>
+        <p lang="ja" className="mt-4 font-jp text-[15px] tracking-[0.06em] text-mist">{legal.returns.titleJa}</p>
         <div className="mt-10 space-y-8 border-t border-line pt-10">
           {legal.returns.sections.map((s) => (
             <div key={s.h} className="grid gap-2 md:grid-cols-[240px_1fr] md:gap-8">
-              <h3 className="font-sans text-[10.5px] uppercase tracking-[0.3em] text-ivory">{s.h}</h3>
-              <p className="max-w-[64ch] font-sans text-[13px] leading-[1.9] text-bone/85">{s.p}</p>
+              <h3 className="font-sans text-small font-medium text-ivory">{s.h}</h3>
+              <p className="max-w-[64ch] font-sans text-small text-bone">{s.p}</p>
             </div>
           ))}
         </div>

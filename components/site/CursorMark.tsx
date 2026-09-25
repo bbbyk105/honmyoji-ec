@@ -81,6 +81,14 @@ export function CursorMark() {
       const host = (event.target as Element | null)?.closest?.("[data-cursor]") as
         | HTMLElement
         | null;
+      /*
+        語は写真の上に出るので、字の色ではなく**地の札**で読ませる。札の色は指している
+        ものが置かれた面（墨 / 紙）に合わせる —— 紙の一覧で墨の札が浮くと、そこだけ別の部屋になる。
+      */
+      if (host) {
+        const surface = host.closest(".surface-paper, .surface-dark");
+        el.classList.toggle("tone-paper", surface?.classList.contains("surface-paper") ?? false);
+      }
       show(host?.dataset.cursor ?? "");
     };
 
@@ -104,13 +112,14 @@ export function CursorMark() {
       aria-hidden
       className="pointer-events-none invisible fixed left-0 top-0 z-[85] hidden lg:block"
     >
-      <span className="block overflow-hidden">
-        <span
-          ref={word}
-          className="block whitespace-nowrap font-sans text-[9.5px] uppercase leading-[1.6] tracking-[0.22em] text-ivory"
-        />
+      {/*
+        地の札。以前は生成りの語と罫だけを写真の上に置いていたが、作品の写真は障子の白が
+        大きく、語がそこに溶けて読めなかった。角の無い小さな札にして、写真の明るさに関係なく読ませる。
+      */}
+      <span className="block overflow-hidden bg-sumi px-2.5 pb-[5px] pt-[6px]">
+        <span ref={word} className="caps block whitespace-nowrap text-[11px] text-ivory" />
       </span>
-      <span ref={line} className="block h-px w-full origin-left bg-ivory/45" />
+      <span ref={line} className="block h-px w-full origin-left bg-ivory/60" />
     </div>
   );
 }

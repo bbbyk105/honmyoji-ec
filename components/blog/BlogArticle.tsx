@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
+import { Arrow } from "@/components/site/Arrow";
 import { Reveal } from "@/components/site/Reveal";
 import { ArticleToc } from "./ArticleToc";
 import { formatBlogDate, blogMeta, type BlogPost } from "@/data/blog";
@@ -29,28 +30,23 @@ export function BlogArticle({ entry, next }: Props) {
   const hasImage = Boolean(entry.image);
 
   return (
-    <article className="pt-16 sm:pt-[72px] md:pt-[80px]">
+    /* 記事は紙の面。長い文章は紙の上のほうが目が疲れない（一覧と同じ紙を繰る）。 */
+    <article className="surface-paper pb-beat pt-16 sm:pt-[72px] md:pt-[80px]">
       <header className="mx-auto w-full max-w-[980px] px-5 pt-12 sm:pt-14 md:pt-20">
-        <Button href="/blog" variant="link" arrow={false} className="text-mist hover:text-ivory">
+        <Button href="/blog" arrow={false} className="text-mist hover:text-ivory">
           Blog
         </Button>
-        <p className="eyebrow mt-10">{blogMeta(entry.topic, entry.season)}</p>
-        <h1 className="mt-4 max-w-[22ch] font-display text-[clamp(38px,5.2vw,68px)] font-light leading-[1.02] text-ivory">
+        <p className="eyebrow mt-12">{blogMeta(entry.topic, entry.season)}</p>
+        <h1 className="mt-5 max-w-[20ch] font-display text-[clamp(40px,4.4vw+8px,76px)] font-light leading-[1.02] tracking-[-0.022em] text-ivory">
           {entry.title}
         </h1>
         {entry.titleJa ? (
-          <p className="mt-4 font-jp text-[14px] tracking-[0.22em] text-mist">{entry.titleJa}</p>
+          <p lang="ja" className="mt-5 font-jp text-[15px] tracking-[0.06em] text-mist">{entry.titleJa}</p>
         ) : null}
         {entry.dek ? (
-          <p className="mt-8 max-w-[42ch] font-display text-[clamp(20px,2.1vw,25px)] font-light leading-[1.45] text-bone">
-            {entry.dek}
-          </p>
+          <p className="mt-9 max-w-[40ch] font-display text-deck font-light text-bone">{entry.dek}</p>
         ) : null}
-        <p
-          className={`mt-8 font-sans text-[11px] uppercase tracking-[0.18em] text-mist ${
-            hasImage ? "border-t border-line pt-5" : ""
-          }`}
-        >
+        <p className={`mt-9 font-sans text-meta text-mist ${hasImage ? "border-t border-line pt-5" : ""}`}>
           {formatBlogDate(entry.date)}
         </p>
         {hasImage ? (
@@ -82,7 +78,7 @@ export function BlogArticle({ entry, next }: Props) {
         <ArticleToc />
         {entry.pull ? (
           <Reveal>
-            <p className="mb-16 max-w-[28ch] font-display text-[clamp(26px,3vw,36px)] font-light leading-[1.32] text-ivory md:mb-20">
+            <p className="mb-16 max-w-[26ch] font-display text-[clamp(28px,1.6vw+14px,40px)] font-light leading-[1.3] tracking-[-0.012em] text-ivory md:mb-20">
               {entry.pull}
             </p>
           </Reveal>
@@ -104,7 +100,7 @@ export function BlogArticle({ entry, next }: Props) {
                 <Reveal key={i}>
                   {/* 上は離し、下は詰める（`space-y` を打ち消す `-mb-2`）。見出しは次に来る文章の持ち物。 */}
                   <h2
-                    className={`${MEASURE} -mb-2 pt-10 font-display text-[clamp(24px,2.6vw,31px)] font-light leading-[1.2] text-ivory`}
+                    className={`${MEASURE} -mb-2 pt-10 font-display text-title font-light text-ivory`}
                   >
                     {block.text}
                   </h2>
@@ -132,7 +128,7 @@ export function BlogArticle({ entry, next }: Props) {
                         className="object-cover"
                       />
                     </div>
-                    <figcaption className="mt-3 font-sans text-[12.5px] leading-[1.6] text-mist">
+                    <figcaption className="mt-3 font-sans text-meta text-mist">
                       {block.caption}
                     </figcaption>
                   </figure>
@@ -142,7 +138,7 @@ export function BlogArticle({ entry, next }: Props) {
             if (block.type === "p" && block.text) {
               return (
                 <Reveal key={i}>
-                  <p className={`${MEASURE} font-sans text-[17px] leading-[1.9] text-bone`}>
+                  <p className={`${MEASURE} font-sans text-body leading-[1.85] text-bone`}>
                     {block.text}
                   </p>
                 </Reveal>
@@ -154,33 +150,24 @@ export function BlogArticle({ entry, next }: Props) {
       </div>
 
       {next ? (
-        <footer className="mx-auto mt-24 w-full max-w-[980px] px-5">
+        <footer className="mx-auto mt-pause w-full max-w-[980px] px-5">
           <Link
             href={`/blog/${next.slug}`}
             className="group flex items-end justify-between gap-8 border-t border-line py-10 no-underline"
           >
             <span>
-              <span className="block font-sans text-[10px] uppercase tracking-[0.24em] text-mist">Next note</span>
-              <span className="mt-3 block font-display text-[clamp(26px,3.2vw,38px)] font-light leading-[1.15] text-ivory">
-                {next.title}
-              </span>
+              <span className="block font-sans text-meta text-mist">Next note</span>
+              <span className="mt-3 block font-display text-title font-light text-ivory">{next.title}</span>
               {next.dek ? (
-                <span className="mt-2 block max-w-[46ch] font-sans text-[13.5px] leading-[1.7] text-bone/75">
-                  {next.dek}
-                </span>
+                <span className="mt-3 block max-w-[46ch] font-sans text-small text-bone">{next.dek}</span>
               ) : null}
             </span>
-            <span
-              aria-hidden
-              className="shrink-0 pb-1 font-sans text-[17px] text-mist transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1.5 group-hover:text-ivory"
-            >
-              →
+            <span className="shrink-0 pb-2 text-mist transition-colors duration-500 group-hover:text-ivory">
+              <Arrow className="cta-arrow" />
             </span>
           </Link>
         </footer>
-      ) : (
-        <div className="mt-24" />
-      )}
+      ) : null}
     </article>
   );
 }

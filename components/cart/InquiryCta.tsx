@@ -12,12 +12,12 @@ export function InquiryCta({
   product,
   href,
   label,
-  variant = "outline",
+  variant = "link",
 }: {
   product: Product;
   href: string;
   label: string;
-  variant?: "outline" | "solid";
+  variant?: "link" | "solid";
 }) {
   if (isPurchasable(product)) {
     return <HoldButton slug={product.slug} />;

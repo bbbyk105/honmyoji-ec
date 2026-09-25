@@ -109,13 +109,13 @@ export function Frame({
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-start justify-end bg-sumi p-6 ring-1 ring-inset ring-line">
-            <p className="font-sans text-[9px] uppercase tracking-[0.28em] text-mist">{ROLE_LABEL[role]}</p>
+            <p className="font-sans text-meta text-mist">{ROLE_LABEL[role]}</p>
             <p className="mt-2 font-display text-[22px] font-light text-bone/50">{ratio.replace("/", "∶")}</p>
           </div>
         )}
       </ImageWell>
       {showRole || caption ? (
-        <figcaption className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-sans text-[12.5px] leading-[1.6] text-mist">
+        <figcaption className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-sans text-meta text-mist">
           <span>{caption ?? alt}</span>
           {showRole ? (
             <span className="text-mist/70">

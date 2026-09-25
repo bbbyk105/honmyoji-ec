@@ -44,29 +44,25 @@ export default async function ThankYouPage({
       <ClearCart />
       <section className="max-w-[54ch] py-24">
         <p className="eyebrow">Order received</p>
-        <h1 className="mt-6 font-display text-[clamp(38px,5.6vw,72px)] font-light leading-[1.02] text-ivory">
+        <h1 className="mt-6 font-display text-display font-light text-ivory">
           {name ? `Thank you, ${name}.` : "Thank you."}
         </h1>
-        <p className="mt-5 font-jp text-[12px] tracking-[0.24em] text-mist">ありがとうございます</p>
+        <p lang="ja" className="mt-5 font-jp text-[15px] tracking-[0.06em] text-mist">ありがとうございます</p>
 
-        <p className="mt-9 font-sans text-[15px] leading-[1.9] text-bone">
+        <p className="mt-10 font-sans text-body text-bone">
           The piece is yours. It leaves Honmyoji within a few days, wrapped by hand, and we write
           to you with the tracking number as soon as it is on its way.
           {email ? ` A receipt is on its way to ${email}.` : ""}
         </p>
 
-        <p className="mt-5 max-w-[48ch] font-sans text-[13.5px] leading-[1.9] text-mist">
+        <p className="mt-5 max-w-[48ch] font-sans text-small text-mist">
           Each bag is made from the edging of a single roll, so the one you chose will not be made
           again. If anything about the order needs changing, write back to us — a person reads it.
         </p>
 
-        <div className="mt-11 flex flex-wrap items-center gap-x-8 gap-y-4">
-          <Button href="/collection" variant="outline">
-            The collection
-          </Button>
-          <Button href="/contact" variant="link">
-            Write to us
-          </Button>
+        <div className="mt-12 flex flex-wrap items-center gap-x-10 gap-y-4">
+          <Button href="/collection">The collection</Button>
+          <Button href="/contact">Write to us</Button>
         </div>
       </section>
     </div>

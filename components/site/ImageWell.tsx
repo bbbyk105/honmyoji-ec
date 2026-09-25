@@ -4,6 +4,7 @@ import { useRef, type CSSProperties, type ReactNode } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
+import { DUR, EASE } from "@/components/motion/tokens";
 import "@/components/motion/register";
 
 export type WellReveal = "wipe" | "band" | "none";
@@ -41,14 +42,14 @@ const CLOSED: Record<WellFrom, string> = {
  * 像の倍率。**動かさない** —— 平行移動で端が欠けないぶんの余白として要るだけで、
  * 寄りの演出ではない。掛けるのは実際にマスクが開くときだけ。
  */
-const SCALE = 1.06;
+const SCALE = 1.04;
 
 /** 掃く向きと逆に置いて、マスクに遅れて追いつかせる量（%）。 */
 const LAG: Record<WellFrom, { x?: number; y?: number }> = {
-  bottom: { y: 4 },
-  top: { y: -4 },
-  left: { x: -4 },
-  right: { x: 4 },
+  bottom: { y: 2.5 },
+  top: { y: -2.5 },
+  left: { x: -2.5 },
+  right: { x: 2.5 },
 };
 
 /**
@@ -60,7 +61,7 @@ const LAG: Record<WellFrom, { x?: number; y?: number }> = {
  * **像そのものは拡大縮小しない**（2026-09-20）。以前は 1.12 倍から実寸へ寄せていたが、
  * マスクと同時に動かすと一枚の写真に効果が二つ乗り、寄りの動き自体もどこかで見た
  * 「写真が寄ってくる演出」になる。いま動くのは**マスクの端**と、それに遅れて追いつく
- * 4% の平行移動だけ —— 窓が開いて、奥の写真が少し遅れて据わる。倍率は 1.06 で固定
+ * 2.5% の平行移動だけ —— 窓が開いて、奥の写真が少し遅れて据わる。倍率は 1.04 で固定
  * （動かさない）。平行移動で端が欠けないぶんの余白として要る。
  *
  * マスクは井戸そのものではなく内側の層に掛ける。井戸ごと切ると、
@@ -92,9 +93,9 @@ export function ImageWell({
         tl.fromTo(
           mask,
           { clipPath: "inset(0% 44% 0% 44%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.5, ease: "expo.out" },
+          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.4, ease: EASE },
         );
-        if (shift) tl.fromTo(shift, { scale: 1.1 }, { scale: SCALE, duration: 1.9, ease: "expo.out" }, 0);
+        /* 像は動かさない。倍率は平行移動が無いので要らない（井戸と同じ 1:1 で開く）。 */
         return;
       }
 
@@ -105,7 +106,7 @@ export function ImageWell({
       tl.fromTo(
         mask,
         { clipPath: CLOSED[from] },
-        { clipPath: "inset(0% 0% 0% 0%)", duration: 1.15, ease: "expo.out" },
+        { clipPath: "inset(0% 0% 0% 0%)", duration: DUR.image, ease: EASE },
       );
       if (shift) {
         gsap.set(shift, { scale: SCALE });
@@ -113,7 +114,7 @@ export function ImageWell({
         tl.fromTo(
           shift,
           { xPercent: lag.x ?? 0, yPercent: lag.y ?? 0 },
-          { xPercent: 0, yPercent: 0, duration: 1.5, ease: "expo.out" },
+          { xPercent: 0, yPercent: 0, duration: DUR.image + 0.2, ease: EASE },
           0,
         );
       }
@@ -127,7 +128,7 @@ export function ImageWell({
         {/*
           平行移動する層。倍率は**クラスではなく effect で**置く（`SCALE`）。
           クラスで固定すると、写真の無い空の井戸（`Frame` の役割 + 比率を罫で囲うやつ）まで
-          1.06 倍になり、四辺の罫が枠の外へ出て消える。動きを止める設定でも同じ。
+          1.04 倍になり、四辺の罫が枠の外へ出て消える。動きを止める設定でも同じ。
         */}
         <div data-well-shift className="absolute inset-0">
           {children}

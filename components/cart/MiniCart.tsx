@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { isPurchasable, leadSrc, priceLabel, productPath, aud } from "@/data/products";
 import { startCheckout, type CheckoutState } from "@/app/(site)/checkout/actions";
+import { Arrow } from "@/components/site/Arrow";
 import { Button } from "@/components/site/Button";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useWindowEvent } from "@/hooks/useWindowEvent";
@@ -15,6 +16,12 @@ import { useCart } from "./CartProvider";
  * `CartProvider` に渡しているので、管理画面で価格を直した直後でも見えている数字が
  * 請求額と食い違わない（data/products.ts を直接読むと古い値が出る）。
  */
+/** 塗りの主導線。`Button` の solid と同じ寸法（form の submit と Link で使うので素のクラスで持つ）。 */
+const SOLID =
+  "cta caps inline-flex min-h-[52px] w-full items-center justify-center gap-5 border border-ivory bg-ivory px-8 text-sumi no-underline transition-[background-color,opacity] duration-500 hover:bg-ivory/88 disabled:opacity-50";
+const QUIET =
+  "min-h-11 w-fit font-sans text-meta text-mist underline decoration-mist/40 underline-offset-4 transition-colors duration-500 hover:text-ivory hover:decoration-ivory";
+
 export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
   const { pieces, open, setOpen, remove, clear } = useCart();
   const [state, checkout, pending] = useActionState<CheckoutState, FormData>(startCheckout, {});
@@ -49,27 +56,20 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
         aria-modal="true"
         aria-label="Cart"
         inert={!open}
-        className={`absolute inset-y-0 right-0 flex w-full max-w-[420px] flex-col bg-sumi shadow-[-24px_0_60px_rgba(0,0,0,0.55)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`absolute inset-y-0 right-0 flex w-full max-w-[440px] flex-col border-l border-line bg-sumi transition-transform duration-700 ease-[var(--ease-soft)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
-        <div className="flex items-baseline justify-between border-b border-line px-7 py-6">
-          <div>
-            <p className="font-sans text-[10px] uppercase tracking-[0.28em] text-mist">Reserve</p>
-            <p className="mt-2 font-display text-[28px] font-light leading-none text-ivory">Cart</p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            className="font-sans text-[10px] uppercase tracking-[0.28em] text-ivory"
-          >
+        <div className="flex items-center justify-between border-b border-line px-7 py-6">
+          <p className="font-display text-[30px] font-light leading-none text-ivory">Cart</p>
+          <button type="button" onClick={() => setOpen(false)} className="caps link-line min-h-11 text-ivory">
             Close
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-7 py-8">
           {pieces.length === 0 ? (
-            <p className="max-w-[28ch] font-sans text-[13px] leading-[1.9] text-bone/80">
+            <p className="max-w-[30ch] font-sans text-small text-bone">
               Your cart is empty. Add a piece from the collection, then take it to checkout — or
               write to us first if you would rather ask.
             </p>
@@ -97,21 +97,15 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                       className="font-display text-[22px] font-light leading-none text-ivory no-underline"
                     >
                       {p.name}
-                      <span className="ml-2 font-jp text-[11px] tracking-[0.2em] text-mist">{p.kanji}</span>
+                      <span lang="ja" className="ml-2.5 font-jp text-[13px] tracking-[0.04em] text-mist">{p.kanji}</span>
                     </Link>
-                    <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-bone/80">
+                    <p className="mt-2 font-sans text-meta tabular-nums text-bone">
                       {priceLabel(p) ?? "Price to come"}
                     </p>
                     {!isPurchasable(p) ? (
-                      <p className="mt-1.5 font-sans text-[11px] tracking-[0.14em] text-clay">
-                        No longer available
-                      </p>
+                      <p className="mt-1 font-sans text-meta text-clay">No longer available</p>
                     ) : null}
-                    <button
-                      type="button"
-                      onClick={() => remove(p.slug)}
-                      className="mt-3 min-h-9 w-fit font-sans text-[10px] uppercase tracking-[0.2em] text-mist underline decoration-mist/40 underline-offset-4 transition-colors hover:text-ivory hover:decoration-ivory"
-                    >
+                    <button type="button" onClick={() => remove(p.slug)} className={`mt-1 ${QUIET}`}>
                       Remove
                     </button>
                   </div>
@@ -124,21 +118,19 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
         <div className="border-t border-line px-7 py-7">
           {pieces.length > 0 && canCheckout ? (
             <div className="mb-5 flex items-baseline justify-between border-b border-line pb-4">
-              <span className="font-sans text-[10.5px] uppercase tracking-[0.22em] text-mist">
-                Subtotal
-              </span>
-              <span className="font-sans text-[15px] tabular-nums text-ivory">{aud.format(total)}</span>
+              <span className="font-sans text-meta text-mist">Subtotal</span>
+              <span className="font-display text-[22px] font-light leading-none tabular-nums text-ivory">{aud.format(total)}</span>
             </div>
           ) : null}
 
-          <p className="font-sans text-[11px] leading-[1.8] text-mist">
+          <p className="font-sans text-meta text-mist">
             {canCheckout
               ? "Shipping is added at the next step. Payment is handled by Stripe — we never see your card."
               : "Nothing is charged here. Send us your cart and a person writes back with payment details."}
           </p>
 
           {state.error ? (
-            <p role="alert" className="mt-4 font-sans text-[12px] leading-[1.7] text-clay">
+            <p role="alert" className="mt-4 font-sans text-meta text-clay">
               {state.error}
             </p>
           ) : null}
@@ -149,50 +141,36 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                 <>
                   <form action={checkout}>
                     <input type="hidden" name="slugs" value={query} />
-                    <button
-                      type="submit"
-                      disabled={pending || sold.length > 0}
-                      className="cta inline-flex min-h-12 w-full items-center justify-center gap-3 border border-ivory bg-ivory px-6 py-3.5 font-sans text-[11.5px] font-medium uppercase tracking-[0.2em] text-sumi transition-colors duration-300 hover:border-bone hover:bg-bone disabled:opacity-55"
-                    >
+                    <button type="submit" disabled={pending || sold.length > 0} className={SOLID}>
                       {pending ? "Opening checkout" : "Check out"}
-                      <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
-                        →
-                      </span>
+                      <Arrow className="cta-arrow" />
                     </button>
                   </form>
                   <Link
                     href={`/contact?product=${query}&subject=reserve`}
                     onClick={() => setOpen(false)}
-                    className="cta inline-flex min-h-11 items-center justify-center gap-3 font-sans text-[11px] font-medium uppercase tracking-[0.18em] text-ivory no-underline link-cta"
+                    className="cta caps link-cta inline-flex min-h-11 w-fit items-center gap-7 self-center text-ivory no-underline"
                   >
-                    Ask about these
-                    <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
-                      →
-                    </span>
+                    <span className="cta-label">Ask about these</span>
+                    <Arrow className="cta-arrow" />
                   </Link>
                 </>
               ) : (
                 <Link
                   href={`/contact?product=${query}&subject=reserve`}
                   onClick={() => setOpen(false)}
-                  className="cta inline-flex min-h-12 items-center justify-center gap-3 border border-ivory bg-ivory px-6 py-3.5 font-sans text-[11.5px] font-medium uppercase tracking-[0.2em] text-sumi no-underline transition-colors duration-300 hover:border-bone hover:bg-bone"
+                  className={SOLID}
                 >
                   Send this cart
-                  <span aria-hidden className="cta-arrow text-[1.15em] leading-none">
-                    →
-                  </span>
+                  <Arrow className="cta-arrow" />
                 </Link>
               )}
-              <button
-                type="button"
-                onClick={clear}
-                className="min-h-11 font-sans text-[10.5px] uppercase tracking-[0.2em] text-mist underline decoration-mist/40 underline-offset-4 transition-colors hover:text-ivory hover:decoration-ivory"
-              >
+              <button type="button" onClick={clear} className={`self-center ${QUIET}`}>
                 Clear all
               </button>
             </div>
           ) : (
-            <Button href="/collection" variant="outline" className="mt-5 w-full">
+            <Button href="/collection" className="mt-5">
               View the collection
             </Button>
           )}

@@ -32,10 +32,10 @@ export default async function BlogPreviewPage({
       {/* 下書きを見ていることが分からないまま公開ページと見分けが付かない、が一番危ない */}
       <div className="fixed inset-x-0 bottom-0 z-50 border-t border-line bg-sumi px-5 py-3">
         <div className="mx-auto flex max-w-[980px] flex-wrap items-baseline justify-between gap-3">
-          <p className="font-sans text-[10px] uppercase tracking-[0.24em] text-clay">
+          <p className="caps text-clay">
             Draft preview · not published
           </p>
-          <Link href="/blog" className="link-line font-sans text-[12px] text-mist">
+          <Link href="/blog" className="link-line font-sans text-meta text-mist">
             Leave preview
           </Link>
         </div>

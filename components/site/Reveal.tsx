@@ -6,6 +6,7 @@ import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { SplitText } from "gsap/SplitText";
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
+import { DUR, EASE, LINE_STAGGER, TEXT_RISE } from "@/components/motion/tokens";
 import "@/components/motion/register";
 
 type Props = {
@@ -16,24 +17,21 @@ type Props = {
 };
 
 /**
- * 入場。
+ * 入場。**動くのは節の入口だけ**（2026-09-25）。
  *
- * **ブロックそのものは動かさない。** 以前はここも `y: 26` で上げていたが、同じ瞬間に
- * ブロックが上がり・見出しの行が上がり・写真のマスクが下から開く、と**同じ向きの動きが
- * 三つ重なっていた**（2026-09-20 に数えたら 10 の所作のうち 7 つが「下から上」だった）。
- * 同じ所作の反復は、丁寧ではなく安く見える —— 一節の中で動きが違うから、どれが見出しで
- * どれが写真なのかが動きだけで読める。
+ * 以前は一覧の一行・表の一段・FAQ の一問にまで Reveal が付いていて、スクロールするたびに
+ * 画面のどこかが必ず動いていた。いまは節の見出しと、その脇の短い文章のブロックだけに使う。
+ * 一覧・表・商品の格子は置いてあるだけ —— 静かな部分があるから、動く部分が効く。
  *
- * 節の中の役割分担はこう：
- *   ブロック   静かに現れるだけ（移動しない）
- *   見出し     行ごとにマスクの下から起き上がる ← 縦の所作はここだけ
+ * 節の中の役割分担：
+ *   見出し     行ごとにマスクの下から起きる（`data-split-lines`）。clip の中で動くので移動量は見えない
+ *   文章       見出しに半拍遅れて、14px 上がりながら現れる
  *   写真       マスクが開く（`ImageWell`）。**フェードは掛けない**
  *
- * **写真を含むブロックはフェードしない。** DESIGN.md は「写真は開く、フェードしない」と
- * 書いてあるのに、この Reveal が上から `autoAlpha` を掛けていたので、一枚の写真が
- * 「フェード + 寄り + マスク」の三つを同時にやっていた（2026-09-20 に見つけた）。
- * 井戸があるブロックでは、動かすのはキャプションだけにして、像は `ImageWell` に任せる。
- * 写真と文章を一つの Reveal に同居させないこと —— 同居すると文章が素で現れる。
+ * 曲線は一つ（`EASE` = easeOutQuint）、長さは 0.9–1.0s（`components/motion/tokens.ts`）。
+ *
+ * **写真を含むブロックはフェードしない。** 井戸があるブロックでは動かすのはキャプションだけで、
+ * 像は `ImageWell` に任せる。写真と文章を一つの Reveal に同居させないこと。
  */
 export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }: Props) {
   const ref = useRef<HTMLElement | null>(null);
@@ -49,30 +47,33 @@ export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }:
 
       const tl = gsap.timeline({
         delay: delay / 1000,
+        defaults: { ease: EASE },
         scrollTrigger: {
           trigger: el,
-          start: "top 90%",
+          start: "top 88%",
           toggleActions: "play none none none",
         },
       });
 
-      /*
-        井戸があるなら、開くのは `ImageWell` の仕事。ここで掛けるのはキャプションだけ
-        （像より少し遅れて出る）。無ければブロックごと静かに現れる。移動はしない。
-      */
       if (el.querySelector("[data-well-mask]")) {
         const captions = el.querySelectorAll("figcaption");
-        if (captions.length > 0) {
-          tl.from(captions, { autoAlpha: 0, duration: 0.9, ease: "power2.out" }, 0.45);
+        if (captions.length > 0) tl.from(captions, { autoAlpha: 0, duration: DUR.text }, 0.45);
+      } else if (heads.length > 0) {
+        /* 見出しを含まない子だけを、見出しの後から。見出しの行はマスクの中で起こす。 */
+        const rest = Array.from(el.children).filter(
+          (child) => !child.matches("[data-split-lines]") && !child.querySelector("[data-split-lines]"),
+        );
+        if (rest.length > 0) {
+          tl.from(rest, { autoAlpha: 0, y: TEXT_RISE, duration: DUR.text, stagger: 0.06 }, 0.28);
         }
       } else {
-        tl.from(el, { autoAlpha: 0, duration: 1.1, ease: "power2.out" });
+        tl.from(el, { autoAlpha: 0, y: TEXT_RISE, duration: DUR.text });
       }
 
       for (const head of heads) {
         const split = SplitText.create(head, { type: "lines", mask: "lines" });
         splits.push(split);
-        tl.from(split.lines, { yPercent: 108, duration: 1.1, stagger: 0.09, ease: "power3.out" }, 0.06);
+        tl.from(split.lines, { yPercent: 100, duration: DUR.lines, stagger: LINE_STAGGER }, 0.04);
       }
 
       return () => {

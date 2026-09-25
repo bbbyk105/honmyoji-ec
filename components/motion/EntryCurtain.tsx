@@ -39,7 +39,7 @@ export function EntryCurtain() {
         <span className="block overflow-hidden">
           <span
             data-entry-mark
-            className="block pl-[0.3em] font-display text-[clamp(30px,6vw,54px)] font-light leading-none tracking-[0.3em] text-ivory"
+            className="block pl-[0.24em] font-display text-[clamp(30px,5vw,50px)] font-normal leading-none tracking-[0.24em] text-ivory"
           >
             MIROKU
           </span>
@@ -52,12 +52,12 @@ export function EntryCurtain() {
 
         {/*
           場所は一行で。`site.location`（Honmyoji Temple, Fuji City, Shizuoka, Japan）は
-          9.5px / 字間 0.24em だと扉の幅で三行に折れる —— 名前の下に住所が三行積まれると、
+          小さな大文字だと扉の幅で三行に折れる —— 名前の下に住所が三行積まれると、
           幕が案内板になる。ヒーローのスマホ表示と同じ短い言い方に揃える。
         */}
         <p
           data-entry-meta
-          className="mt-6 text-center font-sans text-[9.5px] uppercase leading-[1.8] tracking-[0.24em] text-mist"
+          className="caps mt-6 text-center text-[11px] tracking-[0.16em] text-mist"
         >
           Honmyoji · Fuji, Japan
         </p>
