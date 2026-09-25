@@ -6,8 +6,11 @@ import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { useCart } from "@/components/cart/CartProvider";
-import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
+import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import { site } from "@/data/site";
+import { useScrollLock } from "@/hooks/useScrollLock";
+import { useWindowEvent } from "@/hooks/useWindowEvent";
+import { twoDigits } from "@/lib/format";
 import { SHELL } from "./Shell";
 import "@/components/motion/register";
 
@@ -65,12 +68,16 @@ export function SiteHeader() {
     setOnDarkHero(pathname === "/");
   }
 
+  useWindowEvent("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    setCloseMode("reverse");
+    setOpen(false);
+  });
+
+  /* 開いている間は背後を止める。数えて止めるので、カートが同時に止めていても外さない。 */
+  useScrollLock(open);
+
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== "Escape") return;
-      setCloseMode("reverse");
-      setOpen(false);
-    };
     const mq = window.matchMedia("(min-width: 1280px)");
     const onWide = () => {
       if (!mq.matches) return;
@@ -78,12 +85,8 @@ export function SiteHeader() {
       setCloseMode("instant");
       setOpen(false);
     };
-    window.addEventListener("keydown", onKey);
     mq.addEventListener("change", onWide);
-    return () => {
-      window.removeEventListener("keydown", onKey);
-      mq.removeEventListener("change", onWide);
-    };
+    return () => mq.removeEventListener("change", onWide);
   }, []);
 
   useGSAP(
@@ -115,10 +118,8 @@ export function SiteHeader() {
   useGSAP(
     () => {
       if (!tl.current || !lineA.current || !lineB.current || !overlay.current) return;
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const reduced = prefersReducedMotion();
       if (open) {
-        stopLenis();
-        document.body.style.overflow = "hidden";
         tl.current.timeScale(1);
         if (reduced) {
           gsap.set(overlay.current, { autoAlpha: 1, clipPath: "none", pointerEvents: "auto" });
@@ -130,8 +131,6 @@ export function SiteHeader() {
         gsap.to(lineA.current, { y: 4.5, rotate: 45, duration: reduced ? 0 : 0.45, ease: "power3.inOut" });
         gsap.to(lineB.current, { y: -4.5, rotate: -45, duration: reduced ? 0 : 0.45, ease: "power3.inOut" });
       } else {
-        startLenis();
-        document.body.style.overflow = "";
         const instant = reduced || closeMode === "instant";
         if (instant) {
           // pause(0) で中身は開く前の位置へ戻る。pointerEvents だけは 0 秒地点の
@@ -148,8 +147,9 @@ export function SiteHeader() {
       }
     },
     // deps は open だけ。closeMode も入れると、カートを開くとき（open は false のまま
-    // closeMode だけ変わる）に閉じる側の処理が再実行され、MiniCart が掛けた
-    // stopLenis / body overflow を打ち消してしまう。値は同じコミットで確定するので読めている。
+    // closeMode だけ変わる）に閉じる側の所作が再実行される。値は同じコミットで確定するので読めている。
+    // （以前はここでスクロールも外していて、MiniCart の stopLenis / body overflow を打ち消していた。
+    //  いまは `useScrollLock` が数えて止めるので、その事故は構造的に起きない。）
     { dependencies: [open] },
   );
 
@@ -297,7 +297,7 @@ export function SiteHeader() {
                   >
                     <span className="flex items-baseline gap-4 sm:gap-6">
                       <span className="font-sans text-[10px] tabular-nums tracking-[0.18em] text-mist">
-                        {String(i + 1).padStart(2, "0")}
+                        {twoDigits(i + 1)}
                       </span>
                       <span
                         className={`font-display text-[clamp(36px,10vw,64px)] font-light leading-none ${
@@ -323,7 +323,7 @@ export function SiteHeader() {
               }}
               className="mt-4 min-h-11 font-sans text-[12px] uppercase tracking-[0.22em] text-ivory"
             >
-              Cart · {String(slugs.length).padStart(2, "0")}
+              Cart · {twoDigits(slugs.length)}
             </button>
           </div>
         </div>

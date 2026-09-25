@@ -282,8 +282,17 @@ export const products: Product[] = [
   },
 ];
 
+/**
+ * slug でも旧 folder 名でも引く。**約束はここ一つ** —— `getProduct`・`lib/catalog.ts`・
+ * カートがそれぞれ同じ比較を手書きしていた。`products` を参照しないので、client から
+ * import してもカタログ本体はバンドルに入らない。
+ */
+export function findByKey<T extends { slug: string; folder: string }>(list: readonly T[], key: string): T | undefined {
+  return list.find((p) => p.slug === key || p.folder === key);
+}
+
 export function getProduct(key: string): Product | undefined {
-  return products.find((p) => p.slug === key || p.folder === key);
+  return findByKey(products, key);
 }
 
 function folderOf(key: string): string {
@@ -294,12 +303,42 @@ export function productImage(key: string, n: number): string {
   return `/images/products/${folderOf(key)}/${n}.webp`;
 }
 
-export function productCutout(key: string): string {
-  return `/images/products/${folderOf(key)}/cutout.webp`;
+/** folder 名から直に組む版。カタログを引かないので、client の部品はこちらを使う。 */
+export function cutoutSrc(folder: string): string {
+  return `/images/products/${folder}/cutout.webp`;
 }
 
-export function productPath(product: Product): string {
+export function productCutout(key: string): string {
+  return cutoutSrc(folderOf(key));
+}
+
+export function productPath(product: Pick<Product, "slug">): string {
   return `/collection/${product.slug}`;
+}
+
+/* ------------------------------------------------------------------
+   client に渡す形。**Product を丸ごと渡さない。**
+
+   client の部品に渡した props は RSC ペイロードとして HTML に焼き込まれる。以前は
+   カートに全九点の Product（物語の英日・素材・寸法）を渡していたので、どのページの
+   HTML にも九点ぶんの物語が載っていた（2026-09-25 に計測）。部品が読む項目だけに削る。
+   ------------------------------------------------------------------ */
+
+/** カート（CartProvider / MiniCart）が読む分。 */
+export type CartPiece = Pick<Product, "slug" | "folder" | "name" | "kanji" | "priceAud" | "status">;
+
+/** 展示台（FloatingBag）と一覧の絞り込み（CollectionStudio）が読む分。 */
+export type ShelfPiece = Pick<
+  Product,
+  "slug" | "folder" | "name" | "kanji" | "priceAud" | "status" | "note" | "line" | "cutoutAspect"
+>;
+
+export function toCartPiece(p: Product): CartPiece {
+  return { slug: p.slug, folder: p.folder, name: p.name, kanji: p.kanji, priceAud: p.priceAud, status: p.status };
+}
+
+export function toShelfPiece(p: Product): ShelfPiece {
+  return { ...toCartPiece(p), note: p.note, line: p.line, cutoutAspect: p.cutoutAspect };
 }
 
 /**
@@ -319,6 +358,6 @@ export function cm(v: number): string {
   return `${v} cm (${(v / 2.54).toFixed(1)} in)`;
 }
 
-export function isPurchasable(p: Product): boolean {
+export function isPurchasable(p: Pick<Product, "status">): boolean {
   return p.status === "available";
 }

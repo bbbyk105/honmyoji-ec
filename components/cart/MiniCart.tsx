@@ -2,42 +2,34 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useActionState, useEffect } from "react";
-import { productCutout, productPath, aud, type Product } from "@/data/products";
+import { useActionState } from "react";
+import { cutoutSrc, isPurchasable, productPath, aud } from "@/data/products";
 import { startCheckout, type CheckoutState } from "@/app/(site)/checkout/actions";
-import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
 import { Button } from "@/components/site/Button";
+import { useScrollLock } from "@/hooks/useScrollLock";
+import { useWindowEvent } from "@/hooks/useWindowEvent";
 import { useCart } from "./CartProvider";
 
 /**
- * カタログはサーバーから渡す。data/products.ts を直接読むと、管理画面で価格を
- * 直した直後だけカートが古い値を出す（請求額はサーバーで組み直すので正しいが、
- * 見えている数字と違う、が一番不安にさせる）。
+ * 品は `useCart().pieces` から読む。カタログは `SiteChrome` が DB を重ねてから
+ * `CartProvider` に渡しているので、管理画面で価格を直した直後でも見えている数字が
+ * 請求額と食い違わない（data/products.ts を直接読むと古い値が出る）。
  */
-export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canCheckout: boolean }) {
-  const { slugs, open, setOpen, remove, clear } = useCart();
+export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
+  const { pieces, open, setOpen, remove, clear } = useCart();
   const [state, checkout, pending] = useActionState<CheckoutState, FormData>(startCheckout, {});
 
-  const pieces = slugs
-    .map((s) => catalog.find((p) => p.slug === s || p.folder === s))
-    .filter((p): p is Product => Boolean(p));
   const query = pieces.map((p) => p.slug).join(",");
-  const sold = pieces.filter((p) => p.status !== "available");
+  const sold = pieces.filter((p) => !isPurchasable(p));
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
+  useScrollLock(open);
+  useWindowEvent(
+    "keydown",
+    (e) => {
       if (e.key === "Escape") setOpen(false);
-    };
-    document.body.style.overflow = "hidden";
-    stopLenis();
-    window.addEventListener("keydown", onKey);
-    return () => {
-      document.body.style.overflow = "";
-      startLenis();
-      window.removeEventListener("keydown", onKey);
-    };
-  }, [open, setOpen]);
+    },
+    { enabled: open },
+  );
 
   const total = pieces.reduce((sum, p) => sum + p.priceAud, 0);
 
@@ -91,7 +83,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                     className="relative block h-24 w-16 shrink-0"
                   >
                     <Image
-                      src={productCutout(p.slug)}
+                      src={cutoutSrc(p.folder)}
                       alt={p.name}
                       fill
                       sizes="64px"
@@ -110,7 +102,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                     <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-bone/80">
                       {aud.format(p.priceAud)}
                     </p>
-                    {p.status !== "available" ? (
+                    {!isPurchasable(p) ? (
                       <p className="mt-1.5 font-sans text-[11px] tracking-[0.14em] text-clay">
                         No longer available
                       </p>
