@@ -6,13 +6,15 @@
     → public/images/products/<folder>/<n>.webp  ギャラリー（全景・長辺 2000px）
     → public/images/scenes/<name>.webp           着姿・寺（長辺 2400px）
     → public/images/texture/<name>.webp          縁の寄り（掲載と同じ 4:5 で切る）
+    → public/images/stock/<name>.webp            外部の写真（Unsplash。出典は STOCK に）
     → data/image-sizes.json                      public/images 以下の全 webp の寸法
 
 依存: rembg onnxruntime pillow scipy（scripts/prepare-images.py と同じ .venv。モデルは isnet-general-use）
 実行: .venv/bin/python scripts/prepare-photos.py
       .venv/bin/python scripts/prepare-photos.py --only products --product bottle-07
-      .venv/bin/python scripts/prepare-photos.py --only scenes
+      .venv/bin/python scripts/prepare-photos.py --only scenes [--name altar-close]
       .venv/bin/python scripts/prepare-photos.py --only textures
+      .venv/bin/python scripts/prepare-photos.py --only stock   （ネットから取り直す）
 
 **原稿は写真ではなく画面のスクリーンショット**で、上端（横位置）か左端（縦位置）に
 29px / 66px の黒帯が乗っている。そのまま使うと一覧で一枚ずつ黒い線が走るので、
@@ -86,19 +88,20 @@ PRODUCTS: dict[str, dict] = {
 
 # ---- 着姿・寺 -----------------------------------------------------------------
 # サイトが使っている分だけ。0.09.44（bag2 の着姿）と 0.06.20 は作品のギャラリー側にも入っている。
-# 0.10.03（赤いボトルバッグ）・0.13.02/14/28（後ろ手）はどの一本か特定できないので、まだ使っていない。
+# 0.10.03（赤いボトルバッグ）は着姿としてだけ使う（どの一本か特定できないので、作品のギャラリーには入れない）。
+# 顔の写る寄り（0.15.02）は使わない —— Contact に置いたが「顔写真はいらない」（2026-09-25 本人）。
 SCENES = {
     "altar-standing": SS + "0.03.23",   # 本堂の前に三本
-    "altar-lying": SS + "0.03.31",      # 本堂の前に寝かせて三本
+    # 原稿が 90° 倒れている（錦の敷物が左端にある）。起こすと三本が立つ縦位置の寄りになる
+    "altar-close": (SS + "0.03.31", 90),
     "tokonoma": SS + "0.03.01",         # 床の間と像
-    "window-back": SS + "0.03.40",      # 窓辺・後ろ姿（縦）。0.03.41 は同じ画像
-    "window-wide": SS + "0.03.53",      # 窓辺・引き（横）
-    "shoulder": SS + "0.04.01",         # 肩掛けの寄り
     "hall-front": SS + "0.05.43",       # 広間・正面（横）
     "hall-portrait": SS + "0.06.20",    # 広間・正面（縦）
+    "tote-portrait": SS + "0.09.44",    # 籠（Kago）を持った着姿（縦）
+    "red-bottle": SS + "0.10.03",       # 赤いボトルバッグを持った着姿（縦）。どの一本かは未確認
     "laugh": SS + "0.10.58",
     "hands-front": SS + "0.12.55",      # 手元（縦）
-    "smile-window": SS + "0.15.02",
+    "hands-behind": SS + "0.13.02",     # 後ろ手にボトルバッグ（顔は写らない）。Contact
 }
 
 # ---- 縁の寄り（読み込み後＝黒帯を落とした原稿に対する box）---------------------------
@@ -106,6 +109,37 @@ SCENES = {
 TEXTURES = {
     "weave-moegi": ("バンブー中5", (600, 1180, 1280, 2030)),
 }
+
+# ---- 外部の写真 --------------------------------------------------------------------
+# 寺では撮っていない写真（「畳とは何か」の二枚と、About の富士山）。**Unsplash License**（商用可・表記任意・
+# 加工せずに単体で売るのは不可）。作品の写真には使わない —— 作品と寺の写真は全部カメラマン撮影。
+# name, url, width（取りに行く幅）, crop（取った画像に対する割合の box・任意）, credit, page
+STOCK = [
+    {
+        "name": "tatami-room",
+        "url": "https://images.unsplash.com/photo-1764445274404-f2e14fd3f20c",
+        "width": 2400,
+        "credit": "Yosuke Ota — Hamarikyu Gardens, Tokyo",
+        "page": "https://unsplash.com/photos/TeNtfZuCWe8",
+    },
+    {
+        # 上 3 割は暗い戸口。畳表・縁・敷居・差し込む光だけを 4:5 で（home の掲載比率）
+        "name": "tatami-edge",
+        "url": "https://images.unsplash.com/photo-1745813083465-c753b40e6bd4",
+        "width": 3600,
+        "crop": (0.30, 0.34, 0.652, 1.0),
+        "credit": "Fumiaki Hayashi — Machida, Tokyo",
+        "page": "https://unsplash.com/photos/iWHp2H_zRLg",
+    },
+    {
+        # About の「場所」。富士市から撮った昼の一枚もあったが、青空が黒い地の上で浮くので夕暮れを
+        "name": "fuji-dusk",
+        "url": "https://images.unsplash.com/photo-1747164596391-fbb405d37699",
+        "width": 2800,
+        "credit": "alina ozerova — Fujinomiya, Shizuoka",
+        "page": "https://unsplash.com/photos/D4243Gz7ZuQ",
+    },
+]
 
 # stand（4:5）の中で作品が占める割合。横位置の原稿は作品が縦の 77–91% に写っているので、
 # その下限に揃える（これより小さくすると、横位置の原稿からは切り出せない）。
@@ -237,14 +271,34 @@ def run_products(only: str | None) -> None:
         print(f"  galleryCount: {1 + len(spec['gallery'])}")
 
 
-def run_scenes() -> None:
-    for name, src in SCENES.items():
-        save_webp(fit(load(src), 2400), OUT / "scenes" / f"{name}.webp", quality=80)
+def run_scenes(only: str | None = None) -> None:
+    for name, spec in SCENES.items():
+        if only and name != only:
+            continue
+        src, rotate = spec if isinstance(spec, tuple) else (spec, 0)
+        save_webp(fit(load(src, rotate), 2400), OUT / "scenes" / f"{name}.webp", quality=80)
 
 
 def run_textures() -> None:
     for name, (src, box) in TEXTURES.items():
         save_webp(load(src).crop(box), OUT / "texture" / f"{name}.webp", quality=84)
+
+
+def run_stock() -> None:
+    import io
+    import urllib.request
+
+    for spec in STOCK:
+        url = f"{spec['url']}?w={spec['width']}&q=90&fm=jpg"
+        req = urllib.request.Request(url, headers={"User-Agent": "miroku-prepare"})
+        with urllib.request.urlopen(req, timeout=60) as res:
+            im = Image.open(io.BytesIO(res.read())).convert("RGB")
+        if "crop" in spec:
+            W, H = im.size
+            l, t, r, b = spec["crop"]
+            im = im.crop((round(l * W), round(t * H), round(r * W), round(b * H)))
+        save_webp(fit(im, 2400), OUT / "stock" / f"{spec['name']}.webp", quality=82)
+        print(f"    {spec['credit']} · {spec['page']}")
 
 
 def write_sizes() -> None:
@@ -267,15 +321,17 @@ def write_sizes() -> None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--only", choices=["products", "scenes", "textures"])
-    ap.add_argument("--product")
+    ap.add_argument("--only", choices=["products", "scenes", "textures", "stock"])
+    ap.add_argument("--product", "--name", dest="product", help="一点だけ（作品の folder / 情景の名前）")
     args = ap.parse_args()
     if args.only in (None, "products"):
         run_products(args.product)
     if args.only in (None, "scenes"):
-        run_scenes()
+        run_scenes(args.product if args.only == "scenes" else None)
     if args.only in (None, "textures"):
         run_textures()
+    if args.only == "stock":
+        run_stock()
     write_sizes()
 
 

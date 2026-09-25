@@ -273,16 +273,15 @@ body {
   color: var(--color-mist);
 }
 
-/* 引用は罫ではなく、大きさと余白で立てる */
+/* 引用は罫ではなく、大きさと余白で立てる。斜体にもしない（2026-09-25・DESIGN.md の Typography） */
 .blog-prose blockquote {
-  max-width: 24ch;
+  max-width: 26ch;
   margin-top: 2.4em;
   margin-bottom: 2.4em;
   font-family: var(--font-display);
-  font-size: clamp(22px, 2.6vw, 30px);
-  font-style: italic;
+  font-size: clamp(22px, 2.4vw, 28px);
   font-weight: 300;
-  line-height: 1.35;
+  line-height: 1.42;
   color: var(--color-ivory);
 }
 

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
+import { SHELL } from "@/components/site/Shell";
 import { faq, founder } from "@/data/site";
 
 export const metadata: Metadata = {
@@ -71,7 +72,7 @@ export default function AboutPage() {
             <dl className="mt-6 border-t border-line">
               {founder.timeline.map((t) => (
                 <div key={t.years} className="grid gap-x-8 gap-y-2 border-b border-line py-6 sm:grid-cols-[88px_1fr]">
-                  <dt className="font-display text-[16px] italic leading-[1.6] text-moss">{t.years}</dt>
+                  <dt className="font-display text-[16px] tabular-nums leading-[1.6] text-moss">{t.years}</dt>
                   <dd className="max-w-[54ch] font-sans text-[14px] leading-[1.85] text-bone/90">{t.en}</dd>
                 </div>
               ))}
@@ -130,26 +131,22 @@ export default function AboutPage() {
         </Reveal>
       </section>
 
-      <section className="mx-auto mt-16 grid w-full max-w-[1480px] grid-cols-2 gap-4 px-5 md:grid-cols-12 md:gap-5 md:px-8 lg:px-12">
-        <Reveal className="md:col-span-6">
-          <Frame
-            src="/images/scenes/shoulder.webp"
-            alt="The Hishi handbag carried on the shoulder, over a cream kimono"
-            role="lifestyle"
-            ratio="1/1"
-            crop="object-cover object-[42%_60%]"
-            sizes="(min-width: 768px) 48vw, 50vw"
-          />
-        </Reveal>
-        <Reveal delay={80} className="md:col-span-6">
-          <Frame
-            src="/images/scenes/fuji.webp"
-            alt="Mount Fuji from Fuji City"
-            role="lifestyle"
-            ratio="1/1"
-            sizes="(min-width: 768px) 48vw, 50vw"
-          />
-        </Reveal>
+      {/*
+        場所。富士山を版面いっぱいの横長一枚で置く。以前は作品の寄りと iPhone の富士山（鉄塔入り）を
+        正方形で二枚並べていて、二枚が互いに何も言っていなかった（2026-09-25）。
+        写真は Unsplash（富士宮から・夕暮れ）—— 手前の稜線が暗く沈むので、黒い地にそのまま溶ける。
+        スマホで 21:9 にすると高さ 160px の帯になって山が小さいので、3:2 に起こす。
+      */}
+      <section className={`${SHELL} mt-20 md:mt-28`}>
+        <Frame
+          src="/images/stock/fuji-dusk.webp"
+          alt="Mount Fuji at dusk, seen from Fujinomiya, Shizuoka"
+          role="lifestyle"
+          ratio="16/9"
+          wellClass="aspect-[3/2] md:aspect-[21/9]"
+          crop="object-cover object-[50%_42%]"
+          sizes="(min-width: 1480px) 1384px, 100vw"
+        />
       </section>
 
       <section className="mx-auto w-full max-w-[1480px] px-5 py-24 md:px-8 md:py-32 lg:px-12">
@@ -166,7 +163,12 @@ export default function AboutPage() {
           </Reveal>
           <Reveal delay={90} className="md:col-span-6 md:col-start-7">
             <p className="max-w-[56ch] font-sans text-[16px] leading-[1.9] text-bone">{founder.handmade.en}</p>
-            <p className="mt-12 max-w-[30ch] font-display text-[clamp(24px,2.8vw,32px)] font-light italic leading-[1.35] text-ivory">
+            {/*
+              創業者の言葉。斜体にしない（2026-09-25）—— 細いイタリックは「高級そうに見せる書体」の
+              定番で、ここだけ別の人の声のように浮いていた。見出しと同じ立体の Newsreader で、
+              大きさと余白だけで引用として立てる。
+            */}
+            <p className="mt-12 max-w-[32ch] font-display text-[clamp(22px,2.4vw,30px)] font-light leading-[1.45] tracking-[-0.005em] text-ivory">
               {founder.message.en}
             </p>
             <p className="mt-6 font-sans text-[13px] text-mist">— {founder.name}</p>

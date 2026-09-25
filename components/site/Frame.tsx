@@ -11,7 +11,7 @@ export type ImageRole =
   | "lifestyle"
   | "blog";
 
-export type ImageRatio = "16/10" | "4/3" | "3/4" | "4/5" | "1/1" | "16/9" | "5/4";
+export type ImageRatio = "16/10" | "3/2" | "4/3" | "3/4" | "4/5" | "1/1" | "16/9" | "5/4";
 
 const ROLE_LABEL: Record<ImageRole, string> = {
   "hero-campaign": "Hero campaign",
@@ -25,6 +25,7 @@ const ROLE_LABEL: Record<ImageRole, string> = {
 
 const RATIO: Record<ImageRatio, string> = {
   "16/10": "aspect-[16/10]",
+  "3/2": "aspect-[3/2]",
   "4/3": "aspect-[4/3]",
   "3/4": "aspect-[3/4]",
   "4/5": "aspect-[4/5]",
@@ -109,7 +110,7 @@ export function Frame({
         ) : (
           <div className="absolute inset-0 flex flex-col items-start justify-end bg-sumi p-6 ring-1 ring-inset ring-line">
             <p className="font-sans text-[9px] uppercase tracking-[0.28em] text-mist">{ROLE_LABEL[role]}</p>
-            <p className="mt-2 font-display text-[22px] font-light italic text-bone/50">{ratio.replace("/", "∶")}</p>
+            <p className="mt-2 font-display text-[22px] font-light text-bone/50">{ratio.replace("/", "∶")}</p>
           </div>
         )}
       </ImageWell>

@@ -4,6 +4,7 @@ import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { LINE_BLURB, LINE_LABEL, LINE_ORDER, LINE_RATIO } from "@/data/products";
 import { getCatalog } from "@/lib/catalog";
+import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
   title: "Collection",
@@ -43,17 +44,28 @@ export default async function CollectionPage() {
         {/*
           区分の索引。絞り込みのボタンではなく、下の節への目次 —— 二十六点を一枚の格子に
           流すと、ボトルバッグの列の途中にエプロンが混ざって何の一覧か分からなくなる。
+          版面の幅を五等分した帯にする。以前は文字を並べて高さだけ min-h で取っていたので、
+          文字が上の罫に寄り、下に 30px の空きが残っていた（2026-09-25）。上下の余白を同じにし、
+          区切りは縦の罫で言う。数は右端に二桁で —— 見出しと同じ Newsreader に数の sans を添える。
+          スマホは横に送る（五つを縦に積むと、一覧に届く前に一画面が目次で埋まる）。
         */}
         <nav aria-label="Lines" className="mt-12 border-y border-line md:mt-16">
-          <ul className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden">
+          <ul className="-mx-4 flex overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:px-0 md:grid md:grid-cols-5 md:overflow-visible [&::-webkit-scrollbar]:hidden">
             {groups.map(({ line, items }) => (
-              <li key={line} className="shrink-0">
+              <li
+                key={line}
+                className="shrink-0 border-l border-line pl-5 pr-8 first:border-l-0 first:pl-0 md:pr-5"
+              >
                 <a
                   href={`#${line}`}
-                  className="flex min-h-12 items-baseline gap-2 pr-7 font-sans text-[14px] text-bone no-underline transition-colors hover:text-ivory md:pr-10"
+                  className="group flex items-baseline justify-between gap-6 py-5 no-underline"
                 >
-                  {LINE_LABEL[line].plural}
-                  <span className="text-[12px] tabular-nums text-mist">{items.length}</span>
+                  <span className="font-display text-[19px] font-light leading-none text-bone transition-colors group-hover:text-ivory">
+                    {LINE_LABEL[line].plural}
+                  </span>
+                  <span className="font-sans text-[12px] leading-none tabular-nums text-mist transition-colors group-hover:text-ivory">
+                    {twoDigits(items.length)}
+                  </span>
                 </a>
               </li>
             ))}

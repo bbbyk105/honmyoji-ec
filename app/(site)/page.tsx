@@ -33,7 +33,7 @@ import { founder } from "@/data/site";
 const CHAPTERS: Chapter[] = [
   { id: "ch-opening", label: "Opening" },
   { id: "ch-pieces", label: "Pieces" },
-  { id: "ch-material", label: "Material" },
+  { id: "ch-tatami", label: "Tatami" },
   { id: "ch-worn", label: "Worn" },
   { id: "ch-lines", label: "Lines" },
   { id: "ch-making", label: "Making" },
@@ -59,7 +59,7 @@ export default async function HomePage() {
   const featured = FEATURED.map((f) => catalog.find((p) => p.folder === f)).filter((p) => p !== undefined);
 
   const recentNotes = (await getBlogPosts()).slice(0, 3);
-  /* Material セクションの導線。slug は焼き込まない（`blogHref` の註を読む）。 */
+  /* Tatami セクションの導線（素材の記事）。slug は焼き込まない（`blogHref` の註を読む）。 */
   const materialHref = await blogHref("the-edge-that-remains", "Materials");
 
   return (
@@ -103,44 +103,92 @@ export default async function HomePage() {
           </div>
         </section>
 
-        {/* 3. Material essay */}
-        <section id="ch-material" className="pt-28 md:pt-40">
-          <div className={`${SHELL} grid gap-12 md:grid-cols-12 md:items-start md:gap-8`}>
-            <Reveal className="md:col-span-5 md:sticky md:top-28">
-              <h2
-                data-split-lines
-                className="font-display text-[clamp(34px,4vw,56px)] font-light leading-[1.06] text-ivory"
-              >
-                The edge of
-                <br />
-                a tatami room.
-              </h2>
-            </Reveal>
-            <div className="md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8">
-              <Reveal>
-                {/* 原稿は 680×850。版面いっぱいに引き伸ばさず、原寸に近い倍率で置く。 */}
+        {/*
+          3. Tatami — 畳とは何か。海外の人は畳の部屋を知らないことが多く、「畳の縁」と言われても
+          それがどこの何なのか分からない。部屋 → 縁 → バッグの順で、一節で分かるようにする
+          （2026-09-25、織りの寄りだけを置いていた「The edge of a tatami room」から差し替え）。
+          写真二枚は Unsplash（scripts/prepare-photos.py の STOCK）—— 寺の写真ではないので、
+          alt でも本文でも本妙寺とは言わない。
+        */}
+        <section id="ch-tatami" className="pt-28 md:pt-40">
+          <div className={SHELL}>
+            <div className="grid gap-10 md:grid-cols-12 md:items-end md:gap-8">
+              <Reveal className="md:col-span-5">
+                <h2
+                  data-split-lines
+                  className="font-display text-[clamp(34px,4vw,56px)] font-light leading-[1.06] text-ivory"
+                >
+                  A floor of woven rush, edged in cloth.
+                </h2>
+                <p className="mt-8 max-w-[44ch] font-sans text-[15.5px] leading-[1.9] text-bone">
+                  Tatami are the mats that make the floor of a traditional Japanese room — laid edge to
+                  edge, so closely that the room is measured in them: a six-mat room, an eight-mat room.
+                  The dark lines you see running across the floor are their edges.
+                </p>
+              </Reveal>
+              <div className="md:col-span-7">
                 <Frame
-                  src="/images/texture/weave-moegi.webp"
-                  alt="Close view of green and gold tatami-beri woven over dark paper band"
+                  src="/images/stock/tatami-room.webp"
+                  alt="A large tatami room with shoji screens, the dark edging of each mat drawing lines across the floor"
+                  role="lifestyle"
+                  ratio="3/2"
+                  from="right"
+                  sizes="(min-width: 768px) 56vw, 100vw"
+                />
+              </div>
+            </div>
+
+            <div className="mt-16 grid gap-10 md:mt-24 md:grid-cols-12 md:gap-8">
+              <div className="md:col-span-5">
+                <Frame
+                  src="/images/stock/tatami-edge.webp"
+                  alt="Low light across a tatami floor, where the woven rush meets its cloth edging"
                   role="material-macro"
                   ratio="4/5"
-                  from="right"
-                  className="max-w-[420px]"
-                  sizes="(min-width: 768px) 420px, 100vw"
+                  from="left"
+                  sizes="(min-width: 768px) 40vw, 100vw"
                 />
-              </Reveal>
-              <Reveal delay={80} className="mt-10 max-w-[46ch] space-y-5 font-sans text-[15.5px] leading-[1.9] text-bone">
-                <p>
-                  Tatami-beri is the woven band sewn along the long sides of a tatami mat — brocade,
-                  chosen room by room. When a floor is remade, the bands are cut away. The bags here
-                  are made from those remnants, woven onto paper band recycled in Fuji City.
-                </p>
-                <p>
-                  The character <span className="font-jp text-ivory">縁</span> is also read{" "}
-                  <em className="font-display text-[18px] italic">en</em>: a meeting. Each bag begins
-                  there — leftover cloth, a city&apos;s recycled paper, a pair of hands at the temple.
-                </p>
-                <Button href={materialHref} variant="link">
+              </div>
+              {/* 三つの言葉を定義の表で。カードを三つ横に並べる（DESIGN.md が捨てた 3-up）にはしない。 */}
+              <Reveal delay={80} className="flex flex-col justify-center md:col-span-6 md:col-start-7">
+                <dl className="divide-y divide-line border-y border-line">
+                  <div className="grid gap-3 py-7 sm:grid-cols-[180px_1fr] sm:gap-8">
+                    <dt className="font-display text-[24px] font-light leading-none text-ivory">
+                      Tatami
+                      <span lang="ja" className="ml-2 font-jp text-[12px] tracking-[0.12em] text-mist">畳</span>
+                    </dt>
+                    <dd className="max-w-[46ch] font-sans text-[15px] leading-[1.85] text-bone">
+                      A mat of woven igusa rush over a thick core, roughly 90 by 180 centimetres. Soft
+                      underfoot, it smells of cut grass when new and turns from green to gold as it ages.
+                    </dd>
+                  </div>
+                  <div className="grid gap-3 py-7 sm:grid-cols-[180px_1fr] sm:gap-8">
+                    <dt className="font-display text-[24px] font-light leading-none text-ivory">
+                      Tatami-beri
+                      <span lang="ja" className="ml-2 font-jp text-[12px] tracking-[0.12em] text-mist">畳縁</span>
+                    </dt>
+                    <dd className="max-w-[46ch] font-sans text-[15px] leading-[1.85] text-bone">
+                      The band of woven cloth sewn along the two long sides of each mat. It protects the
+                      rush and draws the lines of the room — often plain in a house, brocade with crests and
+                      gold thread in a temple hall.
+                    </dd>
+                  </div>
+                  <div className="grid gap-3 py-7 sm:grid-cols-[180px_1fr] sm:gap-8">
+                    <dt className="font-display text-[24px] font-light leading-none text-ivory">The bags</dt>
+                    <dd className="max-w-[46ch] space-y-4 font-sans text-[15px] leading-[1.85] text-bone">
+                      <p>
+                        Every time a room is laid, the tatami maker is left with offcuts of edging too short
+                        to use. Those remnants are what MIROKU is made from — woven onto paper band recycled
+                        in Fuji City.
+                      </p>
+                      <p>
+                        The character <span lang="ja" className="font-jp text-ivory">縁</span> is also read{" "}
+                        <em className="font-display text-[17px] not-italic text-ivory">en</em>: a meeting.
+                      </p>
+                    </dd>
+                  </div>
+                </dl>
+                <Button href={materialHref} variant="link" className="mt-8 w-fit">
                   Read the material note
                 </Button>
               </Reveal>
@@ -157,7 +205,10 @@ export default async function HomePage() {
         <section id="ch-worn" className={`${SHELL} pt-4 md:pt-8`}>
           {/*
             A: 横長の一枚と文章を、同じ天から始める。
-            B: 縦位置を二枚、同じ高さで左右の端に揃える。互いに向き合って開く。
+            B: 着姿の縦位置を三枚、版面の 12 段に 4 段ずつ —— 左右の端と段の罫が全部揃う。
+               以前は二枚を左右の端に 5 段ずつ置いて真ん中に 2 段の穴を空けていた。揃ってもいないし、
+               意図した空白にも見えなかった（2026-09-25）。どの一枚もバッグが丸ごと写っているものだけ。
+               撮ったままの 2:3 に近い比率で置くので、顔も手元のバッグも切れない。
           */}
           <div className="grid gap-8 md:grid-cols-12 md:gap-10">
             <div className="md:col-span-7 lg:col-span-8">
@@ -178,8 +229,8 @@ export default async function HomePage() {
                 Made to be carried, and made to go with kimono.
               </h2>
               <p className="mt-6 max-w-[44ch] font-sans text-[15px] leading-[1.85] text-bone">
-                Every photograph here was taken at Honmyoji — the hall, the windows, the wooden floor
-                the bags were made on. Nothing was shot in a studio.
+                Every photograph of the bags was taken at Honmyoji — the hall, the windows, the wooden
+                floor they were made on. None was shot in a studio.
               </p>
               <Button href="/collection" variant="outline" className="mt-8 w-fit">
                 The collection
@@ -187,32 +238,37 @@ export default async function HomePage() {
             </Reveal>
           </div>
 
-          <div className="mt-8 grid grid-cols-2 gap-4 sm:gap-6 md:mt-10 md:grid-cols-12 md:gap-10">
-            <div className="md:col-span-5">
-              <Frame
-                src="/images/scenes/window-back.webp"
-                alt="From behind, at the window, the Hishi handbag at the hip"
-                role="lifestyle"
-                ratio="4/5"
-                from="left"
-                crop="object-cover object-[50%_40%]"
-                wellClass="aspect-[4/5] md:aspect-auto md:h-[clamp(440px,44vw,700px)]"
-                sizes="(min-width: 768px) 40vw, 50vw"
-              />
-            </div>
-            <div className="md:col-span-5 md:col-start-8">
-              <Frame
-                src="/images/scenes/laugh.webp"
-                alt="Laughing, a tall bottle bag held at the waist"
-                role="lifestyle"
-                ratio="4/5"
-                from="right"
-                revealDelay={120}
-                crop="object-cover object-[50%_40%]"
-                wellClass="aspect-[4/5] md:aspect-auto md:h-[clamp(440px,44vw,700px)]"
-                sizes="(min-width: 768px) 40vw, 50vw"
-              />
-            </div>
+          <div className="mt-8 grid grid-cols-3 gap-2 sm:gap-4 md:mt-10 md:grid-cols-12 md:gap-10">
+            {[
+              {
+                src: "/images/scenes/laugh.webp",
+                alt: "Laughing, a tall bottle bag of green and sky-blue tatami-beri held at the waist",
+                from: "left" as const,
+              },
+              {
+                src: "/images/scenes/red-bottle.webp",
+                alt: "A red tatami-beri bottle bag held in both hands against a cream kimono",
+                from: "bottom" as const,
+              },
+              {
+                src: "/images/scenes/tote-portrait.webp",
+                alt: "At the window with the Kago basket bag in hand",
+                from: "right" as const,
+              },
+            ].map((shot, i) => (
+              <div key={shot.src} className="md:col-span-4">
+                <Frame
+                  src={shot.src}
+                  alt={shot.alt}
+                  role="lifestyle"
+                  ratio="3/4"
+                  wellClass="aspect-[2/3]"
+                  from={shot.from}
+                  revealDelay={i * 110}
+                  sizes="(min-width: 768px) 30vw, 33vw"
+                />
+              </div>
+            ))}
           </div>
         </section>
 
@@ -267,20 +323,24 @@ export default async function HomePage() {
           </ul>
         </section>
 
-        {/* 6. Making */}
+        {/*
+          6. Making — 縦位置の寄り一枚と文章。写真は左端に着け、文章は写真の高さの中央に置く
+          （DESIGN.md: 縦の写真の横に短い文章を置くときは、下に揃えず中央）。
+        */}
         <section id="ch-making" className="pt-28 md:pt-40">
           <div className={`${SHELL} grid gap-10 md:grid-cols-12 md:gap-8`}>
-            <div className="md:col-span-7">
+            <div className="md:col-span-6 lg:col-span-5">
               <Frame
-                src="/images/scenes/altar-standing.webp"
-                alt="Three bottle bags standing before the altar of the main hall"
+                src="/images/scenes/altar-close.webp"
+                alt="Three bottle bags standing on brocade before the altar of the main hall"
                 role="process"
-                ratio="16/10"
+                ratio="4/5"
                 from="left"
-                sizes="(min-width: 768px) 56vw, 100vw"
+                crop="object-cover object-[50%_62%]"
+                sizes="(min-width: 1024px) 40vw, (min-width: 768px) 48vw, 100vw"
               />
             </div>
-            <Reveal delay={100} className="flex flex-col justify-center md:col-span-4 md:col-start-9">
+            <Reveal delay={100} className="flex flex-col justify-center md:col-span-6 md:col-start-7 lg:col-span-5 lg:col-start-8">
               <h2
                 data-split-lines
                 className="font-display text-[clamp(28px,3vw,42px)] font-light leading-[1.1] text-ivory"
@@ -305,7 +365,7 @@ export default async function HomePage() {
         <section id="ch-blog" className={`${SHELL} py-28 md:py-40`}>
           {/*
             一覧は 1040px で読める幅を保つ。版面が 1384px まで開く xl 以上では右に 344px の
-            空白が残るので、見出しを左の段へ出して版面を埋める（Material と同じ組み方）。
+            空白が残るので、見出しを左の段へ出して版面を埋める（Tatami の節と同じく左に見出しの段）。
           */}
           <div className="max-w-[1040px] xl:grid xl:max-w-none xl:grid-cols-12 xl:gap-8">
             <Reveal className="flex items-end justify-between gap-6 xl:col-span-3 xl:flex-col xl:items-start xl:justify-start xl:gap-8">

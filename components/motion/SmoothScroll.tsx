@@ -11,6 +11,7 @@ import "./register";
 
 import { useWindowEvent } from "@/hooks/useWindowEvent";
 import { HEADER_OFFSET, getLenis, setLenis } from "./lenis";
+import { createMomentumGuard } from "./momentum-guard";
 import { prefersReducedMotion } from "./reduced-motion";
 
 /*
@@ -20,6 +21,15 @@ import { prefersReducedMotion } from "./reduced-motion";
 
 /** Set by popstate so back / forward keeps the reader where they left the page. */
 let returningThroughHistory = false;
+
+/** 遷移をまたいで届く慣性を捨てる（理由は `./momentum-guard`）。 */
+const momentum = createMomentumGuard();
+
+function onWheelCapture(event: WheelEvent) {
+  if (!momentum.onWheel()) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+}
 
 function jumpToHash(hash: string): boolean {
   const target = hash.length > 1 ? document.querySelector(hash) : null;
@@ -79,6 +89,11 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   });
 
   useEffect(() => {
+    window.addEventListener("wheel", onWheelCapture, { capture: true, passive: false });
+    return () => window.removeEventListener("wheel", onWheelCapture, { capture: true });
+  }, []);
+
+  useEffect(() => {
     if (!mounted.current) {
       mounted.current = true;
       jumpToHash(window.location.hash);
@@ -88,8 +103,9 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
 
     if (returningThroughHistory) {
       returningThroughHistory = false;
-    } else if (!jumpToHash(window.location.hash)) {
-      jumpToTop();
+    } else {
+      momentum.arm();
+      if (!jumpToHash(window.location.hash)) jumpToTop();
     }
 
     const frame = requestAnimationFrame(() => ScrollTrigger.refresh());

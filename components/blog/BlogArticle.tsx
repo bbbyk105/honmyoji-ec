@@ -82,7 +82,7 @@ export function BlogArticle({ entry, next }: Props) {
         <ArticleToc />
         {entry.pull ? (
           <Reveal>
-            <p className="mb-16 max-w-[28ch] font-display text-[clamp(28px,3.4vw,40px)] font-light italic leading-[1.28] text-ivory md:mb-20">
+            <p className="mb-16 max-w-[28ch] font-display text-[clamp(26px,3vw,36px)] font-light leading-[1.32] text-ivory md:mb-20">
               {entry.pull}
             </p>
           </Reveal>

@@ -74,11 +74,11 @@ export default async function ContactPage({
             </dl>
             <div className="mt-10">
               <Frame
-                src="/images/scenes/smile-window.webp"
-                alt="Smiling at a window of the temple, in a cream kimono"
+                src="/images/scenes/hands-behind.webp"
+                alt="Hands held behind the back, a woven tatami-beri bottle bag hanging from them"
                 role="lifestyle"
                 ratio="4/5"
-                crop="object-cover object-[46%_50%]"
+                crop="object-cover object-[52%_50%]"
                 sizes="(min-width: 768px) 34vw, 100vw"
               />
             </div>

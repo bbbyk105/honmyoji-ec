@@ -13,9 +13,12 @@ type Props = {
  * 第一画面。**写真は写真、文字は文字**（2026-09-25）。
  *
  * 以前は暗い一枚（hero-weave）の左の余白に縦組み・クレジット・見出し・導線・所在地を
- * 刻んでいた。カメラマンの写真は窓の光で明るく、文字を載せると読めない —— 暗幕を敷けば
- * 読めるが、それは DESIGN.md が捨てたグラデーションに戻ることになる。なので写真には何も
- * 載せず、文字は写真の外の黒に置く（展示の図版と、その脇のキャプション板の関係）。
+ * 刻んでいた。いまの一枚は本堂の祭壇の前に三本が立つ写真で、金具・ろうそく・花で画面の
+ * 隅々まで細かく、どこに文字を載せても読めない —— 暗幕を敷けば読めるが、それは DESIGN.md が
+ * 捨てたグラデーションに戻ることになる。なので写真には何も載せず、文字は写真の外の黒に置く
+ * （展示の図版と、その脇のキャプション板の関係）。
+ * 最初は窓辺の着姿（window-wide）を置いたが、人が主役になって作品が小さく、
+ * 「どこにでもある着物の写真」に見えた（2026-09-25 本人判断で差し替え）。
  * 縦組みの一行・小さな大文字のクレジット・`01 — Honmyoji` の足元は外した。どれも
  * 何も言っていないのに、一画面に「飾り」が三つ並んでいた。
  *
@@ -33,25 +36,25 @@ export function HomeHero({ count }: Props) {
       >
         {/*
           lg 以上は右 8 段に写真を画面の高さいっぱい、左 4 段の足元に文字。版面の幅で横長に
-          切ると 2.7:1 になり、人の頭と手元の作品が同時に入らなかった（窓辺の一枚は、頭が上 12%、
-          作品が下 85% にある）。高さを取れば両方が収まる。
-          スマホは 4:5 に立てて、人と作品が収まる右寄りで切る。
+          切ると 2.7:1 になり、持ち手の先か台の錦が切れる。高さを取れば三本が丸ごと収まる。
+          三本は原稿の左寄り（横 18–58%）に立っているので、どの幅でも左へ寄せて切る。
+          タブレット縦（md）は写真に残りの高さを全部渡す —— 3:2 のままだと下に 400px の黒が残った。
         */}
         <figure
           data-image-role="hero-campaign"
           data-image-ratio="3/2"
           data-hero-frame
-          className="relative m-0 aspect-[4/5] w-full overflow-hidden sm:aspect-[3/2] lg:order-2 lg:col-span-8 lg:col-start-5 lg:aspect-auto lg:h-full"
+          className="relative m-0 aspect-[4/5] w-full overflow-hidden sm:aspect-[3/2] md:aspect-auto md:min-h-[360px] md:flex-1 lg:order-2 lg:col-span-8 lg:col-start-5 lg:h-full lg:min-h-0"
         >
           <ImageWell reveal="band" className="absolute inset-0">
             <Image
-              src="/images/scenes/window-wide.webp"
-              alt="A woman in a cream kimono at the temple window, holding the Hishi handbag"
+              src="/images/scenes/altar-standing.webp"
+              alt="Three tatami-beri bottle bags standing on brocade before the altar of the main hall"
               fill
               priority
               fetchPriority="high"
               sizes="(min-width: 1024px) 64vw, 100vw"
-              className="object-cover object-[66%_50%] sm:object-[50%_40%] lg:object-[60%_50%]"
+              className="object-cover object-[40%_50%] sm:object-center md:object-[30%_50%] lg:object-[10%_50%]"
             />
           </ImageWell>
         </figure>
