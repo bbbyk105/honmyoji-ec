@@ -76,7 +76,7 @@ export default async function HomePage() {
   return (
     <>
       <ChapterRail chapters={CHAPTERS} />
-      <HomeHero count={catalog.length} />
+      <HomeHero />
 
       {/*
         ヒーローの上に上がってくる版。ヒーローは sticky で貼り付いたままなので、第一画面が

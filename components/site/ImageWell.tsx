@@ -7,7 +7,7 @@ import { prefersReducedMotion } from "@/components/motion/reduced-motion";
 import { DUR, EASE } from "@/components/motion/tokens";
 import "@/components/motion/register";
 
-export type WellReveal = "wipe" | "band" | "none";
+export type WellReveal = "wipe" | "none";
 
 /**
  * マスクが開く向き。**写真が版面のどの端に着いているかで決める。**
@@ -56,7 +56,9 @@ const LAG: Record<WellFrom, { x?: number; y?: number }> = {
  * 写真の井戸。写真は「フェードイン」ではなく「開く」。
  *
  *  wipe — 端の一つからマスクが開く（向きは `from`）
- *  band — 中央の細い帯が左右へ広がって全面になる（読み込み時。ヒーロー用）
+ *
+ * トップのヒーローの「中央の帯が左右へ開く」はここではなく `HomeHeroMotion` が持つ（2026-09-25）。
+ * 入場の幕が退くのを待ってから、見出しと一続きの timeline で開くため。
  *
  * **像そのものは拡大縮小しない**（2026-09-20）。以前は 1.12 倍から実寸へ寄せていたが、
  * マスクと同時に動かすと一枚の写真に効果が二つ乗り、寄りの動き自体もどこかで見た
@@ -87,17 +89,6 @@ export function ImageWell({
       const mask = el.querySelector<HTMLElement>("[data-well-mask]");
       const shift = el.querySelector<HTMLElement>("[data-well-shift]");
       if (!mask) return;
-
-      if (reveal === "band") {
-        const tl = gsap.timeline();
-        tl.fromTo(
-          mask,
-          { clipPath: "inset(0% 44% 0% 44%)" },
-          { clipPath: "inset(0% 0% 0% 0%)", duration: 1.4, ease: EASE },
-        );
-        /* 像は動かさない。倍率は平行移動が無いので要らない（井戸と同じ 1:1 で開く）。 */
-        return;
-      }
 
       const tl = gsap.timeline({
         delay: delay / 1000,
