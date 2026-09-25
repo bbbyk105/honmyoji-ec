@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
+import { isPurchasable } from "@/data/products";
 import { getPieces, toCents } from "@/lib/catalog";
 import { SHIPPING_AUD, SHIPPING_COUNTRIES, stripe } from "@/lib/stripe";
 
@@ -46,7 +47,8 @@ export async function startCheckout(
 
   // 一点物なので、決済に進む直前にもう一度状態を見る。カートに入れたあとで
   // 別の人が買った、という取り違えがいちばん起きやすい。
-  const unavailable = pieces.filter((p) => p.status !== "available");
+  // 値段の無いものも通さない（管理画面で Available にだけして価格を入れ忘れた、を止める）。
+  const unavailable = pieces.filter((p) => !isPurchasable(p));
   if (unavailable.length > 0) {
     const names = unavailable.map((p) => p.name).join(", ");
     return {
@@ -64,7 +66,7 @@ export async function startCheckout(
         quantity: 1,
         price_data: {
           currency: "aud",
-          unit_amount: toCents(piece.priceAud),
+          unit_amount: toCents(piece.priceAud ?? 0),
           product_data: {
             name: `${piece.name} — ${piece.kanji}`,
             description: piece.note,

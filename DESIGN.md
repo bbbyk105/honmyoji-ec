@@ -15,13 +15,13 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
 
 - **Direction:** Editorial / material-first. A dark room hung with lit objects. Quiet luxury without gold, black marble, or zen cliché.
 - **Decoration:** Intentional and rare. A beri band used as a section edge, thin rules. No cards, icons, glass — no gradients anywhere, and no grain on the ground (see Color).
-- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large Newsreader italic at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
+- **Never the left-bar blockquote** (`border-l` + indent + italic). It is the markdown-renderer default — the single clearest tell that nobody chose it. A pull quote earns its place through scale and air: large upright Newsreader light at the body's own left edge, with room above and below. Panels get a hairline on all four sides, matching the form fields.
 - **Mood:** Warm black room, lit from the front. Colour lives in the cloth — on this ground the weave is the only saturated thing on the page. Type is literary, not “luxury template.”
 - **What we refused:** 3-up feature rows, centered manifesto + CTA stacks, pill buttons, drop shadows, Shopify grids, beige Instagram boutique, startup landing structure.
 
 ## Typography
 
-- **Display:** Newsreader (300 / italic) — optical, editorial, less costume than display Garamonds used on luxury templates.
+- **Display:** Newsreader 300, **upright only** — optical, editorial, less costume than display Garamonds used on luxury templates. The light italic was dropped on 2026-09-25: in pull quotes, headings (“answered.”) and year labels it read as the stock “luxury” voice, and the founder's words set in it sounded like someone else speaking. The italic face stays loaded only so emphasis inside CMS text is not faux-slanted.
 - **UI / body:** Source Sans 3 (300–600) — clear, slightly condensed, bilingual-friendly.
 - **Japanese:** Shippori Mincho — for secondary lines only. Never dump bilingual pairs on every heading.
 - **Scale (approx.):**
@@ -30,7 +30,8 @@ A bag as a **held object** — leftover weave, one meeting, no reprint. The site
   - Section: clamp(32px, 4vw, 52px)
   - Deck: 22–26px Newsreader light
   - Body: 14–17px / 1.85
-  - Meta: 9.5–10.5px uppercase, tracking 0.22–0.28em
+  - Meta: 12.5–13px, **sentence case**, no extra tracking (since 2026-09-25). Uppercase-tracked 9.5px is kept only for the header nav, buttons and the `Sold out` band
+- **No label above a heading.** A tiny uppercase kicker (“ATELIER NOTE”, “EXHIBITION · 2026”) over every heading, plus a letter-spaced Japanese line under it, was the single most template-looking habit on the site. A heading stands on its own; chapter numbers live in `ChapterRail`.
 - **Loading:** `next/font/google`, `display: "swap"`. Shippori `preload: false`.
 
 ## Color
@@ -76,6 +77,8 @@ one black and one hairline — a fade is the one move that reads as a template r
 decision, and it smears the only saturated thing on the page. The hero photograph
 carries no scrim: measured, the type zone is 8.3∶1 against ivory at its brightest 5 %, so legibility is
 bought with type opacity (meta at 75 %, never 55 %) rather than by clouding the picture.
+
+*(The shelf below applied to the cut-out collection, which was retired on 2026-09-25 — pieces are now shown as the photographer shot them. It is kept here because the reasoning still holds for anything that floats.)*
 
 **On black, a shadow is not a ground — so the ground is a line.** A 12 % drop shadow under a cut-out is
 invisible here, and a soft pool of light is just a radial gradient. Every floating piece stands on a
@@ -233,6 +236,8 @@ Do not use grey “image coming soon” boxes.
 
 When new photography arrives: replace `src` only. Keep crop classes (`object-[50%_58%]` etc.) unless the new frame is stronger.
 
+**No captions on photographs** (2026-09-25). Nine-and-a-half-pixel uppercase notes under every picture (“Corridor, Honmyoji”, “Ai · detail”) said nothing and read as generated. `caption` survives only for image descriptions inside Blog articles, set in sentence case like the text around it.
+
 **Crop at the ratio it will be shown at.** A landscape source dropped into a 4∶5 well loses the cropped-away pixels, so the well upscales what remains and the weave goes soft. Cut the master at the display ratio (`scripts/prepare-images.py`) and give the well a `max-w` so it is never asked for more pixels than the master has. Role + ratio live in `data-image-role` / `data-image-ratio`; they are not printed in the caption (`showRole` defaults to off — to a reader they are just internal codes).
 
 ## Commerce behaviour
@@ -251,11 +256,11 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 
 ## Why this is not a template
 
-1. Hero is an inscribed photograph, not left-copy / right-image.
-2. Featured pieces are three cut-out objects on identical plinths sharing one ground line — no photograph backgrounds, no card chrome. The one you point at comes forward.
+1. The hero is one photograph given the full height of the screen, with its words beside it on the black — nothing is printed over the picture.
+2. Featured pieces are photographed on the same floor, before the same shoji, cut to the same height — so four different bags read as one room. No card chrome.
 3. Material is an essay with a sticky title, not icon pillars.
 4. The blog is a publication — one column of meaning, an article set at 980px — not a widget of teaser cards.
-5. Collection is an exhibition — every piece cut out and floated on the same plinth, so nine different objects read as one show, not a merchandising grid of photographs.
+5. Collection is set in sections by kind of work (bottle bags, origami bags, handbags, shoulder bags, aprons), each with one sentence on what it is made of — a catalogue with chapters, not one long grid of 26.
 6. Footer is `onyx` — the base the page stands on, one step deeper than the ground. It is not a slab of
    contrast bolted to the bottom; it is the same room, further from the light.
 
@@ -345,3 +350,11 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-09-20 | 写真一枚に効果を三つ重ねない | 「In place」の一枚が、フェード（`Reveal`）・寄り（`scale 1.12`）・マスクを同時にやっていた。DESIGN.md は最初から「写真は開く、フェードしない」と書いてあったのに、`Reveal` が上から `autoAlpha` を掛けて黙って上書きしていた。井戸を含むブロックは**キャプションだけ**動かす |
 | 2026-09-20 | マスクは写真が着いている端から開く | 左端いっぱいの写真は左から、右端いっぱいの写真は右から。並んだ二枚が**互いに向き合って**開くので、一組の仕掛けに見えない。以前は三枚とも下から同時に開いていた（`revealDelay` でずらすのも併せて） |
 | 2026-09-20 | 像の倍率は動かさない | 1.12 → 1 の寄りは、どこかで見た「写真が寄ってくる演出」そのもの。いま動くのはマスクの端と、それに 4% 遅れて追いつく平行移動だけ。倍率 1.06 は端が欠けないための余白で、固定（クラスではなく effect で置く — 空の井戸と reduced-motion に掛けないため） |
+| 2026-09-25 | Photographer's shoot replaces the iPhone set; cut-outs retired | The collection was cut-outs floated on plinths because the source photos were phone shots against mismatched walls. The new shoot puts every piece on the same floor before the same shoji, so the photograph itself is the plinth. Standing pieces are cut to 4∶5 with the bag at the same height (84 %) and the same ground line (94 %); wide and flat pieces keep the photographer's 3∶2 frame (`LINE_RATIO`). The morph is photo → photo, same image, same ratio |
+| 2026-09-25 | Hero: photograph and words side by side, nothing on the picture | The hero photograph is three bottle bags on brocade before the altar of the main hall — gold fittings, candles and flowers to every edge, so type on it cannot be read without a scrim, and a scrim is a gradient. Cropped to the page width it became 2.7∶1 and lost the handles or the brocade. Full height on the right eight columns keeps all three; the heading sits at the foot of the left four. (A window-lit portrait was tried first and dropped the same day: the person became the subject and the bag a prop — any kimono site could have that picture; only this temple has this altar.) |
+| 2026-09-25 | Kickers, captions and letter-spaced Japanese sublines removed | Counted on the home page: seven headings, seven uppercase labels above them, five Japanese lines under them, six captions under photographs. None carried information the heading or the picture did not already give. `.eyebrow` is now a sentence-case label for tables and forms only |
+| 2026-09-25 | Collection in sections, not filters | With 26 pieces in five kinds, a filter bar over one grid hid what the shop sells. Sections with an index at the top say it in one line; the status filter went because every piece is either coming soon or sold out until prices are set |
+| 2026-09-25 | PDP gallery at the photographs' own ratios | The old gallery forced 4∶5 / 1∶1 / 16∶10 frames, which cut handles and floors off tall shots. Now two columns of native ratios (portrait 5∶8, landscape 8∶5); a single extra photograph is centred rather than left in half a grid |
+| 2026-09-25 | No italic display type | The founder's closing message was set in Newsreader Light Italic — the one face on the page that looked chosen to seem expensive. Pull quotes (About, Blog), the FAQ heading, year labels and numerals are now upright Newsreader light; quotes are carried by size and leading alone |
+| 2026-09-25 | The material section explains tatami before tatami-beri | Most buyers abroad have never stood in a tatami room, so “the edge of a tatami mat” named nothing. The section now goes room → edge → bag: a wide tatami room, a close view of one mat's edging, and three defined terms (Tatami, Tatami-beri, The bags) in a hairline table rather than three cards. The two photographs are Unsplash stock — the only images on the site not shot at Honmyoji, and never used for the work itself |
+

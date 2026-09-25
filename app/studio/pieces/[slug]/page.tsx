@@ -5,7 +5,7 @@ import { notFound } from "next/navigation";
 import { resetPiece } from "@/app/studio/actions";
 import { DbNotice } from "@/components/studio/DbNotice";
 import { STUDIO_HEAD, STUDIO_SHELL } from "@/components/studio/shell";
-import { getProduct, productCutout, aud, cm, STATUS_LABEL } from "@/data/products";
+import { getProduct, priceLabel, productImage, cm, STATUS_LABEL } from "@/data/products";
 import { getOverrides } from "@/lib/catalog";
 import { requireSession } from "@/lib/studio-session";
 import { dbEnabled } from "@/lib/supabase";
@@ -40,11 +40,11 @@ export default async function StudioPiecePage({
           <div className="flex items-end gap-5">
             <div className="relative h-[76px] w-[76px] shrink-0 bg-sumi">
               <Image
-                src={productCutout(base.folder)}
+                src={productImage(base.folder, 1)}
                 alt=""
                 fill
                 sizes="76px"
-                className="object-contain p-2"
+                className="object-cover"
               />
             </div>
             <div>
@@ -81,7 +81,7 @@ export default async function StudioPiecePage({
             <dl className="mt-4 space-y-2.5 font-sans text-[13px] leading-[1.6]">
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">価格</dt>
-                <dd className="tabular-nums text-bone">{aud.format(base.priceAud)}</dd>
+                <dd className="tabular-nums text-bone">{priceLabel(base) ?? "未定"}</dd>
               </div>
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">ステータス</dt>
@@ -90,7 +90,7 @@ export default async function StudioPiecePage({
               <div className="flex justify-between gap-4">
                 <dt className="text-mist">寸法</dt>
                 <dd className="text-right text-bone">
-                  {cm(base.size.width)} × {cm(base.size.height)}
+                  {base.size ? `${cm(base.size.width)} × ${cm(base.size.height)}` : "未計測"}
                 </dd>
               </div>
               <div className="flex justify-between gap-4">

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState } from "react";
-import { cutoutSrc, isPurchasable, productPath, aud } from "@/data/products";
+import { isPurchasable, leadSrc, priceLabel, productPath, aud } from "@/data/products";
 import { startCheckout, type CheckoutState } from "@/app/(site)/checkout/actions";
 import { Button } from "@/components/site/Button";
 import { useScrollLock } from "@/hooks/useScrollLock";
@@ -31,7 +31,7 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
     { enabled: open },
   );
 
-  const total = pieces.reduce((sum, p) => sum + p.priceAud, 0);
+  const total = pieces.reduce((sum, p) => sum + (p.priceAud ?? 0), 0);
 
   return (
     <div
@@ -80,14 +80,14 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                   <Link
                     href={productPath(p)}
                     onClick={() => setOpen(false)}
-                    className="relative block h-24 w-16 shrink-0"
+                    className="relative block h-20 w-16 shrink-0 overflow-hidden bg-sumi"
                   >
                     <Image
-                      src={cutoutSrc(p.folder)}
+                      src={leadSrc(p.folder)}
                       alt={p.name}
                       fill
                       sizes="64px"
-                      className="object-contain object-bottom"
+                      className="object-cover"
                     />
                   </Link>
                   <div className="flex min-w-0 flex-1 flex-col justify-center">
@@ -100,7 +100,7 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                       <span className="ml-2 font-jp text-[11px] tracking-[0.2em] text-mist">{p.kanji}</span>
                     </Link>
                     <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-bone/80">
-                      {aud.format(p.priceAud)}
+                      {priceLabel(p) ?? "Price to come"}
                     </p>
                     {!isPurchasable(p) ? (
                       <p className="mt-1.5 font-sans text-[11px] tracking-[0.14em] text-clay">

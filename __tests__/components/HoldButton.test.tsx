@@ -43,22 +43,22 @@ describe("HoldButton × CartProvider", () => {
   });
 
   it("旧 folder 名で入っているカートも「入っている」と数える", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(["sakura"]));
-    renderCart("sakura-cherry");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(["bottle-01"]));
+    renderCart("tokiwa-evergreen");
 
     expect(screen.getByRole("button").textContent).toContain("In cart — view");
-    expect(screen.getByTestId("peek").textContent).toBe("closed:sakura-cherry");
+    expect(screen.getByTestId("peek").textContent).toBe("closed:tokiwa-evergreen");
 
     // 二度押しても二重に入らない
     act(() => {
       fireEvent.click(screen.getByRole("button"));
     });
-    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]")).toEqual(["sakura"]);
+    expect(JSON.parse(localStorage.getItem(STORAGE_KEY) ?? "[]")).toEqual(["bottle-01"]);
   });
 
   it("カタログから消えた品は pieces に出さない", () => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(["gone", "matsu-pine"]));
-    renderCart("matsu-pine");
-    expect(screen.getByTestId("peek").textContent).toBe("closed:matsu-pine");
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(["gone", "seiji-celadon"]));
+    renderCart("seiji-celadon");
+    expect(screen.getByTestId("peek").textContent).toBe("closed:seiji-celadon");
   });
 });

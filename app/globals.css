@@ -116,12 +116,18 @@ body {
   background-position: center;
 }
 
+/*
+  小さなラベル。2026-09-25 まで 10px・字間 0.28em の大文字で、ほぼ全部の見出しの上に
+  「ATELIER NOTE」「EXHIBITION · 2026」のように乗っていた。何も言っていないラベルが
+  見出しごとに付いているのが、テンプレートで組んだサイトに見える一番の理由だった。
+  見出しの上の飾りとしては使わない。残すのは表の項目名のような「働いているラベル」だけで、
+  それも文と同じ書き方（先頭だけ大文字）にする。
+*/
 .eyebrow {
   font-family: var(--font-sans);
-  font-size: 0.625rem;
-  font-weight: 500;
-  letter-spacing: 0.28em;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 400;
+  letter-spacing: 0.01em;
   color: var(--color-mist);
 }
 
@@ -186,12 +192,9 @@ body {
    ヒーローの地は版と同じ黒（2026-09-20 に段を畳んだ）。覆われる合図は、上がってくる
    面の上辺に引いた罫一本が持つ。
 
-   **写真に暗幕は掛けない。** 以前は左の余白を沈める 100deg のグラデーションと、
-   スマホで上端を地ににじませる継ぎ目を敷いていたが、二つとも外した。原稿を実測すると
-   文字の載る左三分の一は一番明るい画素でも ivory と 4.6:1、95 パーセンタイルなら
-   5.8:1 あり、暗幕が無くても AA を満たす（2026-09-16 計測）。スマホの上端に至っては
-   写真のほうが地より暗い（輝度 12.9 対 23.4）ので、にじませる継ぎ目も要らなかった。
-   読めるようにするぶんは文字の不透明度で払う —— 写真を曇らせて払わない。
+   **写真に暗幕は掛けない。そもそも写真の上に文字を置かない**（2026-09-25）。
+   カメラマンの一枚は窓の光で明るく、文字を載せると読めない。暗幕で読めるようにする
+   代わりに、写真を版面の幅で見せて、文字はその下の黒に置く（`HomeHero` の註）。
    ------------------------------------------------------------------ */
 
 /* ------------------------------------------------------------------
@@ -270,16 +273,15 @@ body {
   color: var(--color-mist);
 }
 
-/* 引用は罫ではなく、大きさと余白で立てる */
+/* 引用は罫ではなく、大きさと余白で立てる。斜体にもしない（2026-09-25・DESIGN.md の Typography） */
 .blog-prose blockquote {
-  max-width: 24ch;
+  max-width: 26ch;
   margin-top: 2.4em;
   margin-bottom: 2.4em;
   font-family: var(--font-display);
-  font-size: clamp(22px, 2.6vw, 30px);
-  font-style: italic;
+  font-size: clamp(22px, 2.4vw, 28px);
   font-weight: 300;
-  line-height: 1.35;
+  line-height: 1.42;
   color: var(--color-ivory);
 }
 
@@ -346,12 +348,12 @@ body {
   background: var(--color-sumi);
 }
 
+/* 写真の説明は文と同じ書き方で。10px・大文字・字間 0.2em の添え書きはやめた（2026-09-25・`Frame` の註）。 */
 .blog-prose figcaption {
   margin-top: -1.6em;
   font-family: var(--font-sans);
-  font-size: 10px;
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
+  font-size: 12.5px;
+  line-height: 1.6;
   color: var(--color-mist);
 }
 
@@ -402,55 +404,6 @@ body {
 .blog-prose pre code {
   background: none;
   padding: 0;
-}
-
-/* Floating objects — collection as exhibition, not catalogue */
-@keyframes bag-enter {
-  0% {
-    opacity: 0;
-    transform: translateY(36px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes bag-drift {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-10px);
-  }
-}
-
-/* 黒地では 12% の影は「無い」のと同じ。落とす先が地より深い色になるよう、
-   純黒を濃く短く二枚。像の裾だけが沈み、台の面は明るいまま残る。 */
-.bag-shadow-owner {
-  filter: drop-shadow(0 26px 24px rgba(0, 0, 0, 0.72))
-    drop-shadow(0 5px 7px rgba(0, 0, 0, 0.55));
-}
-
-.bag-float {
-  animation:
-    bag-enter 1.1s var(--ease-soft) both,
-    bag-drift 8s ease-in-out 1.1s 3;
-  animation-delay: var(--delay, 0ms), calc(1.1s + var(--delay, 0ms));
-  will-change: transform, opacity;
-}
-
-/* 台の大きさは全点そろえてあるので、序列は hover で付ける。
-   原点は接地線（50% 100%）— 中心から拡大すると床にめり込む。 */
-.bag-lift {
-  transform-origin: 50% 100%;
-  transition: transform 0.7s var(--ease-soft);
-}
-
-.group:hover .bag-lift,
-.group:focus-within .bag-lift {
-  transform: translateY(-10px) scale(1.06);
 }
 
 @keyframes hero-settle {
@@ -612,7 +565,6 @@ html[data-morph]::view-transition-new(.page) {
     animation-duration: 0s !important;
     animation-delay: 0s !important;
   }
-  .bag-float,
   .hero-settle {
     animation: none;
     opacity: 1;
@@ -625,13 +577,6 @@ html[data-morph]::view-transition-new(.page) {
   /* 拡大は動きが大きいので落とす。触れたことが分かる分だけ残す */
   .cta-arrow {
     transition: none;
-  }
-  .bag-lift {
-    transition: none;
-  }
-  .group:hover .bag-lift,
-  .group:focus-within .bag-lift {
-    transform: translateY(-4px);
   }
 }
 

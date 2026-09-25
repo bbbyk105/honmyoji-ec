@@ -17,25 +17,20 @@ import { useLightbox, type Shot } from "./Lightbox";
 export function GalleryStrip({ shots, offset = 0 }: { shots: Shot[]; offset?: number }) {
   const { open } = useLightbox();
 
-  // 一枚しかない作品（hisui / ichimatsu / tsugi）でカルーセルにすると、
+  // 一枚しかない作品でカルーセルにすると、
   // 送れない帯と 01 / 01 のカウンタだけが残って壊れて見える。
   if (shots.length < 2) {
     const only = shots[0];
     if (!only) return null;
     return (
-      <figure>
-        <button
-          type="button"
-          onClick={() => open(offset)}
-          aria-label="写真を拡大する"
-          className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-sumi"
-        >
-          <Image src={only.src} alt={only.alt} fill sizes="100vw" className="object-cover" />
-        </button>
-        <figcaption className="mt-3 font-sans text-[9.5px] uppercase tracking-[0.22em] text-mist">
-          {only.caption}
-        </figcaption>
-      </figure>
+      <button
+        type="button"
+        onClick={() => open(offset)}
+        aria-label="写真を拡大する"
+        className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-sumi"
+      >
+        <Image src={only.src} alt={only.alt} fill sizes="100vw" className="object-cover" />
+      </button>
     );
   }
 
@@ -44,7 +39,6 @@ export function GalleryStrip({ shots, offset = 0 }: { shots: Shot[]; offset?: nu
       card={82}
       until="md"
       gap={3}
-      labels={shots.map((s) => s.caption)}
       trackClassName="-mx-5"
     >
       {shots.map((shot, i) => (
@@ -54,7 +48,7 @@ export function GalleryStrip({ shots, offset = 0 }: { shots: Shot[]; offset?: nu
           key={shot.src}
           type="button"
           onClick={() => open(i + offset)}
-          aria-label={`${shot.caption} を拡大する`}
+          aria-label={`${shot.alt} を拡大する`}
           className="relative block aspect-[4/5] w-full cursor-zoom-in overflow-hidden bg-sumi"
         >
           <Image src={shot.src} alt={shot.alt} fill sizes="82vw" className="object-cover" />

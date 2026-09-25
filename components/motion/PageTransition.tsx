@@ -3,6 +3,8 @@
 import { useEffect } from "react";
 import { usePathname } from "next/navigation";
 
+import { installViewTransitionGuard } from "./view-transition-guard";
+
 /**
  * ページの移り変わり。
  *
@@ -20,6 +22,12 @@ import { usePathname } from "next/navigation";
  */
 export function PageTransition() {
   const pathname = usePathname();
+
+  useEffect(() => {
+    /* 裏のタブで飛ばされた遷移をエラーにしない（理由は view-transition-guard.ts）。
+       最初の遷移は hydration の後なので、ここで包めば間に合う。 */
+    installViewTransitionGuard();
+  }, []);
 
   useEffect(() => {
     /*

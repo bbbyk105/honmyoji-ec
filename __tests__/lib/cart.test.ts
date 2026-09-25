@@ -12,14 +12,14 @@ describe("parseCart", () => {
   });
 
   it("文字列以外は落とす", () => {
-    expect(parseCart('["sakura-cherry", 3, null, "ai"]')).toEqual(["sakura-cherry", "ai"]);
+    expect(parseCart('["tokiwa-evergreen", 3, null, "bottle-07"]')).toEqual(["tokiwa-evergreen", "bottle-07"]);
   });
 });
 
 describe("旧 folder 名の扱い", () => {
   it("canonicalSlug は folder 名を slug に揃える", () => {
-    expect(canonicalSlug(catalog, "sakura")).toBe("sakura-cherry");
-    expect(canonicalSlug(catalog, "sakura-cherry")).toBe("sakura-cherry");
+    expect(canonicalSlug(catalog, "bottle-01")).toBe("tokiwa-evergreen");
+    expect(canonicalSlug(catalog, "tokiwa-evergreen")).toBe("tokiwa-evergreen");
   });
 
   it("カタログに無い鍵はそのまま返す", () => {
@@ -27,8 +27,8 @@ describe("旧 folder 名の扱い", () => {
   });
 
   it("samePiece は slug と folder 名を同じ一点とみなす", () => {
-    expect(samePiece(catalog, "sakura", "sakura-cherry")).toBe(true);
-    expect(samePiece(catalog, "sakura", "ai")).toBe(false);
+    expect(samePiece(catalog, "bottle-01", "tokiwa-evergreen")).toBe(true);
+    expect(samePiece(catalog, "bottle-01", "bottle-07")).toBe(false);
     expect(samePiece(catalog, "gone", "gone")).toBe(true);
     expect(samePiece(catalog, "gone", "also-gone")).toBe(false);
   });
@@ -36,21 +36,21 @@ describe("旧 folder 名の扱い", () => {
 
 describe("addPiece / removePiece", () => {
   it("足すときは slug で書く", () => {
-    expect(addPiece([], catalog, "ai")).toEqual(["ai-indigo"]);
+    expect(addPiece([], catalog, "bottle-07")).toEqual(["ai-indigo"]);
   });
 
   it("もう入っていれば null（旧 folder 名で入っていても）", () => {
-    expect(addPiece(["sakura"], catalog, "sakura-cherry")).toBeNull();
-    expect(addPiece(["sakura-cherry"], catalog, "sakura-cherry")).toBeNull();
+    expect(addPiece(["bottle-01"], catalog, "tokiwa-evergreen")).toBeNull();
+    expect(addPiece(["tokiwa-evergreen"], catalog, "tokiwa-evergreen")).toBeNull();
   });
 
   it("外すときは旧 folder 名の行も一緒に外す", () => {
-    expect(removePiece(["sakura", "ai-indigo"], catalog, "sakura-cherry")).toEqual(["ai-indigo"]);
+    expect(removePiece(["bottle-01", "ai-indigo"], catalog, "tokiwa-evergreen")).toEqual(["ai-indigo"]);
   });
 
   it("元の配列は書き換えない", () => {
     const current = ["ai-indigo"];
-    addPiece(current, catalog, "matsu-pine");
+    addPiece(current, catalog, "seiji-celadon");
     removePiece(current, catalog, "ai-indigo");
     expect(current).toEqual(["ai-indigo"]);
   });
@@ -58,7 +58,7 @@ describe("addPiece / removePiece", () => {
 
 describe("resolvePieces", () => {
   it("並び順を保ち、カタログから消えた slug は落とす", () => {
-    const pieces = resolvePieces(catalog, ["matsu", "gone", "sakura-cherry"]);
-    expect(pieces.map((p) => p.slug)).toEqual(["matsu-pine", "sakura-cherry"]);
+    const pieces = resolvePieces(catalog, ["bottle-04", "gone", "tokiwa-evergreen"]);
+    expect(pieces.map((p) => p.slug)).toEqual(["seiji-celadon", "tokiwa-evergreen"]);
   });
 });

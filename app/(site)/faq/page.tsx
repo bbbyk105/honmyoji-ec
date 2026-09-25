@@ -16,11 +16,10 @@ export default function FaqPage() {
       <div className="mx-auto w-full max-w-[1480px] px-4 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
         <div className="grid gap-12 md:grid-cols-[minmax(0,360px)_1fr] md:gap-20">
           <div className="md:sticky md:top-[120px] md:self-start">
-            <p className="eyebrow">FAQ</p>
-            <h1 className="mt-6 font-display text-[clamp(44px,5.6vw,80px)] font-light leading-[0.98] text-ivory">
+            <h1 className="font-display text-[clamp(44px,5.6vw,80px)] font-light leading-[0.98] text-ivory">
               Questions,
               <br />
-              <em className="italic">answered.</em>
+              answered.
             </h1>
             <p className="mt-4 font-jp text-[12px] tracking-[0.34em] text-mist">よくある質問</p>
             <p className="mt-8 max-w-[36ch] font-sans text-[13px] leading-[2] text-bone/80">
@@ -38,7 +37,7 @@ export default function FaqPage() {
               <Reveal key={item.q} as="li" delay={Math.min(i, 6) * 40}>
                 <details className="group">
                   <summary className="flex cursor-pointer list-none items-baseline gap-5 py-7 outline-none focus-visible:ring-2 focus-visible:ring-ivory/25 md:gap-8">
-                    <span className="font-display text-[15px] italic text-mist">
+                    <span className="font-display text-[15px] tabular-nums text-mist">
                       {twoDigits(i + 1)}
                     </span>
                     <span className="flex-1">

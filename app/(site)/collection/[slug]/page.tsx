@@ -4,23 +4,26 @@ import { notFound, redirect } from "next/navigation";
 import { InquiryCta } from "@/components/cart/InquiryCta";
 import { GalleryStrip } from "@/components/collection/GalleryStrip";
 import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
-import { SwipeStrip } from "@/components/site/SwipeStrip";
+import { PieceTile } from "@/components/collection/PieceTile";
 import { ProductHero } from "@/components/collection/ProductHero";
 import { StatusPill } from "@/components/collection/StatusPill";
-import { StillTile } from "@/components/collection/StillTile";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
+import { SHELL } from "@/components/site/Shell";
+import { SwipeStrip } from "@/components/site/SwipeStrip";
+import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
 import { getCatalog, getPiece } from "@/lib/catalog";
 import {
   LINE_LABEL,
+  LINE_RATIO,
   cm,
-  productCutout,
+  isPurchasable,
+  priceLabel,
   productImage,
   productPath,
   products,
-  aud,
   type Product,
 } from "@/data/products";
 
@@ -34,8 +37,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   const { slug } = await params;
   const product = await getPiece(slug);
   if (!product) return {};
+  const price = priceLabel(product);
   return {
-    title: `${product.name} ${product.kanji} — ${aud.format(product.priceAud)}`,
+    title: `${product.name} ${product.kanji}${price ? ` — ${price}` : ""}`,
     description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
     openGraph: { images: [{ url: productImage(product.slug, 1) }] },
   };
@@ -45,11 +49,18 @@ function cta(product: Product) {
   const q = `?product=${product.slug}`;
   switch (product.status) {
     case "available":
-      return {
-        primary: { href: `/contact${q}&subject=reserve`, label: "Reserve this piece" },
-        secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
-        note: "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
-      };
+      /* 管理画面で Available にしても、値段が入っていなければカートには入らない（`isPurchasable`）。 */
+      return isPurchasable(product)
+        ? {
+            primary: { href: `/contact${q}&subject=reserve`, label: "Reserve this piece" },
+            secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
+            note: "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
+          }
+        : {
+            primary: { href: `/contact${q}&subject=question`, label: "Ask about this piece" },
+            secondary: null,
+            note: "The price for this piece is being set. Write to us and we reply with it.",
+          };
     case "reserved":
       return {
         primary: { href: `/contact${q}&subject=waitlist`, label: "Join the waitlist" },
@@ -59,25 +70,23 @@ function cta(product: Product) {
     case "coming_soon":
       return {
         primary: { href: `/contact${q}&subject=notify`, label: "Notify me" },
-        secondary: null,
-        note: "Finished and photographed, but not released yet. Leave us your email and we write the day it goes on sale.",
+        secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
+        note: "Finished and photographed, not yet released. Leave your email and we write the day it goes on sale, with the price.",
       };
     case "made_to_order":
       return {
         primary: { href: `/contact${q}&subject=colour`, label: "Order in another colour" },
         secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
-        note: "The edging in the photograph is finished, but this bag is woven again to order. Tell us the colours you have in mind — we send photographs of the tatami-beri we hold, then a private checkout link.",
+        note: "The piece in the photograph is finished, but this bag is made again to order. Tell us the colours you have in mind — we send photographs of what we hold, then a private checkout link.",
       };
     case "sold_out":
       return {
         primary: { href: `/contact${q}&subject=custom`, label: "A piece in this spirit" },
         secondary: null,
-        note: "This bag has gone, and we will not make it again. We can make you a new one in a similar height, handle and family of colours.",
+        note: "This piece has gone, and it will not be made again. We can make you a new one in a similar size, shape and family of colours.",
       };
   }
 }
-
-const GALLERY_RATIO = ["4/5", "1/1", "16/10", "4/5", "1/1"] as const;
 
 export default async function ProductPage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
@@ -87,37 +96,41 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
 
   const catalog = await getCatalog();
   const index = catalog.findIndex((p) => p.slug === product.slug);
-  const related = catalog.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 3);
+  const prev = catalog[(index - 1 + catalog.length) % catalog.length];
+  const next = catalog[(index + 1) % catalog.length];
+  const related = catalog.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 4);
   /* お手入れの記事へ。記事は microCMS 側で入れ替わるので slug を焼き込まない。 */
   const careHref = await blogHref("holding-the-weave", "Care");
   const action = cta(product);
-  const gallery = Array.from({ length: product.galleryCount }, (_, i) => i + 1);
-  const extras = gallery.slice(1);
-  /* 拡大表示に渡す並び。0 番はヒーローの像、1 番から下のギャラリー。
-     ヒーローも押せば開くので、通し番号は一本にしておく。 */
-  const photos = gallery.map((n) => ({
-    src: productImage(product.slug, n),
-    alt: `${product.name}, view ${n}`,
-    caption: n === 1 ? `${product.name} · still life` : `${product.name} · view ${n}`,
-  }));
-  const shots = [
-    {
-      src: productCutout(product.slug),
-      alt: `${product.name} — ${product.note}`,
-      caption: `${product.name} · ${product.kanji}`,
-    },
-    ...photos,
-  ];
+  const price = priceLabel(product);
+
+  /* 拡大表示の通し番号は一本。0 番がヒーロー（1.webp）、1 番から下のギャラリー。 */
+  const photos = Array.from({ length: product.galleryCount }, (_, i) => {
+    const src = productImage(product.slug, i + 1);
+    return { src, alt: `${product.name}, photograph ${i + 1} of ${product.galleryCount}`, caption: product.name };
+  });
+  const extras = photos.slice(1);
+  const kind = [LINE_LABEL[product.line].en, product.bottleSize].filter(Boolean).join(" · ");
+  const tall = LINE_RATIO[product.line] === "4/5";
 
   return (
-    <LightboxProvider shots={shots}>
+    <LightboxProvider shots={photos}>
       <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
-        <div className="mx-auto grid w-full max-w-[1480px] gap-8 px-4 sm:px-5 md:grid-cols-12 md:gap-10 md:px-8 lg:px-12">
-          <div className="md:col-span-6 lg:sticky lg:top-[80px] lg:self-start">
+        <div className={`${SHELL} grid gap-10 pt-6 md:grid-cols-12 md:gap-10 md:pt-10`}>
+          {/*
+            縦長（4:5）のヒーローは画面の高さで幅が決まる（1440×900 で 617px）ので、7 段に置くと
+            写真と本文の間に 190px の穴が空いた。縦長は写真 6 段・本文 7 段目から、横長（3:2）は
+            写真 7 段・本文 9 段目から —— どちらも写真の右端から本文までがおよそ一段ぶんになる。
+          */}
+          <div className={`md:col-span-7 lg:sticky lg:top-[104px] lg:self-start ${tall ? "lg:col-span-6" : ""}`}>
             <ProductHero product={product} />
           </div>
 
-          <div className="flex flex-col justify-center pb-16 pt-2 md:col-span-5 md:col-start-8 md:py-16">
+          <div
+            className={`flex flex-col pb-4 md:col-span-5 md:py-6 ${
+              tall ? "lg:col-span-6 lg:col-start-7" : "lg:col-span-4 lg:col-start-9"
+            }`}
+          >
             <Button
               href="/collection"
               variant="link"
@@ -127,69 +140,70 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
             >
               Collection
             </Button>
+
             <p
-              className="eyebrow hero-settle mt-8"
+              className="hero-settle mt-10 font-sans text-[13px] text-mist"
               style={{ "--delay": "60ms" } as React.CSSProperties}
             >
-              {LINE_LABEL[product.line].en} · {product.sku}
+              {kind}
             </p>
             <h1
-              className="hero-settle mt-4 font-display text-[clamp(52px,6.4vw,88px)] font-light leading-[0.94] text-ivory"
+              className="hero-settle mt-3 font-display text-[clamp(48px,5.6vw,80px)] font-light leading-[0.94] text-ivory"
               style={{ "--delay": "120ms" } as React.CSSProperties}
             >
               {product.name}
             </h1>
             <p
-              className="hero-settle mt-3 font-jp text-[15px] tracking-[0.32em] text-bone/75"
+              lang="ja"
+              className="hero-settle mt-3 font-jp text-[14px] tracking-[0.2em] text-bone/75"
               style={{ "--delay": "180ms" } as React.CSSProperties}
             >
               {product.kanji}
-              <span className="ml-3 text-[11px] tracking-[0.2em] text-mist">{product.reading}</span>
+              <span className="ml-3 text-[11px] tracking-[0.14em] text-mist">{product.reading}</span>
             </p>
 
             <div
-              className="hero-settle mt-8 flex flex-wrap items-end gap-4"
+              className="hero-settle mt-8 flex items-baseline gap-4 border-t border-line pt-5"
               style={{ "--delay": "240ms" } as React.CSSProperties}
             >
-              <span className="font-display text-[32px] font-light leading-none text-ivory">
-                {aud.format(product.priceAud)}
-              </span>
-              <span className="font-sans text-[10px] uppercase tracking-[0.2em] text-mist">Shipping included</span>
-            </div>
-            <div className="hero-settle mt-3" style={{ "--delay": "260ms" } as React.CSSProperties}>
-              <StatusPill status={product.status} />
+              {price ? (
+                <>
+                  <span className="font-display text-[30px] font-light leading-none text-ivory">{price}</span>
+                  <span className="font-sans text-[12.5px] text-mist">Shipping included</span>
+                </>
+              ) : null}
+              <StatusPill status={product.status} className={price ? "ml-auto" : ""} />
             </div>
 
             <p
-              className="hero-settle mt-8 max-w-[40ch] font-display text-[22px] font-light leading-[1.4] text-ivory"
+              className="hero-settle mt-8 max-w-[34ch] font-display text-[22px] font-light leading-[1.4] text-ivory"
               style={{ "--delay": "300ms" } as React.CSSProperties}
             >
               {product.note}
             </p>
             <p
-              className="hero-settle mt-5 max-w-[46ch] font-sans text-[14px] leading-[1.9] text-bone/85"
+              className="hero-settle mt-5 max-w-[46ch] font-sans text-[14.5px] leading-[1.9] text-bone"
               style={{ "--delay": "340ms" } as React.CSSProperties}
             >
               {product.story}
             </p>
             <p
-              className="hero-settle mt-4 max-w-[46ch] font-jp text-[12.5px] leading-[2] tracking-[0.04em] text-mist"
+              lang="ja"
+              className="hero-settle mt-4 max-w-[30em] font-jp text-[12.5px] leading-[2] text-mist"
               style={{ "--delay": "380ms" } as React.CSSProperties}
             >
               {product.storyJa}
             </p>
 
             <div
-              className="hero-settle mt-10 flex flex-wrap items-center gap-6"
+              className="hero-settle mt-10 flex flex-wrap items-center gap-4"
               style={{ "--delay": "420ms" } as React.CSSProperties}
             >
               <InquiryCta
                 product={product}
                 href={action.primary.href}
                 label={action.primary.label}
-                variant={
-                  product.status === "available" || product.status === "made_to_order" ? "solid" : "outline"
-                }
+                variant={product.status === "sold_out" || product.status === "reserved" ? "outline" : "solid"}
               />
               {action.secondary ? (
                 <Button href={action.secondary.href} variant="outline" arrow={false}>
@@ -198,169 +212,141 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               ) : null}
             </div>
             <p
-              className="hero-settle mt-5 max-w-[46ch] font-sans text-[12px] leading-[1.8] text-mist"
+              className="hero-settle mt-5 max-w-[46ch] font-sans text-[12.5px] leading-[1.8] text-mist"
               style={{ "--delay": "460ms" } as React.CSSProperties}
             >
               {action.note}
             </p>
+
+            {/*
+              仕様は本文と同じ列に。以前は下に四段の「SPECIFICATION」を一行ぶち抜きで組んでいたが、
+              一行 4 項目・各 3 行の表は写真の下で読まれず、見出しの大文字だけが目立っていた。
+            */}
+            <dl
+              className="hero-settle mt-12 divide-y divide-line border-y border-line font-sans text-[13.5px] leading-[1.7]"
+              style={{ "--delay": "500ms" } as React.CSSProperties}
+            >
+              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+                <dt className="text-mist">Size</dt>
+                <dd className="text-bone">
+                  {product.size ? (
+                    <>
+                      <p>W {cm(product.size.width)}</p>
+                      <p>H {cm(product.size.height)}</p>
+                      <p>D {cm(product.size.depth)}</p>
+                      <p>Handle drop {cm(product.size.handleDrop)}</p>
+                    </>
+                  ) : (
+                    <p>
+                      {product.bottleSize ? `${product.bottleSize}. ` : ""}Measured and sent to you before
+                      shipping.
+                    </p>
+                  )}
+                </dd>
+              </div>
+              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+                <dt className="text-mist">Materials</dt>
+                <dd className="space-y-1 text-bone">
+                  {product.materials.map((m) => (
+                    <p key={m}>{m}</p>
+                  ))}
+                </dd>
+              </div>
+              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+                <dt className="text-mist">Made</dt>
+                <dd className="space-y-1 text-bone">
+                  <p>By hand at Honmyoji Temple, Fuji City</p>
+                  {/* 受注生産だけは「二度と作らない」が嘘になる（色を変えて作り直せる） */}
+                  <p>{product.status === "made_to_order" ? "Made to order, no two the same" : "One of a kind, never remade"}</p>
+                </dd>
+              </div>
+              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+                <dt className="text-mist">Care</dt>
+                <dd className="space-y-1 text-bone">
+                  <p>Spot clean only. Dry it standing or hanging.</p>
+                  <Link href={careHref} className="link-line text-ivory">
+                    Care note
+                  </Link>
+                </dd>
+              </div>
+              <div className="grid grid-cols-[96px_1fr] gap-4 py-4">
+                <dt className="text-mist">Ref.</dt>
+                <dd className="font-sans tabular-nums text-bone">{product.sku}</dd>
+              </div>
+            </dl>
           </div>
         </div>
       </section>
 
-      {/* Specs — quiet documentation */}
-      <section className="mx-auto w-full max-w-[1480px] px-5 pt-8 md:px-8 md:pt-12 lg:px-12">
-        <Reveal>
-          <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ivory">Specification</h2>
-          <dl className="mt-8 grid gap-x-12 gap-y-8 border-t border-line pt-8 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <dt className="eyebrow">Measure</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
-                <p>W {cm(product.size.width)}</p>
-                <p>H {cm(product.size.height)}</p>
-                <p>D {cm(product.size.depth)}</p>
-                <p>Handle drop {cm(product.size.handleDrop)}</p>
-              </dd>
-            </div>
-            <div>
-              <dt className="eyebrow">Materials</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
-                {product.materials.map((m) => (
-                  <p key={m}>{m}</p>
-                ))}
-              </dd>
-            </div>
-            <div>
-              <dt className="eyebrow">Origin</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
-                <p>Honmyoji Temple, Fuji City, Japan</p>
-                <p>Weight — {product.weightG ? `${product.weightG} g` : "measured before shipping"}</p>
-                {/* 受注生産の二点だけは「二度と作らない」が嘘になる（色を変えて織り直せる） */}
-                <p>
-                  {product.status === "made_to_order"
-                    ? "Woven to order · no two the same"
-                    : "One of a kind · never remade"}
-                </p>
-              </dd>
-            </div>
-            <div>
-              <dt className="eyebrow">Care</dt>
-              <dd className="mt-3 space-y-1.5 font-sans text-[13px] leading-[1.7] text-bone/85">
-                <p>Spot clean only. Never machine wash.</p>
-                <p>Dry it standing or hanging.</p>
-                <Link href={careHref} className="link-line text-ivory">
-                  Care note
-                </Link>
-              </dd>
-            </div>
-          </dl>
-        </Reveal>
-      </section>
-
-      {/* Image-led documentation */}
-      <section className="mx-auto w-full max-w-[1480px] px-5 pt-16 md:px-8 md:pt-24 lg:px-12">
-        <Reveal className="mb-6 flex items-baseline justify-between gap-4 md:mb-8">
-          <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ivory">
-            {product.name} — views
-          </h2>
-          <span className="shrink-0 font-sans text-[9.5px] uppercase tracking-[0.2em] text-mist">
-            {gallery.length} {gallery.length === 1 ? "view" : "views"}
-            {gallery.length > 1 ? <span className="md:hidden"> · swipe</span> : null}
-          </span>
-        </Reveal>
-
-        {/* 写真はどれも押せば一枚で開く（拡大・掴んで移動）。
-            スマホは横スワイプ、md 以上は編集的なグリッド。 */}
-        <div className="md:hidden">
-          <GalleryStrip shots={photos} offset={1} />
-        </div>
-
-          <div className="hidden gap-5 md:grid md:grid-cols-12">
-            <Reveal className="md:col-span-7">
-              <Zoomable index={1}>
-                <Frame
-                  src={productImage(product.slug, 1)}
-                  alt={`${product.name}, still life`}
-                  role="product-still"
-                  ratio="4/5"
-                  sizes="(min-width: 768px) 55vw, 100vw"
-                />
-              </Zoomable>
-            </Reveal>
-            <div className="grid gap-5 md:col-span-5">
-              {extras.slice(0, 2).map((n, i) => {
-                const ratio = GALLERY_RATIO[n] ?? "4/5";
-                return (
-                  <Reveal key={n} delay={i * 70}>
-                    <Zoomable index={i + 2}>
-                      <Frame
-                        src={productImage(product.slug, n)}
-                        alt={`${product.name}, view ${n}`}
-                        role={i === 0 ? "product-detail" : "lifestyle"}
-                        ratio={ratio}
-                        caption={`${product.name} · ${i === 0 ? "detail" : "in place"}`}
-                        sizes="(min-width: 768px) 38vw, 100vw"
-                      />
-                    </Zoomable>
-                  </Reveal>
-                );
-              })}
-            </div>
-            {extras.slice(2).map((n, i) => (
-              <Reveal key={n} delay={i * 60} className={i === 0 ? "md:col-span-8" : "md:col-span-4"}>
-                <Zoomable index={i + 4}>
-                  <Frame
-                    src={productImage(product.slug, n)}
-                    alt={`${product.name}, view ${n}`}
-                    role="product-detail"
-                    ratio={i === 0 ? "16/10" : "4/5"}
-                    caption={`${product.name} · ${n}`}
-                    sizes={i === 0 ? "(min-width: 768px) 66vw, 100vw" : "(min-width: 768px) 32vw, 100vw"}
-                  />
-                </Zoomable>
-              </Reveal>
-            ))}
+      {extras.length > 0 ? (
+        <section className={`${SHELL} pt-20 md:pt-32`}>
+          {/*
+            スマホは横スワイプ（一画面一枚）。md 以上は**撮ったままの比率**で二段に流す。
+            縦位置（5:8）と横位置（8:5）が混ざるので、決まった比率の枠に押し込むと持ち手か床が
+            切れ、行で組むと縦が一枚余ったときに半分が空く。段組みなら高さの違いを段が吸う。
+            一枚だけのときは段にせず中央に置く（片側だけ埋まった二段は、組み損ねに見える）。
+          */}
+          <div className="md:hidden">
+            <GalleryStrip shots={extras} offset={1} />
           </div>
-      </section>
+          <div className={`hidden md:block ${extras.length > 1 ? "columns-2 gap-6" : ""}`}>
+            {extras.map((shot, i) => {
+              const size = imageSize(shot.src);
+              const wide = size ? size.width > size.height : false;
+              const lone = extras.length === 1 ? (wide ? "mx-auto max-w-[66%]" : "mx-auto max-w-[44%]") : "";
+              return (
+                <div key={shot.src} className={`mb-6 break-inside-avoid ${lone}`}>
+                  <Zoomable index={i + 1}>
+                    <Frame
+                      src={shot.src}
+                      alt={shot.alt}
+                      role={wide ? "lifestyle" : "product-detail"}
+                      ratio={wide ? "16/10" : "4/5"}
+                      aspect={size ? size.width / size.height : undefined}
+                      from={i % 2 === 0 ? "left" : "right"}
+                      revealDelay={i % 2 === 1 ? 110 : 0}
+                      sizes="(min-width: 768px) 46vw, 100vw"
+                    />
+                  </Zoomable>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ) : null}
 
       {related.length > 0 ? (
-        <section className="mx-auto w-full max-w-[1480px] px-5 pt-24 md:px-8 md:pt-32 lg:px-12">
-          <Reveal>
-            <h2 className="font-sans text-[10.5px] uppercase tracking-[0.26em] text-ivory">Alongside</h2>
-            <p className="mt-3 max-w-[40ch] font-display text-[24px] font-light text-ivory">
-              Other pieces from the same table, chosen by hand.
-            </p>
+        <section className={`${SHELL} pt-24 md:pt-36`}>
+          <Reveal className="flex items-baseline justify-between gap-6 border-t border-line pt-6">
+            <h2 className="font-display text-[clamp(26px,2.6vw,34px)] font-light leading-none text-ivory">
+              More {LINE_LABEL[product.line].plural.toLowerCase()}
+            </h2>
+            <Button href={`/collection#${product.line}`} variant="link" className="shrink-0">
+              See all
+            </Button>
           </Reveal>
-          {/* 一点ずつ中央に立てる。snap-start のままだと作品が画面の左に寄り、次の一点が右端で断ち切られた。 */}
           <SwipeStrip
             className="mt-10"
-            trackClassName="-mx-5 sm:mx-0 sm:grid sm:snap-none sm:grid-cols-3 sm:gap-10 sm:overflow-visible"
+            trackClassName={`-mx-4 sm:mx-0 sm:grid sm:snap-none sm:gap-6 sm:overflow-visible md:gap-8 ${
+              LINE_RATIO[product.line] === "4/5" ? "sm:grid-cols-4" : "sm:grid-cols-2 lg:grid-cols-3"
+            }`}
           >
             {related.map((p) => (
-              <StillTile key={p.slug} product={p} ratio="4/5" />
+              <PieceTile key={p.slug} product={p} showNote={false} sizes="(min-width: 640px) 25vw, 80vw" />
             ))}
           </SwipeStrip>
         </section>
       ) : null}
 
-      <nav className="mx-auto mt-20 w-full max-w-[1480px] border-t border-line px-5 md:px-8 lg:px-12">
-        <div className="grid grid-cols-2">
-          <Link
-            href={productPath(catalog[(index - 1 + catalog.length) % catalog.length])}
-            className="group border-r border-line py-10 pr-5 no-underline"
-          >
-            <span className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-mist">Previous</span>
-            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">
-              {catalog[(index - 1 + catalog.length) % catalog.length].name}
-            </span>
+      <nav className={`${SHELL} mt-24`}>
+        <div className="grid grid-cols-2 border-t border-line">
+          <Link href={productPath(prev)} className="group py-10 pr-5 no-underline">
+            <span className="font-sans text-[12.5px] text-mist">← Previous</span>
+            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">{prev.name}</span>
           </Link>
-          <Link
-            href={productPath(catalog[(index + 1) % catalog.length])}
-            className="group py-10 pl-5 text-right no-underline"
-          >
-            <span className="font-sans text-[9.5px] uppercase tracking-[0.24em] text-mist">Next</span>
-            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">
-              {catalog[(index + 1) % catalog.length].name}
-            </span>
+          <Link href={productPath(next)} className="group border-l border-line py-10 pl-5 text-right no-underline">
+            <span className="font-sans text-[12.5px] text-mist">Next →</span>
+            <span className="mt-3 block font-display text-[26px] font-light leading-none text-ivory">{next.name}</span>
           </Link>
         </div>
       </nav>
