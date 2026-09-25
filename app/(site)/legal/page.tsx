@@ -21,8 +21,7 @@ export default function LegalPage() {
   return (
     <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
       <div className="mx-auto w-full max-w-[1100px] px-4 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
-        <p className="eyebrow">Legal</p>
-        <h1 className="mt-6 font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] text-ivory">
+        <h1 className="font-display text-[clamp(40px,5vw,68px)] font-light leading-[1.02] text-ivory">
           Notice under the Act on Specified Commercial Transactions
         </h1>
         <p className="mt-4 font-jp text-[12px] tracking-[0.3em] text-mist">特定商取引法に基づく表記</p>

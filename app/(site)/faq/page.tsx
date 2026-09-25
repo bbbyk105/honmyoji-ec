@@ -15,8 +15,7 @@ export default function FaqPage() {
       <div className="mx-auto w-full max-w-[1480px] px-4 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
         <div className="grid gap-12 md:grid-cols-[minmax(0,360px)_1fr] md:gap-20">
           <div className="md:sticky md:top-[120px] md:self-start">
-            <p className="eyebrow">FAQ</p>
-            <h1 className="mt-6 font-display text-[clamp(44px,5.6vw,80px)] font-light leading-[0.98] text-ivory">
+            <h1 className="font-display text-[clamp(44px,5.6vw,80px)] font-light leading-[0.98] text-ivory">
               Questions,
               <br />
               <em className="italic">answered.</em>

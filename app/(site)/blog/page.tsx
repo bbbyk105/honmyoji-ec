@@ -59,8 +59,7 @@ export default async function BlogIndexPage() {
       <div className="mx-auto w-full max-w-[1480px] px-4 pb-24 pt-12 sm:px-5 sm:pt-14 md:px-8 md:pt-20 lg:px-12">
         <header className="grid gap-8 md:grid-cols-12 md:items-end">
           <div className="md:col-span-7">
-            <p className="eyebrow">Blog</p>
-            <h1 className="mt-5 font-display text-[clamp(40px,11vw,92px)] font-light leading-[0.94] text-ivory">
+            <h1 className="font-display text-[clamp(40px,11vw,92px)] font-light leading-[0.94] text-ivory">
               Notes from
               <br />
               the table.

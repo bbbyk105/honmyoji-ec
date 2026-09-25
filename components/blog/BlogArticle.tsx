@@ -132,7 +132,7 @@ export function BlogArticle({ entry, next }: Props) {
                         className="object-cover"
                       />
                     </div>
-                    <figcaption className="mt-3 font-sans text-[10px] uppercase tracking-[0.2em] text-mist">
+                    <figcaption className="mt-3 font-sans text-[12.5px] leading-[1.6] text-mist">
                       {block.caption}
                     </figcaption>
                   </figure>

@@ -46,7 +46,7 @@ export const metadata: Metadata = {
     description: site.description,
     type: "website",
     locale: "en_US",
-    images: [{ url: "/images/scenes/hero-tatami.webp" }],
+    images: [{ url: "/images/scenes/window-wide.webp" }],
   },
 };
 

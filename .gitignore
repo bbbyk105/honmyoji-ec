@@ -49,3 +49,7 @@ next-env.d.ts
 
 # ヒーローの原稿 PNG（1.9MB）— サイトが読むのは scenes/hero-weave.webp
 /public/images/*.png
+
+# カメラマン撮影の書き出し（PNG・計 500MB 超）— サイトが読むのは scripts/prepare-photos.py の WebP
+/image
+/image/

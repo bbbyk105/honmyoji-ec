@@ -4,7 +4,7 @@ import Link from "next/link";
 import { DbNotice } from "@/components/studio/DbNotice";
 import { PieceStatusSelect } from "@/components/studio/PieceStatusSelect";
 import { STUDIO_HEAD, STUDIO_SHELL } from "@/components/studio/shell";
-import { aud, productCutout } from "@/data/products";
+import { priceLabel, productImage } from "@/data/products";
 import { getCatalog, getOverrides } from "@/lib/catalog";
 import { requireSession } from "@/lib/studio-session";
 import { dbEnabled } from "@/lib/supabase";
@@ -60,11 +60,11 @@ export default async function StudioPiecesPage() {
               >
                 <div className="relative h-13 w-13 bg-sumi">
                   <Image
-                    src={productCutout(piece.folder)}
+                    src={productImage(piece.folder, 1)}
                     alt=""
                     fill
                     sizes="52px"
-                    className="object-contain p-1.5"
+                    className="object-cover"
                   />
                 </div>
 
@@ -91,7 +91,7 @@ export default async function StudioPiecesPage() {
                 </p>
 
                 <p className="col-start-2 font-sans text-[15px] tabular-nums text-ivory md:col-start-auto md:text-right">
-                  {aud.format(piece.priceAud)}
+                  {priceLabel(piece) ?? <span className="text-mist">未定</span>}
                   {override?.price_aud ? (
                     <span
                       aria-hidden

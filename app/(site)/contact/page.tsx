@@ -34,13 +34,11 @@ export default async function ContactPage({
         {/* 表題は面いっぱいに置き、下の二段組（用件・便箋）と競わせない */}
         <header className="grid gap-6 border-b border-line pb-10 md:grid-cols-12 md:items-end md:gap-10 md:pb-12">
           <div className="md:col-span-6">
-            <p className="eyebrow">Contact</p>
-            <h1 className="mt-5 font-display text-[clamp(40px,6vw,76px)] font-light leading-[0.98] text-ivory">
+            <h1 className="font-display text-[clamp(40px,6vw,76px)] font-light leading-[0.98] text-ivory">
               Write to
               <br />
               the table.
             </h1>
-            <p className="mt-4 font-jp text-[12px] tracking-[0.28em] text-mist">お問い合わせ</p>
           </div>
           <p className="max-w-[44ch] font-sans text-[15px] leading-[1.85] text-bone md:col-span-5 md:col-start-8 md:pb-2">
             To reserve a piece, ask about one, or commission a bag — tell us the shape, size, use and
@@ -58,15 +56,15 @@ export default async function ContactPage({
           <aside className="md:col-span-4 md:col-start-1 md:row-start-1">
             <dl className="space-y-6 font-sans text-[14px] leading-[1.8] text-bone">
               <div>
-                <dt className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-mist">Where</dt>
+                <dt className="font-sans text-[13px] text-mist">Where</dt>
                 <dd className="mt-1.5">{site.location}</dd>
               </div>
               <div>
-                <dt className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-mist">Reply</dt>
+                <dt className="font-sans text-[13px] text-mist">Reply</dt>
                 <dd className="mt-1.5">Within a day or two, in English or Japanese.</dd>
               </div>
               <div>
-                <dt className="font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-mist">Or write directly</dt>
+                <dt className="font-sans text-[13px] text-mist">Or write directly</dt>
                 <dd className="mt-1.5">
                   <a href={`mailto:${site.email}`} className="link-line text-ivory">
                     {site.email}
@@ -76,11 +74,11 @@ export default async function ContactPage({
             </dl>
             <div className="mt-10">
               <Frame
-                src="/images/scenes/sakura-branch.webp"
-                alt="Cherry branches at the temple entrance"
+                src="/images/scenes/smile-window.webp"
+                alt="Smiling at a window of the temple, in a cream kimono"
                 role="lifestyle"
-                ratio="16/10"
-                caption="Entrance, spring"
+                ratio="4/5"
+                crop="object-cover object-[46%_50%]"
                 sizes="(min-width: 768px) 34vw, 100vw"
               />
             </div>

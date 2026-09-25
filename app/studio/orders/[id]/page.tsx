@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { ORDER_STATUS_COLOR, ORDER_STATUS_LABEL } from "@/app/studio/options";
 import { STUDIO_HEAD, STUDIO_SHELL } from "@/components/studio/shell";
-import { aud, productCutout } from "@/data/products";
+import { priceLabel, productImage } from "@/data/products";
 import { getPieces } from "@/lib/catalog";
 import { getOrder, orderAmount, orderRef } from "@/lib/orders";
 import { requireSession } from "@/lib/studio-session";
@@ -77,11 +77,11 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
                   <li key={piece.slug} className="flex items-center gap-4">
                     <div className="relative h-11 w-11 shrink-0 bg-sumi">
                       <Image
-                        src={productCutout(piece.folder)}
+                        src={productImage(piece.folder, 1)}
                         alt=""
                         fill
                         sizes="44px"
-                        className="object-contain p-1"
+                        className="object-cover"
                       />
                     </div>
                     <div className="min-w-0">
@@ -94,7 +94,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
                       <p className="font-sans text-[12px] text-mist">{piece.sku}</p>
                     </div>
                     <p className="ml-auto font-sans text-[13px] tabular-nums text-bone">
-                      {aud.format(piece.priceAud)}
+                      {priceLabel(piece) ?? "—"}
                     </p>
                   </li>
                 ))

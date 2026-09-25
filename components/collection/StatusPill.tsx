@@ -6,7 +6,7 @@ const tone: Record<ProductStatus, string> = {
   /*
     完売はいちばん静かな段。地が純黒になって ivory が純白になったので、この一語が
     ページで一番明るいものになり、「買える」より「売り切れ」のほうが目立っていた（2026-09-20）。
-    読み落とされない役目は、像の中央に罫を引く `SoldBand` が既に負っている —— 二度言わない。
+    読み落とされない役目は、写真の中央に罫を引く `SoldBand` が既に負っている —— 二度言わない。
   */
   sold_out: "text-mist",
   coming_soon: "text-indigo",
@@ -14,17 +14,15 @@ const tone: Record<ProductStatus, string> = {
   made_to_order: "text-clay",
 };
 
-/** ラベルだけでは足りないぶんを一言。買える二つの状態にだけ付く。 */
-const suffix: Partial<Record<ProductStatus, string>> = {
-  available: "one of a kind",
-  made_to_order: "in your colours",
-};
-
+/**
+ * 状態の一語。**大文字・字間の広い 9px にしない**（2026-09-25）。どの見出しの上にも
+ * 小さな大文字のラベルが乗っているのが「テンプレートで組んだ」に見える一番の理由だったので、
+ * 状態は文と同じ書き方（先頭だけ大文字）で、色だけで区別する。
+ */
 export function StatusPill({ status, className = "" }: { status: ProductStatus; className?: string }) {
   return (
-    <span className={`font-sans text-[9px] font-medium uppercase tracking-[0.24em] ${tone[status]} ${className}`}>
+    <span className={`font-sans text-[12.5px] leading-none ${tone[status]} ${className}`}>
       {STATUS_LABEL[status].en}
-      {suffix[status] ? <span className="text-mist"> · {suffix[status]}</span> : null}
     </span>
   );
 }

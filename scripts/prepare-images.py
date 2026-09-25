@@ -1,5 +1,11 @@
 """
-写真の下処理パイプライン。
+写真の下処理パイプライン（旧カタログ・iPhone 原本）。
+
+**2026-09-25 から商品と着姿の写真は `scripts/prepare-photos.py`（カメラマン撮影分）が作る。**
+このスクリプトは寺の風景（fuji / water-basin / temple-hall / statue-mono）と縁のテクスチャ
+（BeriBand 用）を作り直すためだけに残してある。PRODUCTS と、旧作品が写っている SCENES
+（bamboo-* / hero-* / kimono-corridor / kimono-window / prayer-altar）はもう公開ページに
+無い —— `--only textures` 以外で回すと、消した写真が戻ってくるので注意。
 
   public/本妙寺*/IMG_xxxx.jpeg (原本・数MB・EXIF回転あり)
     → public/images/products/<slug>/cutout.webp   背景除去した商品カットアウト（一覧の「浮遊」表示用）

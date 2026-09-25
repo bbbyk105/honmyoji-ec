@@ -36,7 +36,11 @@ export function PieceForm({
         <Field
           label="価格（AUD）"
           htmlFor="price_aud"
-          hint={`空欄ならコード側の A$${base.priceAud}`}
+          hint={
+            base.priceAud == null
+              ? "コード側は未定。入れるまでカートに入りません"
+              : `空欄ならコード側の A$${base.priceAud}`
+          }
         >
           <input
             id="price_aud"
@@ -47,7 +51,7 @@ export function PieceForm({
             step={1}
             disabled={disabled}
             defaultValue={override?.price_aud ?? ""}
-            placeholder={String(base.priceAud)}
+            placeholder={base.priceAud == null ? "未定" : String(base.priceAud)}
             className={`${fieldClass} tabular-nums`}
           />
         </Field>

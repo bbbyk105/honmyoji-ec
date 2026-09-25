@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
+import { useRef, type CSSProperties, type ReactNode } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import "@/components/motion/register";
@@ -16,6 +16,8 @@ export type WellFrom = "bottom" | "left" | "right" | "top";
 
 type Props = {
   className?: string;
+  /** 比率を数値で渡すとき（撮ったままの比率で置くギャラリー）。クラスで書けない値だけに使う。 */
+  style?: CSSProperties;
   /** マスクの中に入る本体（写真）。ここだけが開く。 */
   children: ReactNode;
   /** 見出しやグラデーションなど、マスクの外に置く重ね物。開いている間も動かない。 */
@@ -65,6 +67,7 @@ const LAG: Record<WellFrom, { x?: number; y?: number }> = {
  */
 export function ImageWell({
   className = "",
+  style,
   children,
   overlay,
   reveal = "wipe",
@@ -118,7 +121,7 @@ export function ImageWell({
   );
 
   return (
-    <div ref={root} className={className}>
+    <div ref={root} className={className} style={style}>
       <div data-well-mask className="absolute inset-0">
         {/*
           平行移動する層。倍率は**クラスではなく effect で**置く（`SCALE`）。

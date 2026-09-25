@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useActionState, useEffect } from "react";
-import { productCutout, productPath, aud, type Product } from "@/data/products";
+import { priceLabel, productImage, productPath, aud, type Product } from "@/data/products";
 import { startCheckout, type CheckoutState } from "@/app/(site)/checkout/actions";
 import { startLenis, stopLenis } from "@/components/motion/SmoothScroll";
 import { Button } from "@/components/site/Button";
@@ -39,7 +39,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
     };
   }, [open, setOpen]);
 
-  const total = pieces.reduce((sum, p) => sum + p.priceAud, 0);
+  const total = pieces.reduce((sum, p) => sum + (p.priceAud ?? 0), 0);
 
   return (
     <div
@@ -88,14 +88,14 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                   <Link
                     href={productPath(p)}
                     onClick={() => setOpen(false)}
-                    className="relative block h-24 w-16 shrink-0"
+                    className="relative block h-20 w-16 shrink-0 overflow-hidden bg-sumi"
                   >
                     <Image
-                      src={productCutout(p.slug)}
+                      src={productImage(p.slug, 1)}
                       alt={p.name}
                       fill
                       sizes="64px"
-                      className="object-contain object-bottom"
+                      className="object-cover"
                     />
                   </Link>
                   <div className="flex min-w-0 flex-1 flex-col justify-center">
@@ -108,7 +108,7 @@ export function MiniCart({ catalog, canCheckout }: { catalog: Product[]; canChec
                       <span className="ml-2 font-jp text-[11px] tracking-[0.2em] text-mist">{p.kanji}</span>
                     </Link>
                     <p className="mt-1.5 font-sans text-[12px] tracking-[0.12em] text-bone/80">
-                      {aud.format(p.priceAud)}
+                      {priceLabel(p) ?? "Price to come"}
                     </p>
                     {p.status !== "available" ? (
                       <p className="mt-1.5 font-sans text-[11px] tracking-[0.14em] text-clay">

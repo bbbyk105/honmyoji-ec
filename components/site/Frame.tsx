@@ -52,12 +52,22 @@ type Props = {
   from?: WellFrom;
   /** 隣り合う写真をずらす（ms）。同時に開くと一組の仕掛けに見える。 */
   revealDelay?: number;
+  /**
+   * 撮ったままの比率（幅 / 高さ）。渡すと `ratio` のクラスより優先する。商品ページの
+   * ギャラリー用 —— 決まった比率に押し込むと、縦位置の写真は持ち手か床が切れる。
+   */
+  aspect?: number;
 };
 
 /**
  * Art-directed image well. Photography can be swapped by changing `src`.
  * Role と ratio は data-image-role / data-image-ratio 属性に残す（撮り直しの指示書はそこを読む）。
  * キャプションに刷るのは撮影メモ用なので既定は off — 読者にはただの内部記号にしか見えない。
+ *
+ * **公開ページの写真にキャプションを付けない**（2026-09-25）。「Corridor, Honmyoji」
+ * 「Ai · detail」のような 9.5px の大文字の添え書きが写真の下に一枚ずつ並んでいて、
+ * 何も言っていないのに一番テンプレートらしく見えていた。`caption` は Blog の本文
+ * （CMS の画像説明）のためだけに残してあり、そこでも文と同じ書き方で出す。
  */
 export function Frame({
   src,
@@ -75,11 +85,13 @@ export function Frame({
   reveal = "wipe",
   from = "bottom",
   revealDelay = 0,
+  aspect,
 }: Props) {
   return (
     <figure className={className} data-image-role={role} data-image-ratio={ratio}>
       <ImageWell
-        className={`relative overflow-hidden bg-sumi ${wellClass ?? RATIO[ratio]}`}
+        className={`relative overflow-hidden bg-sumi ${aspect ? "" : (wellClass ?? RATIO[ratio])}`}
+        style={aspect ? { aspectRatio: String(aspect) } : undefined}
         reveal={src ? reveal : "none"}
         from={from}
         delay={revealDelay}
@@ -102,7 +114,7 @@ export function Frame({
         )}
       </ImageWell>
       {showRole || caption ? (
-        <figcaption className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-sans text-[9.5px] uppercase tracking-[0.22em] text-mist">
+        <figcaption className="mt-3 flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1 font-sans text-[12.5px] leading-[1.6] text-mist">
           <span>{caption ?? alt}</span>
           {showRole ? (
             <span className="text-mist/70">

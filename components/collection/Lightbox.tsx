@@ -268,7 +268,7 @@ function Viewer({
     >
       {/* 上 — どの一枚か、いま何倍か、閉じる */}
       <div className="flex shrink-0 items-center justify-between gap-4 border-b border-line px-4 py-2 md:px-8">
-        <p className="min-w-0 truncate font-sans text-[9.5px] uppercase tracking-[0.22em] text-mist">
+        <p className="min-w-0 truncate font-display text-[17px] font-light leading-none text-ivory">
           {shot.caption}
         </p>
 
@@ -366,7 +366,7 @@ function Viewer({
                   reset();
                   onIndex(i);
                 }}
-                aria-label={s.caption}
+                aria-label={s.alt}
                 aria-current={i === index ? "true" : undefined}
                 className={`relative h-14 w-12 shrink-0 overflow-hidden bg-sumi outline-none transition-opacity focus-visible:ring-2 focus-visible:ring-ivory/30 ${
                   i === index ? "opacity-100" : "opacity-50 hover:opacity-85"
