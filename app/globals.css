@@ -53,7 +53,7 @@
   /*
     文字の段。**ページごとに clamp を手で書かない** —— 同じ役の見出しが節ごとに 2〜4px
     ずつ違っていたのが、ばらつきの正体だった。
-      hero     第一画面の見出し（64–76px / スマホ 42px〜）
+      hero     第一画面の一行だけ（Newsreader Light の表示用。スマホ 52px、1440px で 72px）
       display  ページの題（Collection・作品名・About…）
       section  節の見出し（42–62px）
       title    小見出し・用語・一覧の題
@@ -66,14 +66,15 @@
     11px を下限にする。
   */
   /*
-    最長の句（woven by hand）が左 5 段の 87% に収まる大きさ。Poppins ではこの句が 7.36em あり
-    （Newsreader は 6.36em だった）、5 段の幅は lg〜1480px で「0.4135 × 画面幅 − 55px」の直線に乗る
-    ので、そこから逆算して `4.9vw − 6.5px`、上限 66px（1440px で 64px）。
-    スマホは 42px を天井に 11vw —— 320px 幅でも句が一行に収まる。
+    第一画面の一行（「Made once.」）だけの段。書体も Poppins ではなく Newsreader Light の表示用
+    （`components/home/HomeHero.tsx`）。スマホ 52px、1024px で 64px、1440px で 72px、上限 80px。
+    **この一行の幅がヒーローの左の余白の幅になる**（そこから右は全部写真）。Newsreader は
+    「Made once.」が 4.8em と横に広いので、大きくするとそのぶん写真が縮む。二語しかないので、
+    大きさではなく周りの余白で立たせる。
   */
-  --text-hero: max(min(42px, 11vw), min(4.9vw - 6.5px, 66px));
-  --text-hero--line-height: 1.02;
-  --text-hero--letter-spacing: -0.022em;
+  --text-hero: clamp(48px, 1.9vw + 45px, 80px);
+  --text-hero--line-height: 0.96;
+  --text-hero--letter-spacing: -0.02em;
   --text-display: clamp(46px, 6vw, 96px);
   --text-display--line-height: 0.98;
   --text-display--letter-spacing: -0.024em;
@@ -382,9 +383,26 @@ body {
    （2026-09-25。以前は墨が墨を覆っていたので、上辺に罫を一本引いていた）。
 
    **写真に暗幕は掛けない。そもそも写真の上に文字を置かない**（2026-09-25）。
-   カメラマンの一枚は窓の光で明るく、文字を載せると読めない。暗幕で読めるようにする
-   代わりに、写真を版面の幅で見せて、文字はその下の黒に置く（`HomeHero` の註）。
+   祭壇の一枚は金具・蝋燭・花で隅々まで細かく、文字を載せると読めない。暗幕で読めるようにする
+   代わりに、写真を図版として大きく掛け、文字は左下の余白に置く（`HomeHero` の註）。
    ------------------------------------------------------------------ */
+
+/*
+  入場の前の姿。サーバの HTML は開ききった姿で届くので、何もしないと hydration までの一瞬
+  写真と字が出て、それが消えてから開き直す。**幕が掛かっていないとき**（`data-entered` は
+  SiteChrome の一行が塗る前に付ける）だけ、開く前の姿で塗っておく。初めての訪問は幕が覆っている。
+  終わりの値は `HomeHeroMotion` が `fromTo` で明示する —— `from` だとここで置いた値を
+  終わりの値として読んでしまい、見えないまま止まる。
+*/
+@media (prefers-reduced-motion: no-preference) {
+  html[data-entered] [data-hero-mask] {
+    clip-path: inset(0% 44% 0% 44%);
+  }
+
+  html[data-entered] :is([data-hero-title], [data-hero-aside]) {
+    opacity: 0;
+  }
+}
 
 /* ------------------------------------------------------------------
    Blog 本文 — microCMS のリッチエディタから来る HTML の組み。

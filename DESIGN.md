@@ -28,10 +28,18 @@ nothing is fetched from Google or from that shop's CDN.
 
 - **Display (`font-display`):** Poppins 300, upright only. Poppins is not a variable font, so `layout.tsx` loads
   the 300 file alone: every `font-display` carries `font-light`. No italic is loaded.
-  Poppins is wider than the Newsreader it replaced (“woven by hand” is 7.36em against 6.36em) and its line box
-  carries 0.16em above the cap height, so the hero is sized and pulled up for it (see the `--text-hero` note).
   Its descenders run 0.09–0.11em below a 1.02–1.05 line box: split-line masks must come from `splitLines()`
   (`components/motion/split-lines.ts`), which adds that room, or the g, p and y are cut off.
+- **Home hero line only:** Newsreader Light at its display optical size (opsz 72), for the two words
+  “Made once.” and nothing else. Poppins's round geometry set as a four-line headline read as a SaaS or agency
+  landing page; an editorial serif lets two words carry the first screen the way a magazine opener does.
+  Instrument Serif was tried first and dropped the same day — narrow and tightly packed, it read as the serif
+  every startup landing page now uses. Not Playfair, not Cormorant, not a Bodoni or a Didone display cut
+  (Noto Serif Display, Fraunces at 144) — each of those *is* the luxury template; not EB Garamond or Crimson —
+  too classical. The file is a **static instance pinned at opsz 72 / wght 300**, kept in
+  `components/home/fonts/` (22.6KB, OFL) and loaded with `next/font/local`: `next/font/google` serves Newsreader
+  at its text optical size (soft, low-contrast at 72px), and the full variable file with the opsz axis is
+  132KB. It is called from the hero component, so it is preloaded on `/` only.
 - **Body + UI (`font-sans`):** Nunito Sans, variable. Its italic (emphasis in CMS text) is a separate,
   non-preloaded load, fetched only on a page that uses it.
   **Satoshi is not used** — its ITF Free Font License forbids making the font files available through a public
@@ -48,7 +56,7 @@ nothing is fetched from Google or from that shop's CDN.
 
 | Token | Size | Leading / tracking | Use |
 |---|---|---|---|
-| `hero` | ≤42px on phones (11vw), 44px → 66px from 1024 (≈64px at 1440) | 1.02 / −0.022em | The home H1 only |
+| `hero` | 52px on phones, 64px at 1024, 72px at 1440, ≤80px | 0.96 / −0.02em | The home H1 only, in Newsreader Light (display) |
 | `display` | 46px → 96px | 0.98 / −0.024em | Page titles, piece name on the PDP |
 | `section` | 34px → 62px (≈57px at 1440) | 1.05 / −0.018em | Section headings |
 | `title` | 24px → 34px | 1.16 / −0.01em | Sub-heads, defined terms, list titles |
@@ -189,8 +197,10 @@ buttons, centred CTA stacks and a cold black are still refused.
   - `wipe` (default) — the mask opens from one edge, 1.1s on the site curve. Inside it the picture lags 2.5 %
     behind the sweep and settles, at a **fixed** 1.04 scale that never animates; the scale is only the
     bleed that keeps an edge from going empty while the picture slides. It is not a zoom.
-  - `band` — the hero only: a centre strip widens outward to full frame, 1.4s, on load, the picture itself still. The type sits
-    *outside* the mask and stays put while it opens
+  - The home hero is not an `ImageWell`: its photograph opens from a centre strip outward, 1.1s, in one timeline
+    with the words (`HomeHeroMotion`) — photograph, then “Made once.” settling 14px, then the caption 140ms later.
+    On the first visit of a session it waits until the entry curtain's leaves are half apart (1.45s), so the
+    two centre-out moves do not fire as one
 - **A photograph opens from the edge it is anchored to.** `from="left" | "right" | "top" | "bottom"`. A
   picture flush to the page's left edge opens left-to-right, one flush right opens right-to-left — so it
   reads as being drawn out of the margin it sits in, and a pair standing side by side **opens towards each
@@ -202,7 +212,7 @@ buttons, centred CTA stacks and a cold black are still refused.
   from the beginning — `Reveal` was quietly overriding it from above. A block containing a well now
   animates **only its caption**; the picture belongs to `ImageWell`. Do not put a photograph and a
   paragraph inside one `Reveal` — the paragraph then arrives with no move at all.
-- **Headings:** add `data-split-lines` to an `h2` inside a `Reveal` and it rises line by line from behind a mask (`SplitText` with `mask: "lines"`), 0.09s stagger — the hero's move, reused.
+- **Headings:** add `data-split-lines` to an `h2` inside a `Reveal` and it rises line by line from behind a mask (`SplitText` with `mask: "lines"`), 0.09s stagger.
 - **Drift band:** `DriftBand` — a strip of photographs travelling left, scrubbed to scroll position. Never a self-running marquee: if the reader stops, it stops. **Bags only** — the band is a procession of the work, not a scrapbook of the precinct; scenery and hall interiors belong in the `lifestyle` / `process` wells, not here. The bags stand on **one floor line** (no vertical stagger), and on the home page the band straddles the sumi/paper seam (`bridge`).
 - **Enter:** text blocks 0.9s, opacity + 14px, half a beat after the heading; heading lines 1.0s from behind a clip. Home title uses SplitText lines.
 - **Hover:** Image scale 1.02 inside its clip, 1.1s. No lift, no shadow bloom, no inverted fills.
@@ -258,7 +268,7 @@ Every well is a `Frame` (or equivalent) carrying `data-image-role` and `data-ima
 
 | Role | Ratio | Where |
 |---|---|---|
-| `hero-campaign` | 16∶10 | Home hero |
+| `hero-campaign` | 3∶2 source, cut to the viewport (≈1.16∶1 at 1440, ≈0.73∶1 on a phone) | Home hero |
 | `product-still` | 4∶5 (sometimes 1∶1) | Collection tiles, PDP lead still |
 | `product-detail` | 4∶5, 1∶1 | PDP gallery mix |
 | `material-macro` | 4∶5 | Material essay, blog |
@@ -292,7 +302,7 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 
 ## Why this is not a template
 
-1. The hero is one photograph in a 48px mat, cut on the axis of its own symmetric composition, with its title pinned to the photograph's top edge and its caption to the bottom edge — nothing is printed over the picture.
+1. The hero is a plate, not a banner: one photograph taking everything right of a two-word title, cut on the axis of its own symmetric composition, with the title and a one-line caption in the lower-left margin — nothing is printed over the picture.
 2. Featured pieces are photographed on the same floor, before the same shoji, cut to the same height — so four different bags read as one room. No card chrome.
 3. Material is an essay with a sticky title, not icon pillars.
 4. The blog is a publication — one column of meaning, an article set at 980px — not a widget of teaser cards.
@@ -404,4 +414,6 @@ When new photography arrives: replace `src` only. Keep crop classes (`object-[50
 | 2026-09-25 | Leftover screenshot bars trimmed at the source | `trim_bars()` stopped at the first row carrying menu-bar text, leaving 37px of black on 33 photographs. Invisible on black, a hard line on paper |
 | 2026-09-25 | Hero recomposed: centred crop, 7 columns, title top / caption bottom | It read cheap for four measurable reasons. The crop sat at 10 % although the three bags stand at 33–63 % of the frame, so they were pushed to the right edge and the drum and sutra books on the left became the subject — a symmetric altar turned into a cluttered snapshot. The photograph took 8 columns of candles and gold. The headline broke wherever it ran out of room (“…at a temple in / Fuji.”). And the frame sat on unrelated margins (24 / 32 / 48px). Now: `object-[48%_50%]`, 7 columns, a 48px mat on three sides (the page margin), the headline broken by phrase and sized so the longest phrase fills 85–90 % of five columns, its ink top on the photograph's top edge (measured to 1px) and the CTA rule on its bottom edge |
 | 2026-09-25 | Poppins / Nunito Sans / Prompt replace Newsreader / Albert Sans | The client asked for the type of jimotofoods.com.au: Poppins Light for headings, Nunito Sans for body and UI, Prompt Light for the wordmark. Taken from Google Fonts (OFL) through `next/font`, not from that shop's CDN. Three things moved with the face: the hero is re-sized for Poppins's wider phrase (`4.9vw − 6.5px`, capped at 66px, so “woven by hand” fills 87 % of five columns; it had been wrapping to “woven by / hand” at 1024, 1280 and 1920) and pulled up 0.16em to keep its cap height on the photograph's top edge; split-line masks get 0.15em of room below (`splitLines()`), because Poppins's descenders were cut off; the hero is four phrases at every width (SplitText breaks at a `display:none` `<br>`, so the three-line tablet setting only ever appeared with reduced motion) |
+| 2026-09-25 | Hero line in Newsreader Light (opsz 72), not Instrument Serif | Instrument Serif looked cheap on the page: condensed and tightly packed, it is the serif of the current startup landing page. Nine faces were set in the hero itself (Newsreader, Source Serif 4, Noto Serif Display, Spectral, Fraunces, EB Garamond, Castoro, Crimson Pro); Newsreader Light at display size was the only one that read as a magazine opener without turning classical or Didone. It is wider (4.8em against 3.6em), so the line is set at 72px at 1440 to keep the photograph near 66vw |
+| 2026-09-25 | Hero as a campaign plate: “Made once.” in an editorial serif | The 5 + 7 column split — a four-line Poppins headline, a three-line paragraph and the photograph at equal weight — read as an agency landing page. Now the photograph runs from the header to the foot of the screen and from the title's edge to the page's right edge (1011×868 at 1440, 71vw; full-bleed 390×532 on a phone), and the words shrink to a title, one line and one link in the lower-left margin. The left column is exactly as wide as “Made once.” (`auto`; the caption is `contain: inline-size`), so the title decides the margin and the photograph takes the rest. Tried and dropped the same day: the title at 92px (the photograph fell to 67vw and argued with it), “Made / once.” stacked (78vw, but the CTA wrapped to two lines in the narrow column), “Made by hand. / Made once.” (heavier words, a 59vw photograph, and it repeated the caption), and on phones the photograph inset on the left only (a 16px offset that read as a mistake). The count, the material and the place moved down to the sections that already say them. On phones the hero now fits one screen — before, it was ~1,700px tall and pinned, so its paragraph and CTA were covered by the paper before they were ever seen |
 | 2026-09-25 | No Japanese web font; three preloads | The site read as heavy. Measured on the production build (Lighthouse, mobile): the largest cost was not the new Latin faces but Shippori Mincho — 245 `@font-face` rules in a render-blocking 184KB stylesheet on every page, and up to 36 font files on the collection. Japanese now uses the device's Mincho; Poppins loads 300 only; Nunito Sans italic is no longer preloaded. Collection: 1,193KB → 569KB, first paint 3.5s → 1.1s, LCP 5.3s → 3.6s, score 73 → 90 (home 75 → 91, piece 69 → 90) |
