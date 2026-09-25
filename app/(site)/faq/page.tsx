@@ -36,7 +36,7 @@ export default function FaqPage() {
               <li key={item.q}>
                 <details className="group">
                   <summary className="flex cursor-pointer list-none items-baseline gap-5 py-8 outline-none focus-visible:ring-1 focus-visible:ring-ivory/40 md:gap-8">
-                    {/* 番号は固定幅で。Albert Sans の「1」は等幅にならず、11 番だけ問いの頭がずれた */}
+                    {/* 番号は固定幅で。本文の sans の数字は等幅にならず、11 番だけ問いの頭がずれた */}
                     <span className="w-6 shrink-0 font-sans text-meta tabular-nums text-mist">
                       {twoDigits(i + 1)}
                     </span>

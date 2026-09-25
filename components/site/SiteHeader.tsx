@@ -215,8 +215,8 @@ export function SiteHeader() {
       {/* 三分割グリッド。flex + justify-between だと nav が中途半端な位置に落ちる */}
       <div className={`${SHELL} grid h-16 grid-cols-[1fr_auto_1fr] items-center sm:h-[72px] md:h-[80px]`}>
         {/*
-          ワードマーク。Newsreader 400 を光学サイズの小さい切り口（opsz ≈ 22）で —— 300 の細さは
-          この大きさでは字が痩せて、銘ではなく見出しの断片に見えた。字間は 0.24em、
+          ワードマーク。Prompt Light（`font-mark`）—— 見出しの Poppins と同じ幾何学の骨格で、
+          銘だけ別の書体にして見出しの断片に見えないようにする。字間は 0.24em、
           添え書きは大文字 11px・0.16em で、二行の幅がほぼ揃う（銘板の組み）。
           右に余る字間（最後の U の後ろの 0.24em）は負の margin で戻して、左右の端を字面で揃える。
         */}
@@ -226,7 +226,7 @@ export function SiteHeader() {
           className="z-[60] col-start-1 justify-self-start no-underline"
           aria-label={`${site.name} — home`}
         >
-          <span className="mr-[-0.24em] block font-display text-[21px] font-normal leading-none tracking-[0.24em] text-ivory transition-colors duration-500 sm:text-[23px]">
+          <span className="mr-[-0.24em] block font-mark text-[21px] font-light leading-none tracking-[0.24em] text-ivory transition-colors duration-500 sm:text-[23px]">
             MIROKU
           </span>
           <span className="mt-[9px] hidden font-sans text-[11px] font-medium uppercase leading-none tracking-[0.16em] text-mist transition-colors duration-500 sm:block">

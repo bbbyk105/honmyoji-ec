@@ -191,7 +191,7 @@ export default async function HomePage() {
                       </p>
                       <p>
                         The character <span lang="ja" className="font-jp text-ivory">縁</span> is also read{" "}
-                        <em className="font-display text-[1.15em] not-italic text-ivory">en</em>: a meeting.
+                        <em className="font-display text-[1.15em] font-light not-italic text-ivory">en</em>: a meeting.
                       </p>
                     </dd>
                   </div>

@@ -75,18 +75,21 @@ export function HomeHero({ count }: Props) {
           {/*
             見出しは**句で改行する**。成り行きで折ると「…at a temple in / Fuji.」「woven by hand at /
             a temple…」のように句の途中で切れ、偶然の折り返しに見えた。一番長い句（woven by hand、
-            6.36em）が 5 段の 85–90% に収まる大きさにしてある（`--text-hero`）。
-            スマホとタブレットは三行（最後の二句を一行に）、lg 以上は四行。
-            行の箱の上の余りがちょうど字面の上端を写真の上端に揃える（1440 / 1280px で実測 0–2px）ので、
-            margin で引き上げない。
+            Poppins で 7.36em）が 5 段の 87% に収まる大きさにしてある（`--text-hero`）。
+            どの幅でも句ごとの四行。以前は lg 未満で最後の二句を一行にしていた（`hidden lg:inline` の br）が、
+            SplitText は display:none の br でも改行するので、動きのある画面では元から四行で、三行になるのは
+            「動きを減らす」の人だけだった。Poppins だと最後の二句は 8.52em あり、スマホで一行にすると
+            390px 幅でちょうど一杯、それより狭いと「at a temple in / Fuji.」と句の途中で折れる。
+            lg 以上は字面の上端を写真の上端に揃える。Poppins は行の箱の上に 0.16em の余りがあり
+            （Newsreader はほぼ 0 で、何もしなくても揃っていた）、そのままだと 7〜10px 下がるので引き上げる。
           */}
-          <h1 data-hero-title className="font-display text-hero font-light text-ivory md:col-span-7">
+          <h1 data-hero-title className="font-display text-hero font-light text-ivory md:col-span-7 lg:mt-[-0.16em]">
             Tatami-beri,
             <br />
             woven by hand
             <br />
-            at a temple{" "}
-            <br className="hidden lg:inline" />
+            at a temple
+            <br />
             in Fuji.
           </h1>
           <div data-hero-aside className="md:col-span-5 md:col-start-8 md:pb-2 lg:pb-0">

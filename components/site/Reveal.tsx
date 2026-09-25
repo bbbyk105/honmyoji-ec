@@ -4,8 +4,9 @@ import { useRef, type ReactNode } from "react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { SplitText } from "gsap/SplitText";
+import type { SplitText } from "gsap/SplitText";
 import { prefersReducedMotion } from "@/components/motion/reduced-motion";
+import { LINES_FROM, splitLines } from "@/components/motion/split-lines";
 import { DUR, EASE, LINE_STAGGER, TEXT_RISE } from "@/components/motion/tokens";
 import "@/components/motion/register";
 
@@ -71,9 +72,9 @@ export function Reveal({ children, className = "", delay = 0, as: Tag = "div" }:
       }
 
       for (const head of heads) {
-        const split = SplitText.create(head, { type: "lines", mask: "lines" });
+        const split = splitLines(head);
         splits.push(split);
-        tl.from(split.lines, { yPercent: 100, duration: DUR.lines, stagger: LINE_STAGGER }, 0.04);
+        tl.from(split.lines, { ...LINES_FROM, duration: DUR.lines, stagger: LINE_STAGGER }, 0.04);
       }
 
       return () => {

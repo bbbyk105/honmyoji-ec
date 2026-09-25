@@ -52,7 +52,7 @@ export default async function CollectionPage() {
           流すと、ボトルバッグの列の途中にエプロンが混ざって何の一覧か分からなくなる。
           版面の幅を五等分した帯にする。以前は文字を並べて高さだけ min-h で取っていたので、
           文字が上の罫に寄り、下に 30px の空きが残っていた（2026-09-25）。上下の余白を同じにし、
-          区切りは縦の罫で言う。数は右端に二桁で —— 見出しと同じ Newsreader に数の sans を添える。
+          区切りは縦の罫で言う。数は右端に二桁で —— 見出しと同じ Poppins に本文の sans の数を添える。
           スマホは横に送る（五つを縦に積むと、一覧に届く前に一画面が目次で埋まる）。
         */}
         <nav aria-label="Lines" className="mt-lead border-y border-line">
