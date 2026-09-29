@@ -1,11 +1,10 @@
 "use client";
 
-import { useActionState } from "react";
-
-import { savePiece, type FormState } from "@/app/studio/actions";
-import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
+import { savePiece } from "@/app/studio/actions";
+import { PIECE_STATUS_NAME, PIECE_STATUS_OPTIONS } from "@/app/studio/options";
 import { Field, Notice, Select, fieldClass } from "@/components/studio/Field";
-import { Button } from "@/components/site/Button";
+import { BTN_SOLID } from "@/components/studio/shell";
+import { useStudioForm } from "@/components/studio/useStudioForm";
 import type { Override } from "@/lib/catalog";
 import type { Product } from "@/data/products";
 
@@ -15,6 +14,9 @@ import type { Product } from "@/data/products";
  * 空欄は「消す」ではなく「コード側の値を使う」。だから placeholder には
  * data/products.ts の値をそのまま出す —— 何も入れなければこれが出る、が
  * 見えていないと、上書きしているのかどうかが分からなくなる。
+ *
+ * 送信は `useStudioForm`（onSubmit）。`<form action>` に渡すと、保存後に React が
+ * ステータスの選択欄を保存前の値へ戻して見せる。
  */
 export function PieceForm({
   base,
@@ -26,10 +28,10 @@ export function PieceForm({
   override: Override | undefined;
   disabled: boolean;
 }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(savePiece, {});
+  const { state, pending, onSubmit } = useStudioForm(savePiece);
 
   return (
-    <form action={action} className="space-y-8 pb-6">
+    <form onSubmit={onSubmit} className="space-y-8">
       <input type="hidden" name="slug" value={base.slug} />
 
       <div className="grid gap-8 sm:grid-cols-2">
@@ -56,9 +58,9 @@ export function PieceForm({
           />
         </Field>
 
-        <Field label="ステータス" htmlFor="status">
+        <Field label="ステータス" htmlFor="status" hint="一覧の画面からも、まとめて変えられます。">
           <Select id="status" name="status" defaultValue={override?.status ?? ""} disabled={disabled}>
-            <option value="">コード側のまま（{base.status}）</option>
+            <option value="">コード側のまま（{PIECE_STATUS_NAME[base.status]}）</option>
             {PIECE_STATUS_OPTIONS.map((o) => (
               <option key={o.value} value={o.value}>
                 {o.label}
@@ -88,7 +90,7 @@ export function PieceForm({
           disabled={disabled}
           defaultValue={override?.note_ja ?? ""}
           placeholder={base.noteJa}
-          className={`${fieldClass} resize-y font-jp`}
+          className={`${fieldClass} resize-y`}
         />
       </Field>
 
@@ -112,14 +114,14 @@ export function PieceForm({
           disabled={disabled}
           defaultValue={override?.story_ja ?? ""}
           placeholder={base.storyJa}
-          className={`${fieldClass} resize-y font-jp leading-[1.95]`}
+          className={`${fieldClass} resize-y leading-[1.95]`}
         />
       </Field>
 
-      <div className="flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-line pt-7">
-        <Button type="submit" variant="solid" disabled={disabled || pending} arrow={false}>
-          {pending ? "保存中" : "保存する"}
-        </Button>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-7">
+        <button type="submit" disabled={disabled || pending} className={BTN_SOLID}>
+          {pending ? "保存中…" : "保存する"}
+        </button>
         <Notice error={state.error} saved={state.saved} />
       </div>
     </form>

@@ -2,9 +2,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { ORDER_STATUS_COLOR, ORDER_STATUS_LABEL } from "@/app/studio/options";
-import { STUDIO_HEAD, STUDIO_SHELL } from "@/components/studio/shell";
-import { priceLabel, productImage } from "@/data/products";
+import { LINK_QUIET, STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
+import { OrderBadge } from "@/components/studio/StatusBadge";
+import { StudioHead } from "@/components/studio/StudioHead";
+import { leadSrc, priceLabel } from "@/data/products";
 import { getPieces } from "@/lib/catalog";
 import { getOrder, orderAmount, orderRef } from "@/lib/orders";
 import { requireSession } from "@/lib/studio-session";
@@ -23,6 +24,8 @@ function fullDate(iso: string | null): string {
   });
 }
 
+const HEADING = "font-sans text-[14px] font-semibold text-ivory";
+
 export default async function StudioOrderPage({ params }: { params: Promise<{ id: string }> }) {
   await requireSession();
 
@@ -37,63 +40,50 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
   const address = order.shipping;
 
   return (
-    <div className={STUDIO_SHELL}>
-      <div className={STUDIO_HEAD}>
-        <Link
-          href="/studio/orders"
-          className="font-sans text-[10.5px] font-medium uppercase tracking-[0.22em] text-mist no-underline transition-colors hover:text-ivory"
-        >
-          ← 注文一覧
-        </Link>
-        <div className="mt-5 flex flex-wrap items-end justify-between gap-x-8 gap-y-3">
-          <div>
-            <h1 className="font-display text-[clamp(30px,4vw,42px)] font-light leading-[1.02] text-ivory">
-              {orderRef(order.id)}
-            </h1>
-            <p className="mt-2.5 flex items-center gap-2.5 font-sans text-[12.5px] text-mist">
-              <span aria-hidden className={`h-1.5 w-1.5 ${ORDER_STATUS_COLOR[order.status]}`} />
-              {ORDER_STATUS_LABEL[order.status]} · {fullDate(order.created_at)}
-            </p>
-          </div>
-          <p className="font-display text-[30px] font-light tabular-nums text-ivory">
+    <div className={`${STUDIO_SHELL} pb-24`}>
+      <StudioHead
+        back={{ href: "/studio/orders", label: "注文" }}
+        title={orderRef(order.id)}
+        sub={
+          <span className="flex flex-wrap items-center gap-3">
+            <OrderBadge status={order.status} />
+            {fullDate(order.created_at)}
+          </span>
+        }
+        action={
+          <p className="font-display text-[34px] font-light leading-none tabular-nums text-ivory">
             {orderAmount(order)}
           </p>
+        }
+      />
+
+      <div className="grid gap-x-10 gap-y-10 lg:grid-cols-[1fr_340px]">
+        <div className={`${STUDIO_CARD} self-start px-5 py-6 md:px-8 md:py-8`}>
+          <OrderForm order={order} />
         </div>
-      </div>
 
-      <div className="grid gap-x-16 gap-y-12 pb-24 pt-11 lg:grid-cols-[1fr_320px]">
-        <OrderForm order={order} />
-
-        <aside className="space-y-8 lg:pt-1">
-          <section>
-            <h2 className="eyebrow border-b border-line pb-3">品</h2>
+        <aside className="space-y-6">
+          <section className={`${STUDIO_CARD} px-5 py-5`}>
+            <h2 className={HEADING}>作品</h2>
             <ul className="mt-4 space-y-4">
               {pieces.length === 0 ? (
-                <li className="font-sans text-[13px] text-mist">
-                  {order.slugs.join(" · ") || "—"}
-                </li>
+                <li className="font-sans text-[13.5px] text-mist">{order.slugs.join(" · ") || "—"}</li>
               ) : (
                 pieces.map((piece) => (
                   <li key={piece.slug} className="flex items-center gap-4">
-                    <div className="relative h-11 w-11 shrink-0 bg-sumi">
-                      <Image
-                        src={productImage(piece.folder, 1)}
-                        alt=""
-                        fill
-                        sizes="44px"
-                        className="object-cover"
-                      />
+                    <div className="relative h-12 w-12 shrink-0 overflow-hidden bg-field">
+                      <Image src={leadSrc(piece.folder)} alt="" fill sizes="48px" className="object-cover" />
                     </div>
                     <div className="min-w-0">
                       <Link
                         href={`/studio/pieces/${piece.slug}`}
-                        className="font-display text-[18px] font-light text-ivory no-underline hover:text-bone"
+                        className="font-sans text-[15px] font-semibold text-ivory no-underline hover:underline"
                       >
                         {piece.name}
                       </Link>
-                      <p className="font-sans text-[12px] text-mist">{piece.sku}</p>
+                      <p className="font-mono text-[12px] text-mist">{piece.sku}</p>
                     </div>
-                    <p className="ml-auto font-sans text-[13px] tabular-nums text-bone">
+                    <p className="ml-auto font-sans text-[14px] tabular-nums text-ivory">
                       {priceLabel(piece) ?? "—"}
                     </p>
                   </li>
@@ -102,10 +92,10 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
             </ul>
           </section>
 
-          <section>
-            <h2 className="eyebrow border-b border-line pb-3">送り先</h2>
+          <section className={`${STUDIO_CARD} px-5 py-5`}>
+            <h2 className={HEADING}>送り先</h2>
             {address ? (
-              <address className="mt-4 font-sans text-[13.5px] not-italic leading-[1.9] text-bone">
+              <address className="mt-3 font-sans text-[14px] not-italic leading-[1.9] text-ivory">
                 {address.name ?? order.customer_name}
                 <br />
                 {address.line1}
@@ -127,16 +117,16 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
                 ) : null}
               </address>
             ) : (
-              <p className="mt-4 font-sans text-[13px] text-mist">
+              <p className="mt-3 font-sans text-[13.5px] leading-[1.8] text-mist">
                 住所が届いていません。Stripe の Checkout で住所の取得を有効にしてください。
               </p>
             )}
 
             {order.customer_email ? (
-              <p className="mt-4 font-sans text-[13px] leading-[1.8]">
+              <p className="mt-3 font-sans text-[14px]">
                 <a
                   href={`mailto:${order.customer_email}`}
-                  className="text-bone underline decoration-line underline-offset-[5px] transition-colors hover:decoration-ivory"
+                  className="text-ivory underline decoration-line underline-offset-[5px] transition-colors hover:decoration-ivory"
                 >
                   {order.customer_email}
                 </a>
@@ -144,18 +134,18 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
             ) : null}
           </section>
 
-          <section>
-            <h2 className="eyebrow border-b border-line pb-3">Stripe</h2>
-            <dl className="mt-4 space-y-2.5 font-sans text-[12.5px] leading-[1.6]">
+          <section className={`${STUDIO_CARD} px-5 py-5`}>
+            <h2 className={HEADING}>Stripe</h2>
+            <dl className="mt-3 space-y-3 font-sans text-[13px] leading-[1.6]">
               <div>
                 <dt className="text-mist">Payment intent</dt>
-                <dd className="mt-1 break-all font-mono text-[11.5px] text-bone">
+                <dd className="mt-1 break-all font-mono text-[12px] text-ivory">
                   {order.stripe_intent ?? "—"}
                 </dd>
               </div>
               <div>
                 <dt className="text-mist">発送日</dt>
-                <dd className="mt-1 text-bone">{fullDate(order.shipped_at)}</dd>
+                <dd className="mt-1 text-ivory">{fullDate(order.shipped_at)}</dd>
               </div>
             </dl>
             {order.stripe_intent ? (
@@ -163,7 +153,7 @@ export default async function StudioOrderPage({ params }: { params: Promise<{ id
                 href={`https://dashboard.stripe.com/payments/${order.stripe_intent}`}
                 target="_blank"
                 rel="noreferrer"
-                className="mt-4 inline-block font-sans text-[10.5px] font-medium uppercase tracking-[0.2em] text-mist no-underline transition-colors hover:text-ivory"
+                className={`mt-4 inline-block ${LINK_QUIET}`}
               >
                 Stripe で見る ↗
               </a>
