@@ -1,5 +1,7 @@
 "use server";
 
+import { notifyStore, siteLink } from "@/lib/mail";
+
 import { SUBJECTS } from "./subjects";
 
 export type ContactState =
@@ -8,8 +10,24 @@ export type ContactState =
   | { status: "sent"; message: string };
 
 /**
- * お問い合わせ送信。TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID があれば Telegram に転送、
- * 無ければサーバーログに出す（ローカル開発用）。
+ * フォームの `product`（`Hishi · Kago (hishi-diamond,kago-basket)`、ContactForm が組む）
+ * を、名前と slug に分ける。お客さまが書き換えられる欄なので、slug の形をしたものだけ
+ * リンクにする。括弧が無ければ書かれたままを名前として出す。
+ */
+function parsePiece(product: string): { names: string; slugs: string[] } | null {
+  if (!product) return null;
+  const match = /\(([^()]*)\)\s*$/.exec(product);
+  if (!match) return { names: product.slice(0, 120), slugs: [] };
+  const slugs = match[1]
+    .split(",")
+    .map((s) => s.trim())
+    .filter((s) => /^[a-z0-9-]{1,60}$/.test(s));
+  return { names: product.slice(0, match.index).trim() || slugs.join(", "), slugs };
+}
+
+/**
+ * お問い合わせ送信。お店にメールで届ける（Resend、`lib/mail.ts`）。返信先はお客さまの
+ * アドレスなので、お店は返信を押すだけで答えられる。鍵が無ければサーバーログに出す。
  */
 export async function sendInquiry(_prev: ContactState, formData: FormData): Promise<ContactState> {
   const name = String(formData.get("name") ?? "").trim();
@@ -29,29 +47,23 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
 
-  const lines = [
-    `📿 MIROKU — ${SUBJECTS[subject] ?? subject}`,
-    product ? `Piece: ${product}` : null,
-    `From: ${name} <${email}>`,
+  const topic = SUBJECTS[subject] ?? subject;
+  const piece = parsePiece(product);
+  const text = [
+    `${name} さんからお問い合わせがありました。`,
+    "このメールに返信すると、そのままお客さまに届きます。",
     "",
+    `件名: ${topic}`,
+    `お名前: ${name}`,
+    `メール: ${email}`,
+    ...(piece ? [`作品: ${piece.names}`, ...piece.slugs.map((slug) => `  ${siteLink(`/collection/${slug}`)}`)] : []),
+    "",
+    "―――――― 本文 ――――――",
     message,
-  ].filter((l): l is string => l !== null);
-  const text = lines.join("\n");
-
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  ].join("\n");
 
   try {
-    if (token && chatId) {
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text }),
-      });
-      if (!res.ok) throw new Error(`telegram ${res.status}`);
-    } else {
-      console.info("[contact] (no TELEGRAM_* env — logging only)\n" + text);
-    }
+    await notifyStore({ subject: `【MIROKU】お問い合わせ — ${topic}（${name}）`, text, replyTo: email });
   } catch (err) {
     console.error("[contact] failed", err);
     return {

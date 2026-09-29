@@ -2,6 +2,11 @@ import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
+import { priceLabel } from "@/data/products";
+import { getPieces } from "@/lib/catalog";
+import { notifyStoreQuietly, siteLink } from "@/lib/mail";
+import { clashesBefore, doubleSaleMail, orderPlacedMail } from "@/lib/order-mail";
+import { orderAmount, orderRef } from "@/lib/orders";
 import { stripe } from "@/lib/stripe";
 import { db } from "@/lib/supabase";
 
@@ -78,10 +83,16 @@ export async function POST(request: NextRequest) {
     .map((s) => s.trim())
     .filter(Boolean);
 
+  // 印を付ける前の状態。決済が通る前にもう売れていた（取り置かれていた）作品が無いかを
+  // 見る —— 一点物で、同じ作品の決済画面が二つ開いていれば二人とも払えてしまう。
+  const before = await getPieces(slugs);
+
+  let orderId: number | null = null;
+
   try {
     // stripe_session が unique なので、Stripe が同じイベントを再送しても
-    // 二重に注文が立たない。
-    const { error } = await supabase.from("orders").upsert(
+    // 二重に注文が立たない。返ってくるのは新しく入った行だけ（再送なら空）。
+    const { data: inserted, error } = await supabase.from("orders").upsert(
       {
         stripe_session: session.id,
         stripe_intent:
@@ -97,8 +108,10 @@ export async function POST(request: NextRequest) {
         shipping: address(session),
       },
       { onConflict: "stripe_session", ignoreDuplicates: true },
-    );
+    ).select("id");
     if (error) throw error;
+    const id = inserted?.[0]?.id;
+    if (typeof id === "number") orderId = id;
 
     // 一点物なので、売れたら在庫から下ろす。ここを手作業にすると、二人目に
     // 買える状態のまま見えてしまう時間が必ずできる。
@@ -114,6 +127,40 @@ export async function POST(request: NextRequest) {
     console.error("[stripe] 注文の保存に失敗", error);
     // 500 を返して Stripe に再送させる（決済は通っているので落としてはいけない）
     return NextResponse.json({ error: "save failed" }, { status: 500 });
+  }
+
+  // お店に知らせるのは初めて入った注文のときだけ（再送のたびに届かないように）。
+  // 送れなくても 200 を返す —— 注文は保存できているので、Stripe に再送させる理由が無い。
+  if (orderId !== null) {
+    const ref = orderRef(orderId);
+    const studioUrl = siteLink(`/studio/orders/${orderId}`);
+    const intent =
+      typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
+
+    await notifyStoreQuietly(
+      orderPlacedMail({
+        ref,
+        amount: orderAmount({ amount_cents: session.amount_total ?? 0, currency: session.currency ?? "aud" }),
+        customerName: session.customer_details?.name ?? null,
+        customerEmail: session.customer_details?.email ?? null,
+        shipping: address(session),
+        pieces: before.map((p) => ({ name: p.name, kanji: p.kanji, price: priceLabel(p) })),
+        studioUrl,
+      }),
+    );
+
+    const clashes = clashesBefore(before);
+    if (clashes.length > 0) {
+      console.error("[stripe] 決済の前に買えない状態だった作品", ref, clashes.map((p) => p.name));
+      await notifyStoreQuietly(
+        doubleSaleMail({
+          ref,
+          clashes,
+          studioUrl,
+          stripeUrl: intent ? `https://dashboard.stripe.com/payments/${intent}` : null,
+        }),
+      );
+    }
   }
 
   revalidatePath("/");

@@ -1,12 +1,13 @@
 import Link from "next/link";
 
 import { PIECE_STATUS_COLOR, PIECE_STATUS_NAME } from "@/app/studio/options";
-import { DbNotice } from "@/components/studio/DbNotice";
+import { DbNotice, MailNotice } from "@/components/studio/DbNotice";
 import { LINK_QUIET, STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
 import { OrderBadge } from "@/components/studio/StatusBadge";
 import { Kpi, StudioHead } from "@/components/studio/StudioHead";
 import type { ProductStatus } from "@/data/products";
 import { getCatalog } from "@/lib/catalog";
+import { mailEnabled } from "@/lib/mail";
 import { getOrders, orderAmount, orderRef } from "@/lib/orders";
 import { requireSession } from "@/lib/studio-session";
 import { dbEnabled } from "@/lib/supabase";
@@ -61,6 +62,7 @@ export default async function StudioOverviewPage() {
       />
 
       {!dbEnabled ? <DbNotice /> : null}
+      {!mailEnabled ? <MailNotice /> : null}
 
       <div className="grid gap-x-10 gap-y-10 lg:grid-cols-[1fr_320px]">
         <section>
@@ -75,7 +77,7 @@ export default async function StudioOverviewPage() {
             {recent.length === 0 ? (
               <p className="px-5 py-6 font-sans text-[14px] leading-[1.9] text-mist">
                 まだ注文はありません。Stripe の決済が通ると、ここに入金と送り先が並びます。
-                Contact からの取り置き依頼は、いつも通り Telegram に届きます。
+                お問い合わせと注文は、メールでも届きます。
               </p>
             ) : (
               <ul>

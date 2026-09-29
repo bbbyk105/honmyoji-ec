@@ -118,7 +118,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **管理画面の select を `defaultValue` のまま `<form action={…}>` で送らない**。React 19 は action の後に form を初期値へ戻し、select は描いた後に初期値を差し替えられないので、保存は通っているのに「完売」などの元の値に戻って見える（2026-09-29 に「完売から切り替えられない」と報告された原因）。保存フォームは `useStudioForm`（onSubmit から送る）、一覧の状態は制御した select（`PieceTable`）。ログインだけは `<form action>` のまま（通れば redirect、失敗で欄が空に戻るのは望ましい）。
 - 一覧のステータス変更は `setPiecesStatus(slugs, status)` 一本（一点でも複数でも）。失敗は必ず画面へ返す —— 以前は void で握りつぶしていて、受注生産が DB の check（0001 に `made_to_order` が無い）で一度も保存されていなかったことに誰も気づけなかった。`supabase/migrations/0003_made_to_order.sql` を流すと通る。
 - 管理画面の日本語は `ch` で測らない。`max-w-[62ch]` は和文だと 20 字ほどで折り返す（DESIGN.md の Measure と同じ話）。
-- ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・Telegram 通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
+- ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・ログインのメール通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
 - **`.env` の値に `$` を入れない**。dotenv は `scrypt$abc$def` の `$abc` / `$def` を未定義の変数として空に置き換えるので、値が `scrypt` の 6 文字になってログインが必ず失敗する（実際に踏んだ）。パスワードハッシュの区切りは `:`、生成する秘密は base64url（`+/=` も避ける）。
 - セッション cookie は `SameSite=Lax`。`Strict` にすると外部サイトのリンクから `/studio` を開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST なので、`Lax` でもクロスサイトからの書き込みには cookie が付かない。
 - ログインの失敗理由（メールかパスワードか）を画面に出さない。メールが違ってもパスワードは必ず照合する — 早く返すと、応答の速さの差で「このアドレスは登録されている」が伝わる。
@@ -134,7 +134,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **`globals.css` の独自クラスに `position` を書かない**。レイヤー外の CSS は Tailwind ユーティリティより強く、`fixed` 等を上書きする（モバイルメニューが崩れた原因）。
 - `"use server"` ファイルから非 async 値（定数）を export すると 500。定数は `app/contact/subjects.ts` のような別モジュールへ。
 - 浮遊アニメ（`.bag-float`）は WCAG 2.2.2 のため 3 周で止める設計。無限ループにしない。
-- お問い合わせは `TELEGRAM_BOT_TOKEN` / `TELEGRAM_CHAT_ID` があれば Telegram 送信、無ければサーバーログのみ。
+- **お店への知らせは全部メール（Resend、`lib/mail.ts`）**: お問い合わせ（返信先はお客さま）・新作のお知らせの登録・注文（Webhook、初めて入ったときだけ）・二重販売の警告・管理画面のログイン。env は `RESEND_API_KEY` / `RESEND_FROM` / `NOTIFY_EMAILS`（カンマ区切り）。無ければサーバーログのみ。**以前は Telegram だったが、本番に `TELEGRAM_*` が入っておらず、公開から 2026-09-29 までお問い合わせが一通も届いていなかった**（お客さまの画面は「送れました」のまま）。Telegram に戻さない。鍵が無いとダッシュボードに赤い帯（`MailNotice`）が出る。
+- **二重販売の備え**: Checkout は 35 分で閉じる（`expires_at`。既定の 24 時間だと同じ一点の決済画面が二つ開ける）。それでも決済の前に作品がもう完売 / 取り置き中だったら、Webhook が「要確認」のメールを送る（文面は `lib/order-mail.ts`、テストあり）。
 - microCMS の API キーに `NEXT_PUBLIC_` を付けない。`lib/microcms.ts` はサーバ専用 — `"use client"` から import しない。
 - `NEXT_PUBLIC_SITE_URL` が OG 画像の `metadataBase`。本番ドメイン確定時に設定。
 

@@ -1,31 +1,20 @@
+import { notifyStoreQuietly } from "@/lib/mail";
+
 /* ------------------------------------------------------------------
-   /studio の出来事を Telegram に送る。**サーバ専用**。
+   /studio の出来事をお店にメールで知らせる（Resend、`lib/mail.ts`）。**サーバ専用**。
 
-   お問い合わせと同じ経路（TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID）を使う。
-   鍵が無ければサーバーログに残すだけで、通知できないことを理由に
-   ログインを失敗させない。
-
-   知らせるのは「入られた」と「締め出した」の二つだけ。毎回の失敗まで送ると
-   通知が慣れになって、本当に危ないときに読まれなくなる。
+   送れなくてもログインは失敗させない。知らせるのは「入られた」と「締め出した」の
+   二つだけ。毎回の失敗まで送ると通知が慣れになって、本当に危ないときに読まれなくなる。
    ------------------------------------------------------------------ */
 
 export async function notifyStudio(text: string): Promise<void> {
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
-  if (!token || !chatId) {
-    console.info(`[studio] ${text}`);
-    return;
-  }
-
-  try {
-    const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ chat_id: chatId, text }),
-    });
-    if (!res.ok) throw new Error(`telegram ${res.status}`);
-  } catch (error) {
-    console.error("[studio] 通知を送れませんでした", error);
-  }
+  await notifyStoreQuietly({
+    subject: `【MIROKU 管理画面】${text.replace(/^MIROKU Studio — /, "").slice(0, 60)}`,
+    text: [
+      text,
+      "",
+      "身に覚えがなければ、STUDIO_SESSION_SECRET を作り直して全員のログインを切り、",
+      "パスワードを変えてください（手順は docs/studio.md）。",
+    ].join("\n"),
+  });
 }
