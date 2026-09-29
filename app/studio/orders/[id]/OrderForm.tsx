@@ -1,25 +1,21 @@
 "use client";
 
-import { useActionState } from "react";
-
-import { updateOrder, type FormState } from "@/app/studio/actions";
+import { updateOrder } from "@/app/studio/actions";
 import { ORDER_STATUS_OPTIONS } from "@/app/studio/options";
 import { Field, Notice, Select, fieldClass } from "@/components/studio/Field";
-import { Button } from "@/components/site/Button";
+import { BTN_SOLID } from "@/components/studio/shell";
+import { useStudioForm } from "@/components/studio/useStudioForm";
 import type { Order } from "@/lib/orders";
 
+/** 送信は `useStudioForm`（onSubmit）。`<form action>` だと保存後に状態の欄が元の値に戻って見える。 */
 export function OrderForm({ order }: { order: Order }) {
-  const [state, action, pending] = useActionState<FormState, FormData>(updateOrder, {});
+  const { state, pending, onSubmit } = useStudioForm(updateOrder);
 
   return (
-    <form action={action} className="space-y-8">
+    <form onSubmit={onSubmit} className="space-y-8">
       <input type="hidden" name="id" value={order.id} />
 
-      <Field
-        label="状態"
-        htmlFor="status"
-        hint="「Shipped」を選んで保存した時刻が発送日になります。"
-      >
+      <Field label="状態" htmlFor="status" hint="「発送済み」を選んで保存した時刻が発送日になります。">
         <Select id="status" name="status" defaultValue={order.status}>
           {ORDER_STATUS_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -39,20 +35,20 @@ export function OrderForm({ order }: { order: Order }) {
         />
       </Field>
 
-      <Field label="覚え書き" htmlFor="memo" hint="お客さんには見えません。">
+      <Field label="覚え書き" htmlFor="memo" hint="お客さまには見えません。">
         <textarea
           id="memo"
           name="memo"
           rows={4}
           defaultValue={order.memo ?? ""}
-          className={`${fieldClass} resize-y font-jp leading-[1.95]`}
+          className={`${fieldClass} resize-y leading-[1.95]`}
         />
       </Field>
 
-      <div className="flex flex-wrap items-center gap-x-7 gap-y-4 border-t border-line pt-7">
-        <Button type="submit" variant="solid" disabled={pending} arrow={false}>
-          {pending ? "保存中" : "保存する"}
-        </Button>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-line pt-7">
+        <button type="submit" disabled={pending} className={BTN_SOLID}>
+          {pending ? "保存中…" : "保存する"}
+        </button>
         <Notice error={state.error} saved={state.saved} />
       </div>
     </form>

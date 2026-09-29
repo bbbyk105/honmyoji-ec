@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 
-import { STUDIO_SHELL } from "@/components/studio/shell";
+import { STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
 import { passwordIsPlaintext, studioConfigured, verifySession } from "@/lib/studio-session";
 import { LoginForm } from "./LoginForm";
 
@@ -22,34 +22,31 @@ export default async function StudioLoginPage({
   const { next } = await searchParams;
 
   return (
-    <div className={`${STUDIO_SHELL} flex min-h-screen items-center`}>
+    <div className={`${STUDIO_SHELL} flex min-h-screen items-center justify-center`}>
       <div className="w-full max-w-105 py-20">
-        <p className="eyebrow">MIROKU</p>
-        <h1 className="mt-5 font-display text-[clamp(34px,5vw,46px)] font-light leading-[1.05] text-ivory">
-          Studio
-        </h1>
-        <p className="mt-4 font-jp text-[12px] tracking-[0.24em] text-mist">管理画面</p>
+        <p className="font-mark text-[26px] font-light leading-none tracking-[0.02em] text-ivory">MIROKU</p>
+        <h1 className="mt-3 font-sans text-[15px] text-mist">管理画面</h1>
 
-        {studioConfigured ? (
-          <>
-            <LoginForm next={next ?? "/studio"} />
-            {passwordIsPlaintext ? (
-              <p className="mt-8 border-t border-line pt-5 font-sans text-[12px] leading-[1.8] text-clay">
-                パスワードが平文のまま環境変数に入っています。
-                <code className="mx-1 font-mono text-[11.5px]">npm run studio:secrets</code>
-                でハッシュに移してください。
-              </p>
-            ) : null}
-          </>
-        ) : (
-          <div className="mt-10 border border-clay/60 bg-sumi px-5 py-5">
-            <p className="font-sans text-[13px] leading-[1.9] text-clay">
+        <div className={`mt-8 ${STUDIO_CARD} px-6 py-7`}>
+          {studioConfigured ? (
+            <>
+              <LoginForm next={next ?? "/studio"} />
+              {passwordIsPlaintext ? (
+                <p className="mt-6 border-t border-line pt-5 font-sans text-[12.5px] leading-[1.8] text-clay">
+                  パスワードが平文のまま環境変数に入っています。
+                  <code className="mx-1 font-mono text-[12px]">npm run studio:secrets</code>
+                  でハッシュに移してください。
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className="font-sans text-[13.5px] leading-[1.9] text-clay">
               まだアカウントが設定されていません。
               <code className="mx-1 font-mono">npm run studio:secrets</code>
               で鍵を作り、<code className="font-mono">.env.local</code> に入れてから開いてください。
             </p>
-          </div>
-        )}
+          )}
+        </div>
       </div>
     </div>
   );

@@ -24,7 +24,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - カテゴリ（`ProductLine`）は五つ: `tatami-beri`（ボトルバッグ・大中小）/ `origami`（折り紙バッグ）/ `handbag` / `kimono`（着物地のショルダー）/ `apron`。主役写真の比率は区分で決まる（`LINE_RATIO` — 立つものは 4:5、横に広いもの・平置きは 3:2）。一覧は区分ごとの節で組む（`LINE_ORDER`・`LINE_BLURB`）。
   - `folder` はクライアントの書き出し番号（`bottle-01` … `bottle-13`、`bottle-05b`、`origami-01` …）。**名前が変わっても folder は変えない** — 写真の置き場所とモーフ名（`bag-{folder}`）がこれに付いている。SKU も書き出し番号に合わせてある（`MI-BAG-001` = バンブー中1）。
   - **価格は未定なら `priceAud: null`**。表示は `priceLabel()`（null なら何も出さず状態だけ）。`isPurchasable()` は `available` かつ価格ありのときだけ真 —— 管理画面で Available にしても、価格を入れるまでカートにも Stripe にも入らない。
-  - ステータス（`ProductStatus`）は五つ。`made_to_order` は「写真の一点は出たが、同じ形を別の色で作り直せる」もの。**ステータスを増やしたら六箇所を直す**: `data/products.ts` の型と `STATUS_LABEL` / `lib/catalog.ts` の `STATUSES` / `components/collection/StatusPill.tsx` / `app/(site)/collection/[slug]/page.tsx` の `cta()` / `app/studio/options.ts` / `app/studio/page.tsx` の `PIECE_ORDER`。`Record<ProductStatus, …>` にしてある三箇所は `tsc` が教えてくれるが、`cta()` は黙って落ちる。
+  - ステータス（`ProductStatus`）は五つ。`made_to_order` は「写真の一点は出たが、同じ形を別の色で作り直せる」もの。**ステータスを増やしたら七箇所を直す**: `data/products.ts` の型と `STATUS_LABEL` / `lib/catalog.ts` の `STATUSES` / `components/collection/StatusPill.tsx` / `app/(site)/collection/[slug]/page.tsx` の `cta()` / `app/studio/options.ts` / `app/studio/page.tsx` の `PIECE_ORDER` / **DB の `piece_overrides_status_check`**（`supabase/migrations/` に一本足す。0003 がその例）。`Record<ProductStatus, …>` にしてある箇所は `tsc` が教えてくれるが、`cta()` と DB の check は黙って落ちる。
   - 買えるのは `available`（カート → Stripe）だけ。`made_to_order` は色を決める会話が要るのでカートに入れず、Contact（`subject=colour`）へ送る。
 - `data/site.ts` — ブランドコピー・FAQ・創業者・特商法/返品ポリシー。
 - `data/blog.ts` — Blog の**型とフォールバックの種**。記事本体は microCMS（下記）。ここは鍵の無い環境で Blog が空にならないようにするための seed で、記事を足す場所ではない。
@@ -114,6 +114,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 注文が確定するのは **Stripe Webhook だけ**。`/checkout/thank-you` では作らない（カードは通ったのに客がタブを閉じた、で注文が消える）。Webhook は保存に失敗したら 500 を返して再送させる。
 - 決済が通ると Webhook が作品を自動で `sold_out` にする。一点物なので、手作業にすると二人目に買える状態で見える時間ができる。
 - Stripe に商品を登録しない。毎回 `price_data` でその場に組む（価格の正本が二つになると必ずどちらかが古くなる）。
+- **管理画面の地は紙**（2026-09-29 に fujisan の管理画面に合わせて組み直した。墨の全面は「黒で見にくい」と言われた）。`app/studio/layout.tsx` が `surface-paper`、墨はナビの帯（`StudioNav` の `surface-dark`）だけ。表と入力欄は一段明るい台紙（`bg-card` / `bg-field`、`globals.css` の `@theme`）。語は日本語が先、英語の小さな大文字のラベルは使わない。版面・ボタン・台紙のクラスは `components/studio/shell.ts`、見出しと数字は `StudioHead` / `Kpi`。
+- **管理画面の select を `defaultValue` のまま `<form action={…}>` で送らない**。React 19 は action の後に form を初期値へ戻し、select は描いた後に初期値を差し替えられないので、保存は通っているのに「完売」などの元の値に戻って見える（2026-09-29 に「完売から切り替えられない」と報告された原因）。保存フォームは `useStudioForm`（onSubmit から送る）、一覧の状態は制御した select（`PieceTable`）。ログインだけは `<form action>` のまま（通れば redirect、失敗で欄が空に戻るのは望ましい）。
+- 一覧のステータス変更は `setPiecesStatus(slugs, status)` 一本（一点でも複数でも）。失敗は必ず画面へ返す —— 以前は void で握りつぶしていて、受注生産が DB の check（0001 に `made_to_order` が無い）で一度も保存されていなかったことに誰も気づけなかった。`supabase/migrations/0003_made_to_order.sql` を流すと通る。
 - 管理画面の日本語は `ch` で測らない。`max-w-[62ch]` は和文だと 20 字ほどで折り返す（DESIGN.md の Measure と同じ話）。
 - ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・Telegram 通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
 - **`.env` の値に `$` を入れない**。dotenv は `scrypt$abc$def` の `$abc` / `$def` を未定義の変数として空に置き換えるので、値が `scrypt` の 6 文字になってログインが必ず失敗する（実際に踏んだ）。パスワードハッシュの区切りは `:`、生成する秘密は base64url（`+/=` も避ける）。
@@ -156,7 +159,7 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 
 - Stripe Checkout（現状は Add to cart → Send this cart → お問い合わせで取り置き → 手動決済案内）。
 - 日本語版ページ（i18n）。
-- 26 点の正式な名前・文言・価格・寸法（今は仮。価格は未定で Coming soon、`data/products.ts` の冒頭の註）。
+- 26 点の正式な名前・文言・寸法（今は仮）。価格は 2026-09-29 に 26 点とも入れたが、状態は Coming soon のまま —— 売り出す日を決めて /studio で Available に（`data/products.ts` の冒頭の註）。
 - 着姿のうち、どの作品か特定できていないカット（`image/` の 0.10.03・0.13.02/14/28）の割り当て。
 - `site.email` / `site.instagram` の実値差し替え。
 

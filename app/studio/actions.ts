@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
+import { getProduct } from "@/data/products";
 import { db, dbEnabled } from "@/lib/supabase";
 import { LOGIN_LIMITS, checkGate, clientIp, recordAttempt } from "@/lib/studio-guard";
 import { notifyStudio } from "@/lib/studio-notify";
@@ -138,7 +140,7 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
 
   if (error) {
     console.error("[studio] piece の保存に失敗", error);
-    return { error: `保存できませんでした: ${error.message}` };
+    return { error: saveError(error) };
   }
 
   revalidateCatalog();
@@ -147,28 +149,57 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
   return { saved: new Date().toISOString() };
 }
 
-/** 一覧からステータスだけ直す。詳細を開かずに「売れた」を記録するため。 */
-export async function setPieceStatus(formData: FormData): Promise<void> {
+export type StatusResult = { ok: true; count: number } | { ok: false; error: string };
+
+/**
+ * 一覧からステータスだけ直す。一点でも、チェックを入れた複数でも同じ道を通る。
+ *
+ * 以前は失敗しても何も返さず（void）、画面は選んだ値のまま黙っていた。受注生産は DB の
+ * check に弾かれて一度も保存されていなかったのに、誰も気づけなかった。失敗は必ず画面へ返す。
+ */
+export async function setPiecesStatus(slugs: string[], status: string): Promise<StatusResult> {
   await requireSession();
 
-  const slug = String(formData.get("slug") ?? "").trim();
-  const status = String(formData.get("status") ?? "").trim();
-  if (!slug || !status) return;
+  const option = PIECE_STATUS_OPTIONS.find((o) => o.value === status);
+  if (!option) return { ok: false, error: "ステータスが読めませんでした。選び直してください。" };
+
+  // 画面から来た slug は信用しない —— カタログにあるものだけ書く。
+  const known = [...new Set(slugs)].filter((slug) => getProduct(slug)?.slug === slug);
+  if (known.length === 0) return { ok: false, error: "作品が選ばれていません。" };
 
   const client = db();
-  if (!client) return;
+  if (!client) {
+    return { ok: false, error: "データベースに繋がっていません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
+  }
 
+  // 列を status と updated_at だけにして upsert する。既にある行の価格や文言には触れない。
+  const now = new Date().toISOString();
   const { error } = await client
     .from("piece_overrides")
-    .upsert({ slug, status, updated_at: new Date().toISOString() }, { onConflict: "slug" });
+    .upsert(
+      known.map((slug) => ({ slug, status: option.value, updated_at: now })),
+      { onConflict: "slug" },
+    );
 
   if (error) {
     console.error("[studio] ステータスの更新に失敗", error);
-    return;
+    return { ok: false, error: saveError(error) };
   }
 
   revalidateCatalog();
-  revalidatePath("/studio/pieces");
+  revalidatePath("/studio", "layout");
+  return { ok: true, count: known.length };
+}
+
+/**
+ * 保存の失敗を人の言葉に。23514 は check 違反で、ここに来るのは「DB がまだ知らない
+ * ステータス」のときだけ（受注生産を足したあと 0003 を流していない）。
+ */
+function saveError(error: { code?: string; message: string }): string {
+  if (error.code === "23514") {
+    return "データベースがこのステータスをまだ受け付けません。supabase/migrations/0003_made_to_order.sql を Supabase の SQL Editor で一度流してください。";
+  }
+  return `保存できませんでした: ${error.message}`;
 }
 
 /** 上書きを消してコード側（data/products.ts）の値に戻す。 */

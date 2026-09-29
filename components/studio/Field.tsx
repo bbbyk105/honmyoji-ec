@@ -1,17 +1,15 @@
 import type { ReactNode, SelectHTMLAttributes } from "react";
 
 /**
- * 管理画面の入力欄。公開サイトの Contact フォームと同じ「紙の升目」を使う。
- * 罫線一本だけの欄はどこを触ればいいのか分からない、というのは管理画面でも同じ
- * ——むしろ一日に何度も触る画面のほうが効く。
+ * 管理画面の入力欄。紙の上に一段明るい升目（`bg-field`）+ 全周の罫。
+ * 罫線一本だけの欄はどこを触ればいいのか分からない —— 一日に何度も触る画面のほうが効く。
  */
 export const fieldClass =
-  "w-full border border-line bg-sumi px-4 py-3 font-sans text-[15px] leading-[1.6] text-ivory outline-none transition-colors placeholder:text-mist/70 hover:border-bark focus:border-ivory focus:ring-1 focus:ring-ivory/15 aria-[invalid=true]:border-clay";
+  "w-full border border-line bg-field px-4 py-3 font-sans text-[15px] leading-[1.6] text-ivory outline-none transition-colors placeholder:text-mist/70 hover:border-bark focus:border-ivory focus:ring-2 focus:ring-ivory/10 disabled:cursor-not-allowed disabled:opacity-60 aria-[invalid=true]:border-clay";
 
-export const labelClass =
-  "block font-sans text-[11px] font-medium uppercase tracking-[0.16em] text-bone";
+export const labelClass = "block font-sans text-[13.5px] font-semibold text-ivory";
 
-export const hintClass = "mt-2 font-sans text-[12px] leading-[1.6] text-mist";
+export const hintClass = "mt-2 font-sans text-[12.5px] leading-[1.7] text-mist";
 
 export function Field({
   label,
@@ -65,7 +63,7 @@ export function Notice({ error, saved }: { error?: string; saved?: string }) {
     return (
       <p
         role="alert"
-        className="border border-clay/60 bg-sumi px-4 py-3 font-sans text-[13px] leading-[1.7] text-clay"
+        className="border border-clay/40 bg-clay/10 px-4 py-3 font-sans text-[13.5px] leading-[1.7] text-clay"
       >
         {error}
       </p>
@@ -73,7 +71,7 @@ export function Notice({ error, saved }: { error?: string; saved?: string }) {
   }
   if (saved) {
     return (
-      <p className="flex items-center gap-2.5 font-sans text-[12px] text-mist">
+      <p role="status" className="flex items-center gap-2.5 font-sans text-[13px] text-moss">
         <span aria-hidden className="h-1.5 w-1.5 bg-moss" />
         保存しました
         <time dateTime={saved} className="tabular-nums">

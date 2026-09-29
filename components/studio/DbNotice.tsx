@@ -6,20 +6,18 @@
  */
 export function DbNotice() {
   return (
-    <div className="mt-10 border border-line bg-sumi px-6 py-7">
-      <p className="font-display text-[24px] font-light leading-[1.25] text-ivory">
-        データベースに繋がっていません
-      </p>
-      <p className="mt-3 max-w-[42em] font-sans text-[13.5px] leading-[1.9] text-bone">
+    <div className="mb-8 border border-clay/40 bg-clay/10 px-6 py-5">
+      <p className="font-sans text-[15px] font-semibold text-clay">データベースに繋がっていません</p>
+      <p className="mt-2 max-w-[46em] font-sans text-[13.5px] leading-[1.9] text-bone">
         いまは <code className="font-mono text-[12.5px]">data/products.ts</code> の値をそのまま表示しています。
-        編集して保存することはできますが、保存先がないので値は残りません。
+        変更しても保存先がないので、値は残りません。
       </p>
-      <p className="mt-4 max-w-[42em] font-sans text-[13px] leading-[1.9] text-mist">
+      <p className="mt-2 max-w-[46em] font-sans text-[13px] leading-[1.9] text-mist">
         <code className="font-mono text-[12.5px]">.env.local</code> に{" "}
         <code className="font-mono text-[12.5px]">SUPABASE_URL</code> と{" "}
         <code className="font-mono text-[12.5px]">SUPABASE_SERVICE_ROLE_KEY</code> を入れ、
-        <code className="mx-1 font-mono text-[12.5px]">supabase/migrations/0001_studio.sql</code>
-        を Supabase の SQL Editor で流してください。
+        <code className="mx-1 font-mono text-[12.5px]">supabase/migrations/</code>
+        の SQL を番号順に Supabase の SQL Editor で流してください。
       </p>
     </div>
   );
