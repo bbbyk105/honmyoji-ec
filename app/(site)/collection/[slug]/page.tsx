@@ -71,7 +71,10 @@ function cta(product: Product) {
       return {
         primary: { href: `/contact${q}&subject=notify`, label: "Notify me" },
         secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
-        note: "Finished and photographed, not yet released. Leave your email and we write the day it goes on sale, with the price.",
+        /* 値段がもう出ている作品に「with the price」と書くと、画面の上の値札と食い違う。 */
+        note: `Finished and photographed, not yet released. Leave your email and we write the day it goes on sale${
+          product.priceAud == null ? ", with the price" : ""
+        }.`,
       };
     case "made_to_order":
       return {
