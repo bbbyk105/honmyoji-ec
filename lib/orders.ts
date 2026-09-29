@@ -70,7 +70,7 @@ export function orderRef(id: number): string {
 }
 
 /** 金額の表記。DB はセント単位、表示は A$220（サイトと同じ書き方）。 */
-export function orderAmount(order: Order): string {
+export function orderAmount(order: Pick<Order, "amount_cents" | "currency">): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: order.currency.toUpperCase(),

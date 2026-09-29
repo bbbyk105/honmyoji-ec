@@ -1,0 +1,81 @@
+import { addressLines, clashesBefore, doubleSaleMail, orderPlacedMail } from "@/lib/order-mail";
+
+const base = {
+  ref: "MI-0007",
+  amount: "A$183",
+  customerName: "Jane Doe",
+  customerEmail: "jane@example.com",
+  shipping: {
+    name: "Jane Doe",
+    line1: "1 George St",
+    city: "Sydney",
+    state: "NSW",
+    postal_code: "2000",
+    country: "AU",
+    phone: "+61 400 000 000",
+  },
+  pieces: [{ name: "Hishi", kanji: "菱", price: "A$148" }],
+  studioUrl: "https://example.com/studio/orders/7",
+};
+
+describe("orderPlacedMail", () => {
+  it("件名に注文番号と合計が入る", () => {
+    expect(orderPlacedMail(base).subject).toBe("【MIROKU】注文が入りました — MI-0007（A$183）");
+  });
+
+  it("作品・お客さま・送り先・管理画面の URL が本文に入る", () => {
+    const { text } = orderPlacedMail(base);
+    expect(text).toContain("  Hishi 菱 — A$148");
+    expect(text).toContain("お客さま: Jane Doe <jane@example.com>");
+    expect(text).toContain("  Sydney NSW 2000");
+    expect(text).toContain("  電話: +61 400 000 000");
+    expect(text).toContain("管理画面: https://example.com/studio/orders/7");
+  });
+
+  it("住所が無ければ、無いと書く（空欄で黙らない）", () => {
+    expect(orderPlacedMail({ ...base, shipping: null }).text).toContain("住所が届いていません");
+  });
+});
+
+describe("addressLines", () => {
+  it("空の行を落とす", () => {
+    expect(addressLines({ name: "A", line1: "1 St", line2: "", country: "JP" })).toEqual(["A", "1 St", "JP"]);
+  });
+});
+
+describe("clashesBefore", () => {
+  it("完売と取り置き中だけを拾う", () => {
+    const got = clashesBefore([
+      { name: "A", kanji: "一", status: "available" },
+      { name: "B", kanji: "二", status: "sold_out" },
+      { name: "C", kanji: "三", status: "reserved" },
+      { name: "D", kanji: "四", status: "coming_soon" },
+    ]);
+    expect(got.map((p) => p.name)).toEqual(["B", "C"]);
+  });
+});
+
+describe("doubleSaleMail", () => {
+  it("決済の前の状態と、返金の入口を書く", () => {
+    const { subject, text } = doubleSaleMail({
+      ref: "MI-0008",
+      clashes: [{ name: "Hishi", kanji: "菱", status: "sold_out" }],
+      studioUrl: "https://example.com/studio/orders/8",
+      stripeUrl: "https://dashboard.stripe.com/payments/pi_1",
+    });
+    expect(subject).toContain("MI-0008");
+    expect(text).toContain("Hishi 菱 — 決済の前は「完売」");
+    expect(text).toContain("Stripe: https://dashboard.stripe.com/payments/pi_1");
+  });
+
+  it("payment intent が無ければ Stripe の行を出さない", () => {
+    const { text } = doubleSaleMail({
+      ref: "MI-0009",
+      clashes: [{ name: "Kago", kanji: "籠", status: "reserved" }],
+      studioUrl: "/studio/orders/9",
+      stripeUrl: null,
+    });
+    expect(text).not.toContain("Stripe:");
+    expect(text).toContain("「取り置き中」");
+  });
+});

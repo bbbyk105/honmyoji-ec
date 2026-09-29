@@ -17,6 +17,9 @@ import { SHIPPING_AUD, SHIPPING_COUNTRIES, stripe } from "@/lib/stripe";
 
 export type CheckoutState = { error?: string };
 
+/** 決済画面が開いていられる時間（分）。定数は "use server" から export しない。 */
+const CHECKOUT_HOLD_MINUTES = 35;
+
 async function origin(): Promise<string> {
   const configured = process.env.NEXT_PUBLIC_SITE_URL;
   if (configured) return configured.replace(/\/$/, "");
@@ -91,6 +94,10 @@ export async function startCheckout(
             ]
           : undefined,
       phone_number_collection: { enabled: true },
+      // 一点物なので、決済画面を開いたまま置いておける時間を短くする。既定の 24 時間だと、
+      // その間に別の人も同じ作品の決済画面を開けて、二人とも払えてしまう。Stripe の
+      // 下限は 30 分（作成時刻から数えるので、ぎりぎりにすると弾かれる）。
+      expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_HOLD_MINUTES * 60,
       // Webhook が注文を組み立てるときに読む。line_items から引き直すより確実。
       metadata: { slugs: pieces.map((p) => p.slug).join(",") },
       success_url: `${base}/checkout/thank-you?session_id={CHECKOUT_SESSION_ID}`,

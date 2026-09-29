@@ -1,31 +1,31 @@
 "use server";
 
+import { notifyStore } from "@/lib/mail";
+
 export type SubscribeState =
   | { status: "idle" }
   | { status: "error"; message: string }
   | { status: "sent"; message: string };
 
+/** 新作のお知らせの登録。お店にメールで届ける（Resend、`lib/mail.ts`）。 */
 export async function subscribeNote(_prev: SubscribeState, formData: FormData): Promise<SubscribeState> {
   const email = String(formData.get("email") ?? "").trim();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     return { status: "error", message: "Please enter a valid email address." };
   }
 
-  const text = `MIROKU — Notes from the temple\n${email}`;
-  const token = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
-
   try {
-    if (token && chatId) {
-      const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chat_id: chatId, text }),
-      });
-      if (!res.ok) throw new Error(`telegram ${res.status}`);
-    } else {
-      console.info("[subscribe] (no TELEGRAM_* env — logging only)\n" + text);
-    }
+    await notifyStore({
+      subject: "【MIROKU】新作のお知らせに登録がありました",
+      text: [
+        "新作のお知らせ（Notes from the temple）に登録がありました。",
+        "",
+        `メール: ${email}`,
+        "",
+        "新しい作品が出たら、このアドレスにお知らせを送ってください。",
+      ].join("\n"),
+      replyTo: email,
+    });
   } catch (err) {
     console.error("[subscribe] failed", err);
     return { status: "error", message: "We could not keep your address. Please try again." };
