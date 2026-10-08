@@ -1,4 +1,4 @@
-import { addressLines, clashesBefore, doubleSaleMail, orderPlacedMail } from "@/lib/order-mail";
+import { addressLines, clashesBefore, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 
 const base = {
   ref: "MI-0007",
@@ -77,5 +77,29 @@ describe("doubleSaleMail", () => {
     });
     expect(text).not.toContain("Stripe:");
     expect(text).toContain("「取り置き中」");
+  });
+});
+
+describe("orderConfirmationMail", () => {
+  it("件名と書き出しはお客さまの名前と注文番号（英語）", () => {
+    const mail = orderConfirmationMail(base);
+    expect(mail.subject).toBe("Thank you — your MIROKU order MI-0007");
+    expect(mail.text.split("\n")[0]).toBe("Thank you, Jane Doe.");
+  });
+
+  it("作品・合計・送り先が入り、電話番号は載せない", () => {
+    const { text } = orderConfirmationMail(base);
+    expect(text).toContain("Order MI-0007");
+    expect(text).toContain("  Hishi 菱 — A$148");
+    expect(text).toContain("Total: A$183 (shipping included)");
+    expect(text).toContain("  Sydney NSW 2000");
+    expect(text).not.toContain("+61 400 000 000");
+    expect(text).not.toContain("電話");
+  });
+
+  it("名前も住所も無くても崩れない", () => {
+    const { text } = orderConfirmationMail({ ...base, customerName: null, shipping: null });
+    expect(text.split("\n")[0]).toBe("Thank you.");
+    expect(text).not.toContain("Shipping to:");
   });
 });

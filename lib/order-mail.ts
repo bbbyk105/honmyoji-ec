@@ -1,9 +1,11 @@
 import { STATUS_LABEL, type Product, type ProductStatus } from "@/data/products";
+import { site } from "@/data/site";
 import type { ShippingAddress } from "@/lib/orders";
 
 /* ------------------------------------------------------------------
-   注文のときにお店へ送るメールの文面。**組むだけで送らない**（送るのは Webhook が
-   `lib/mail.ts` で）。DB にも Stripe にも触らない純粋な関数なので、テストで直に叩く。
+   注文のときに送るメールの文面（お店へ二通、お客さまへ一通）。**組むだけで送らない**
+   （送るのは Webhook が `lib/mail.ts` で）。DB にも Stripe にも触らない純粋な関数なので、
+   テストで直に叩く。
    ------------------------------------------------------------------ */
 
 export type Mail = { subject: string; text: string };
@@ -91,9 +93,49 @@ export function doubleSaleMail(o: {
       "",
       "どちらのお客さまにお渡しするかを決めて、もう一方には Stripe のダッシュボードから返金し、",
       "お詫びのメールを送ってください。",
+      "この注文のお客さまには、注文の確認メールを自動では送っていません。決めたあとでご連絡ください。",
       "",
       `この注文: ${o.studioUrl}`,
       ...(o.stripeUrl ? [`Stripe: ${o.stripeUrl}`] : []),
+    ].join("\n"),
+  };
+}
+
+/**
+ * お客さまへの注文の確認（英語）。文面は /checkout/thank-you の画面と同じ言葉にしてある ——
+ * 画面で読んだことと、あとでメールで読み返すことが食い違わないように。
+ *
+ * 電話番号は載せない（お客さま自身の情報で、確認に要らない）。返信はお店の公開アドレスに
+ * 届く（`lib/mail.ts` の `sendToCustomerQuietly`）。
+ */
+export function orderConfirmationMail(o: {
+  ref: string;
+  amount: string;
+  customerName: string | null;
+  shipping: ShippingAddress | null;
+  pieces: PieceLine[];
+}): Mail {
+  const address = addressLines(o.shipping ? { ...o.shipping, phone: undefined } : null);
+  return {
+    subject: `Thank you — your MIROKU order ${o.ref}`,
+    text: [
+      o.customerName ? `Thank you, ${o.customerName}.` : "Thank you.",
+      "ありがとうございます",
+      "",
+      "The piece is yours. It leaves Honmyoji within a few days, wrapped by hand, and we write",
+      "to you with the tracking number as soon as it is on its way.",
+      "",
+      `Order ${o.ref}`,
+      ...o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`),
+      `Total: ${o.amount} (shipping included)`,
+      ...(address.length ? ["", "Shipping to:", ...address.map((line) => `  ${line}`)] : []),
+      "",
+      "Each bag is made from the edging of a single roll, so the one you chose will not be made",
+      "again. If anything about the order needs changing, reply to this email — a person reads it.",
+      "",
+      site.name,
+      site.location,
+      site.url,
     ].join("\n"),
   };
 }

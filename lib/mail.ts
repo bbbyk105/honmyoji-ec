@@ -3,7 +3,7 @@ import "server-only";
 import { site } from "@/data/site";
 
 /* ------------------------------------------------------------------
-   お店への知らせ（Resend）。**サーバ専用** —— API キーを client に渡さない。
+   お店への知らせと、お客さまへの注文の確認（Resend）。**サーバ専用** —— API キーを client に渡さない。
 
    以前は Telegram に送っていたが、本番に TELEGRAM_* が入っておらず、公開から
    2026-09-29 までお問い合わせが一通もお店に届いていなかった（ログに残るだけ）。
@@ -55,12 +55,17 @@ export async function notifyStore(mail: Mail): Promise<void> {
     return;
   }
 
+  await send(notifyRecipients, mail);
+}
+
+/** Resend に一通頼む。失敗したら投げる。 */
+async function send(to: string[], mail: Mail): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from,
-      to: notifyRecipients,
+      to,
       subject: mail.subject,
       text: mail.text,
       // Resend のフィールド名は snake_case
@@ -71,6 +76,24 @@ export async function notifyStore(mail: Mail): Promise<void> {
 
   if (!res.ok) {
     throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+}
+
+/**
+ * お客さまに送る（注文の確認）。返信はお店の公開アドレス（`site.email`。Cloudflare の
+ * Email Routing でお店の Gmail へ転送される）に届く —— 送り元の notify@ には受信箱が無い。
+ *
+ * 失敗しても投げない（Webhook を止めない。注文はもう保存できている）。鍵が無ければログだけ。
+ */
+export async function sendToCustomerQuietly(to: string, mail: Mail): Promise<void> {
+  if (!apiKey) {
+    console.info(`[mail] RESEND_API_KEY が無いのでお客さまに送っていません: ${mail.subject}`);
+    return;
+  }
+  try {
+    await send([to], { replyTo: site.email, ...mail });
+  } catch (error) {
+    console.error("[mail] お客さまに送れませんでした", mail.subject, error);
   }
 }
 

@@ -4,8 +4,8 @@ import type Stripe from "stripe";
 
 import { priceLabel } from "@/data/products";
 import { getPieces } from "@/lib/catalog";
-import { notifyStoreQuietly, siteLink } from "@/lib/mail";
-import { clashesBefore, doubleSaleMail, orderPlacedMail } from "@/lib/order-mail";
+import { notifyStoreQuietly, sendToCustomerQuietly, siteLink } from "@/lib/mail";
+import { clashesBefore, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 import { orderAmount, orderRef } from "@/lib/orders";
 import { stripe, webCrypto } from "@/lib/stripe";
 import { db } from "@/lib/supabase";
@@ -150,19 +150,33 @@ export async function POST(request: NextRequest) {
     const intent =
       typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
 
+    const amount = orderAmount({ amount_cents: session.amount_total ?? 0, currency: session.currency ?? "aud" });
+    const customerName = session.customer_details?.name ?? null;
+    const customerEmail = session.customer_details?.email ?? null;
+    const pieces = before.map((p) => ({ name: p.name, kanji: p.kanji, price: priceLabel(p) }));
+
     await notifyStoreQuietly(
       orderPlacedMail({
         ref,
-        amount: orderAmount({ amount_cents: session.amount_total ?? 0, currency: session.currency ?? "aud" }),
-        customerName: session.customer_details?.name ?? null,
-        customerEmail: session.customer_details?.email ?? null,
+        amount,
+        customerName,
+        customerEmail,
         shipping: address(session),
-        pieces: before.map((p) => ({ name: p.name, kanji: p.kanji, price: priceLabel(p) })),
+        pieces,
         studioUrl,
       }),
     );
 
     const clashes = clashesBefore(before);
+    // お客さまへの確認は、取り違えが無いときだけ。二重に売れたかもしれない注文に
+    // 「The piece is yours」と送ると、あとで返金するときに言ったことを取り消すことになる。
+    // そのときはお店がどちらに渡すかを決めてから、自分で書く（doubleSaleMail に書いてある）。
+    if (clashes.length === 0 && customerEmail) {
+      await sendToCustomerQuietly(
+        customerEmail,
+        orderConfirmationMail({ ref, amount, customerName, shipping: address(session), pieces }),
+      );
+    }
     if (clashes.length > 0) {
       console.error("[stripe] 決済の前に買えない状態だった作品", ref, clashes.map((p) => p.name));
       await notifyStoreQuietly(
