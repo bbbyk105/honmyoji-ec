@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { legal } from "@/data/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/legal" },
   title: "Legal — Specified Commercial Transactions Act & Returns",
   description: "Seller information under Japan's Act on Specified Commercial Transactions, and our returns and refund policy.",
 };

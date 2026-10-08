@@ -12,6 +12,7 @@ import { getBlogPosts } from "@/lib/microcms";
 const MEASURE = "max-w-[var(--blog-measure)]";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/blog" },
   title: "Blog",
   description: "Notes on material, making, care, and place — from Honmyoji Temple, Fuji.",
 };

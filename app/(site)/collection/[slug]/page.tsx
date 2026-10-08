@@ -7,6 +7,7 @@ import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { ProductHero } from "@/components/collection/ProductHero";
 import { StatusPill } from "@/components/collection/StatusPill";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
@@ -15,6 +16,7 @@ import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
 import { getCatalog, getPiece } from "@/lib/catalog";
+import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo";
 import {
   LINE_LABEL,
   LINE_RATIO,
@@ -49,7 +51,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: `${product.name} ${product.kanji}${price ? ` — ${price}` : ""}`,
     description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
-    openGraph: { images: [{ url: productImage(product.slug, 1) }] },
+    alternates: { canonical: productPath(product) },
+    openGraph: { type: "website", siteName: "MIROKU", images: [{ url: productImage(product.slug, 1) }] },
     // 試し買い用は検索エンジンに載せない
     ...(product.test ? { robots: { index: false, follow: false } } : {}),
   };
@@ -134,6 +137,19 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   */
   return (
     <LightboxProvider shots={photos}>
+      {/* 試し買い用は検索エンジンに載せない（noindex）ので、構造化データも出さない */}
+      {product.test ? null : (
+        <JsonLd
+          data={[
+            productJsonLd(product),
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "Collection", path: "/collection" },
+              { name: `${product.name} ${product.kanji}`, path: productPath(product) },
+            ]),
+          ]}
+        />
+      )}
       <div className="surface-paper pb-beat">
       <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
         <div className={`${SHELL} grid gap-10 pt-6 md:grid-cols-12 md:gap-10 md:pt-10`}>

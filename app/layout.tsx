@@ -69,9 +69,12 @@ export const metadata: Metadata = {
     title: `${site.name} — Tatami-beri bags, made once`,
     description: site.description,
     type: "website",
+    siteName: site.name,
     locale: "en_US",
     images: [{ url: "/images/scenes/altar-standing.webp" }],
   },
+  // X（Twitter）で共有したときは大きい写真のカード
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

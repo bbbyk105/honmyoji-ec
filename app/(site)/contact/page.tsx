@@ -7,6 +7,7 @@ import { subjectOptions } from "./subjects";
 import { ContactForm } from "./ContactForm";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contact" },
   title: "Contact",
   description: "Reserve a piece, ask a question, or commission a bag from Honmyoji Temple.",
 };

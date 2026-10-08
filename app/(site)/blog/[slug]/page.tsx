@@ -1,7 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogArticle } from "@/components/blog/BlogArticle";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getBlogPosts, getBlogPost, nextPost } from "@/lib/microcms";
+import { blogPostingJsonLd, breadcrumbJsonLd } from "@/lib/seo";
+
+/** 写真の無い記事を共有したときの絵（layout の既定と同じ） */
+const FALLBACK_IMAGE = "/images/scenes/altar-standing.webp";
 
 type Params = { slug: string };
 
@@ -18,7 +23,15 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: entry.title,
     description: entry.dek,
-    openGraph: entry.image ? { images: [{ url: entry.image }] } : undefined,
+    alternates: { canonical: `/blog/${entry.slug}` },
+    openGraph: {
+      type: "article",
+      siteName: "MIROKU",
+      title: entry.title,
+      description: entry.dek,
+      ...(entry.date ? { publishedTime: entry.date } : {}),
+      images: [{ url: entry.image ?? FALLBACK_IMAGE }],
+    },
   };
 }
 
@@ -28,5 +41,19 @@ export default async function BlogArticlePage({ params }: { params: Promise<Para
   const entry = entries.find((e) => e.slug === slug);
   if (!entry) notFound();
 
-  return <BlogArticle entry={entry} next={nextPost(entries, slug)} />;
+  return (
+    <>
+      <JsonLd
+        data={[
+          blogPostingJsonLd(entry),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+            { name: entry.title, path: `/blog/${entry.slug}` },
+          ]),
+        ]}
+      />
+      <BlogArticle entry={entry} next={nextPost(entries, slug)} />
+    </>
+  );
 }

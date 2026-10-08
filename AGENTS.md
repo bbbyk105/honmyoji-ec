@@ -163,6 +163,14 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - microCMS の API キーに `NEXT_PUBLIC_` を付けない。`lib/microcms.ts` はサーバ専用 — `"use client"` から import しない。
 - `NEXT_PUBLIC_SITE_URL` が OG 画像の `metadataBase`。本番ドメイン確定時に設定。
 
+## SEO（2026-10-09）
+
+- `app/sitemap.ts`（固定ページ・作品 26 点と写真・Blog の記事、1 時間ごと）と `app/robots.ts`（止めるのは `/api/` だけ。`/studio` や thank-you は noindex で外してあり、robots で塞ぐと noindex が読まれない）。Cloudflare が robots.txt の前に Content Signals を足して出す。
+- **どのページにも canonical**（`alternates.canonical`、自分自身のクエリ無しの URL）。`/contact?product=…` のような問い合わせの導線がクエリ付きで増えるため。
+- 構造化データは `lib/seo.ts` が組み、`components/seo/JsonLd.tsx` が body に出す（`metadata.other` に入れると `<meta>` になって読まれない）。作品 = Product（値段・在庫・送料・返品不可。在庫は状態から: Coming soon は OutOfStock、完売は SoldOut）＋パンくず、記事 = BlogPosting＋パンくず、トップ = OnlineStore と WebSite。**ページに見えていることだけを書く**（送料や返品の決まりを変えたら `lib/stripe-config.ts` と `data/site.ts` の legal に合わせて自動で変わる）。**電話番号は載せない**（作り手の携帯。特商法のページにだけ出す）。
+- 試し買い用（`data/products.ts` の `test`）は noindex・サイトマップに入れない・構造化データを出さない。一覧から外すのは `isListed()`。
+- パンくずは画面には出していない（版面に足すとテンプレートらしく見える）。構造化データだけ。
+
 ## デザイン
 
 Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, spacing, image roles, and what not to build (feature-card rows, gold luxury, centered CTA stacks) live there.

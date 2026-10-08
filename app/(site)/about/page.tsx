@@ -6,6 +6,7 @@ import { SHELL } from "@/components/site/Shell";
 import { faq, founder } from "@/data/site";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/about" },
   title: "About",
   description:
     "MIROKU is made at Honmyoji Temple in Fuji City by Emi Kashiwazake — tatami-beri remnants, recycled paper band, one piece at a time.",

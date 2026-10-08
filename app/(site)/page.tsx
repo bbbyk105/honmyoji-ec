@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "@/components/site/Arrow";
@@ -9,8 +10,10 @@ import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { HomeHero } from "@/components/home/HomeHero";
 import { PieceTile } from "@/components/collection/PieceTile";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { LINE_BLURB, LINE_LABEL, LINE_ORDER, productImage } from "@/data/products";
 import { getCatalog } from "@/lib/catalog";
+import { storeJsonLd } from "@/lib/seo";
 import { blogMeta } from "@/data/blog";
 import { blogHref, getBlogPosts } from "@/lib/microcms";
 import { founder } from "@/data/site";
@@ -64,6 +67,11 @@ const LINE_COVER: Record<(typeof LINE_ORDER)[number], string> = {
   apron: "apron-01",
 };
 
+/* タイトルと説明は layout の既定（サイト全体の名前と説明）。正規の URL だけここで決める。 */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
 export default async function HomePage() {
   /* カタログ経由で引くので、管理画面で直した価格とステータスがそのまま出る。 */
   const catalog = await getCatalog();
@@ -75,6 +83,7 @@ export default async function HomePage() {
 
   return (
     <>
+      <JsonLd data={storeJsonLd()} />
       <ChapterRail chapters={CHAPTERS} />
       <HomeHero />
 

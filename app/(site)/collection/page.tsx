@@ -7,6 +7,7 @@ import { getCatalog } from "@/lib/catalog";
 import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/collection" },
   title: "Collection",
   description:
     "One-of-a-kind bottle bags, origami bags, handbags, kimono shoulder bags and aprons, handmade from tatami-beri and vintage kimono cloth at Honmyoji Temple, Fuji.",
