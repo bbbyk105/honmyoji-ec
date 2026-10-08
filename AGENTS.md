@@ -136,6 +136,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - **DB は supabase-js ではなく postgrest-js**（`lib/supabase.ts`。読み込み 32ms → 1ms）。使っているのは `.from()` だけ。認証や Storage が要るようになったら戻す。
   - どちらも eslint の `no-restricted-imports` が止める（`eslint.config.mjs`）。
   - 実測（workers.dev・各 12 回）: 作り置きのページは中央値 8ms、毎回組み立てるページ（contact・studio/login・checkout/thank-you・404）は 17〜53ms、起きたばかりの Worker では 200〜500ms。
+- **Worker の入口は `worker/index.ts`**（`.open-next/worker.js` を包んで `scheduled` を足しただけ。`wrangler.jsonc` の `main`）。OpenNext の Durable Object（`DOQueueHandler` など）はここから export し直している —— 入口を替えるときに落とすと、再検証の列が実行時に動かなくなる。`.open-next/` が無いときの型は `worker/open-next.d.ts`。
+- **Supabase（無料プラン）は 7 日アクセスが無いとプロジェクトごと止まる**。止まるとホスト名が DNS から消え、Worker からの読み書きは `error code: 1016` になる（2026-10-08 に踏んだ。管理画面のステータスが保存できなかった。ログインは回数制限が「数えられないときは通す」ので入れてしまい、公開ページはコード側の値で出るので、気づきにくい）。毎日 UTC 18:00 の定期実行（`worker/keep-alive.ts`）が一行読んで起こしておく。止まったら Supabase のダッシュボードで Restore（戻ってから数分は 521 → 404 → 200 と変わる）。
 - **OpenNext はプロジェクトの `.env*` を値ごと Worker に焼き込む**（`.open-next/cloudflare/next-env.mjs`。止める設定は無い）。手元の .env には Stripe の本番の鍵もあるので、デプロイは必ず `npm run deploy`（`scripts/cf-deploy.mjs` が git の追うファイルだけを一時ディレクトリに写してビルドする）。`npx opennextjs-cloudflare deploy` をプロジェクトで直に叩かない。秘密は `npx wrangler secret put <NAME>`。
 
 - **client 部品に `Product` を丸ごと渡さない。** client に渡した props は RSC ペイロードとして HTML に焼き込まれる。以前は `MiniCart` に全九点を渡していて、どのページの HTML にも九点ぶんの物語（英日）が載っていた（2026-09-25 に削って、HTML は gzip で 7〜26% 減った）。渡すのは `CartPiece`（`data/products.ts` の `toCartPiece`）か slug だけ。client から `getProduct` / `productImage` を呼ばない（`products` 本体がバンドルに入る）— 画像は `leadSrc(folder)`。一覧（`PieceTile`）と商品ページのヒーローは Server Component なので `Product` をそのまま受けてよい。
