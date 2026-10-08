@@ -8,8 +8,9 @@
    カート（MiniCart）は作り置きのページに載るのでサーバーでは決められず、ブラウザで
    `navigator.languages` から決める（`hooks/useBrowserLang.ts`）。決済のフォームがその
    言語を送り、startCheckout はそれを優先する（無ければ Accept-Language）。決めた言語は
-   Stripe の決済画面（locale）と決済の metadata に残し、Webhook と thank-you はそれを
-   読む —— あとから判定し直すと、カート・決済画面・メールで言語が食い違うことがある。
+   決済の metadata に残し、Webhook と thank-you はそれを読む —— あとから判定し直すと、
+   カートとメールで言語が食い違うことがある。Stripe の決済画面は、日本語なら `ja`、
+   それ以外は `auto`（Stripe が持っている言語ならお客さまの言語で出す。2026-10-09 本人判断）。
    ------------------------------------------------------------------ */
 
 export type Lang = "ja" | "en";

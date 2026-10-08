@@ -92,7 +92,9 @@ export async function startCheckout(
     const session = await client.checkout.sessions.create({
       mode: "payment",
       currency: "aud",
-      locale: lang,
+      // 日本語の人には日本語で。それ以外は Stripe の自動判定（中国語・韓国語・フランス語なども
+      // Stripe が持っている言語ならその言語で出る）。メールと thank-you は lang のまま英語
+      locale: lang === "ja" ? "ja" : "auto",
       line_items: pieces.map((piece) => ({
         quantity: 1,
         price_data: {
