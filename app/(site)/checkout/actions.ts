@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { isPurchasable } from "@/data/products";
 import { getPieces, toCents } from "@/lib/catalog";
+import { langFromAcceptLanguage } from "@/lib/lang";
 import { SHIPPING_AUD, SHIPPING_COUNTRIES } from "@/lib/stripe-config";
 
 /* ------------------------------------------------------------------
@@ -63,11 +64,14 @@ export async function startCheckout(
   }
 
   const base = await origin();
+  // お客さまの言語。決済画面・確認メール・thank-you をこれで揃える（lib/lang.ts）
+  const lang = langFromAcceptLanguage((await headers()).get("accept-language"));
 
   try {
     const session = await client.checkout.sessions.create({
       mode: "payment",
       currency: "aud",
+      locale: lang,
       line_items: pieces.map((piece) => ({
         quantity: 1,
         price_data: {
@@ -102,7 +106,8 @@ export async function startCheckout(
       // 下限は 30 分（作成時刻から数えるので、ぎりぎりにすると弾かれる）。
       expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_HOLD_MINUTES * 60,
       // Webhook が注文を組み立てるときに読む。line_items から引き直すより確実。
-      metadata: { slugs: pieces.map((p) => p.slug).join(",") },
+      // lang は確認メールと thank-you の言語（決めるのはここだけ）。
+      metadata: { slugs: pieces.map((p) => p.slug).join(","), lang },
       success_url: `${base}/checkout/thank-you?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/collection`,
     });

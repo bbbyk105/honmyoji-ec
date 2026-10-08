@@ -4,6 +4,7 @@ import type Stripe from "stripe";
 
 import { priceLabel } from "@/data/products";
 import { getPieces } from "@/lib/catalog";
+import { isLang } from "@/lib/lang";
 import { notifyStoreQuietly, sendToCustomerQuietly, siteLink } from "@/lib/mail";
 import { clashesBefore, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 import { orderAmount, orderRef } from "@/lib/orders";
@@ -154,6 +155,8 @@ export async function POST(request: NextRequest) {
     const customerName = session.customer_details?.name ?? null;
     const customerEmail = session.customer_details?.email ?? null;
     const pieces = before.map((p) => ({ name: p.name, kanji: p.kanji, price: priceLabel(p) }));
+    // 決済を始めたときに決めた言語（lib/lang.ts）。それより前に作られた決済は英語
+    const lang = isLang(session.metadata?.lang) ? session.metadata.lang : "en";
 
     await notifyStoreQuietly(
       orderPlacedMail({
@@ -161,6 +164,7 @@ export async function POST(request: NextRequest) {
         amount,
         customerName,
         customerEmail,
+        customerLang: lang,
         shipping: address(session),
         pieces,
         studioUrl,
@@ -174,7 +178,7 @@ export async function POST(request: NextRequest) {
     if (clashes.length === 0 && customerEmail) {
       await sendToCustomerQuietly(
         customerEmail,
-        orderConfirmationMail({ ref, amount, customerName, shipping: address(session), pieces }),
+        orderConfirmationMail({ ref, amount, customerName, shipping: address(session), pieces, lang }),
       );
     }
     if (clashes.length > 0) {

@@ -1,5 +1,6 @@
 import { STATUS_LABEL, type Product, type ProductStatus } from "@/data/products";
 import { site } from "@/data/site";
+import type { Lang } from "@/lib/lang";
 import type { ShippingAddress } from "@/lib/orders";
 
 /* ------------------------------------------------------------------
@@ -19,6 +20,8 @@ export type OrderMailInput = {
   amount: string;
   customerName: string | null;
   customerEmail: string | null;
+  /** お客さまの言語（決済を始めたときのブラウザの設定）。返信をどちらで書くかの目安 */
+  customerLang?: Lang;
   shipping: ShippingAddress | null;
   pieces: PieceLine[];
   /** 管理画面の注文ページ（絶対 URL） */
@@ -54,6 +57,7 @@ export function orderPlacedMail(o: OrderMailInput): Mail {
       ...o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`),
       "",
       `お客さま: ${o.customerName ?? "—"}${o.customerEmail ? ` <${o.customerEmail}>` : ""}`,
+      ...(o.customerLang ? [`お客さまの言語: ${o.customerLang === "ja" ? "日本語" : "英語"}（確認メールもこの言語で送っています）`] : []),
       "",
       "送り先:",
       ...(address.length ? address.map((line) => `  ${line}`) : ["  （住所が届いていません。Stripe で確認してください）"]),
@@ -102,8 +106,9 @@ export function doubleSaleMail(o: {
 }
 
 /**
- * お客さまへの注文の確認（英語）。文面は /checkout/thank-you の画面と同じ言葉にしてある ——
- * 画面で読んだことと、あとでメールで読み返すことが食い違わないように。
+ * お客さまへの注文の確認。言語は決済を始めたときのブラウザの設定（`lib/lang.ts`）。
+ * 文面は /checkout/thank-you の画面と同じ言葉にしてある —— 画面で読んだことと、
+ * あとでメールで読み返すことが食い違わないように。
  *
  * 電話番号は載せない（お客さま自身の情報で、確認に要らない）。返信はお店の公開アドレスに
  * 届く（`lib/mail.ts` の `sendToCustomerQuietly`）。
@@ -114,8 +119,38 @@ export function orderConfirmationMail(o: {
   customerName: string | null;
   shipping: ShippingAddress | null;
   pieces: PieceLine[];
+  lang?: Lang;
 }): Mail {
   const address = addressLines(o.shipping ? { ...o.shipping, phone: undefined } : null);
+  const pieces = o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`);
+
+  if (o.lang === "ja") {
+    return {
+      subject: `【MIROKU】ご注文ありがとうございます（${o.ref}）`,
+      text: [
+        ...(o.customerName ? [`${o.customerName} 様`, ""] : []),
+        "このたびは MIROKU の作品をお求めいただき、ありがとうございます。",
+        "",
+        "作品は数日のうちに、本妙寺から手で包んでお送りします。",
+        "発送しましたら、追跡番号をメールでお知らせします。",
+        "",
+        `ご注文番号: ${o.ref}`,
+        ...pieces,
+        `合計: ${o.amount}（送料込み）`,
+        ...(address.length ? ["", "お届け先:", ...address.map((line) => `  ${line}`)] : []),
+        "",
+        "バッグはどれも、ひと巻きの畳縁から一つずつ作っています。お選びいただいたものと",
+        "同じ作品は、二度と作られません。",
+        "ご注文について変えたいことがあれば、このメールにそのまま返信してください。",
+        "寺の者が読んでお返事します。",
+        "",
+        site.name,
+        site.locationJa,
+        site.url,
+      ].join("\n"),
+    };
+  }
+
   return {
     subject: `Thank you — your MIROKU order ${o.ref}`,
     text: [
@@ -126,7 +161,7 @@ export function orderConfirmationMail(o: {
       "to you with the tracking number as soon as it is on its way.",
       "",
       `Order ${o.ref}`,
-      ...o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`),
+      ...pieces,
       `Total: ${o.amount} (shipping included)`,
       ...(address.length ? ["", "Shipping to:", ...address.map((line) => `  ${line}`)] : []),
       "",
