@@ -9,13 +9,13 @@
 
 import openNext from "../.open-next/worker.js";
 
-import { refuse } from "./guard";
+import { intercept } from "./guard";
 import { pingDatabase, type KeepAliveEnv } from "./keep-alive";
 
 const worker = {
   fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
-    const refused = refuse(request);
-    return refused ? Promise.resolve(refused) : openNext.fetch(request, env, ctx);
+    const early = intercept(request);
+    return early ? Promise.resolve(early) : openNext.fetch(request, env, ctx);
   },
 
   /** `wrangler.jsonc` の triggers.crons（一日一回）。Supabase を眠らせない。 */

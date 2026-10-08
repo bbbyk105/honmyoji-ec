@@ -132,7 +132,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 落とし穴
 
 - **監査（2026-10-08）の直し — 戻さないこと**（2026-10-09）:
-  - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413 にする。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。
+  - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413 にする。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。`www.` と `http://` も入口で `https://honmyoujifuji.com` へ恒久の転送（www も Custom Domain として同じ Worker に付けてある）。
   - **外の画像を Next に最適化させない**（`next.config.ts` に `remotePatterns` を置かない）。Cloudflare の画像変換は無料で月 5,000 件で、microCMS のホストを丸ごと許すと誰でも枠を使い切れた。Blog の写真は microCMS 自身の画像 API で縮め（`blogImage`）、`Frame` は外の URL を `unoptimized` で出す。
   - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。
   - **Blog の本文 HTML は描く前に無害化する**（`lib/blog-html.ts`、`xss`）。本文は `/studio` と同じオリジンで描かれるので、script が混ざるとログイン中の人の権限で管理画面を操作できた。プレビューの slug と draftKey は英数字と - _ だけ（SDK が URL にそのままつなぐ）。microCMS が落ちたら、ビルド中だけ予備の記事に落ち、動いている間は投げる（予備の記事が 10 分キャッシュされて本物が消えないように）。

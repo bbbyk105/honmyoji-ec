@@ -11,7 +11,11 @@
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	// 本番は honmyoujifuji.com（Custom Domain。DNS のレコードと証明書は Cloudflare が作る）。
 	// workers.dev は止める（同じサイトが二つの住所で見え、ゾーンの WAF も効かない。監査 14）。
-	"routes": [{ "pattern": "honmyoujifuji.com", "custom_domain": true }],
+	// www も同じ Worker に付け、入口（worker/guard.ts）で本体へ転送する
+	"routes": [
+		{ "pattern": "honmyoujifuji.com", "custom_domain": true },
+		{ "pattern": "www.honmyoujifuji.com", "custom_domain": true }
+	],
 	"workers_dev": false,
 	"preview_urls": false,
 	"assets": {

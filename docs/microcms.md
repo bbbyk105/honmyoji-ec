@@ -51,7 +51,7 @@ Blog（`/blog`）の記事は microCMS から読む。商品カタログ（`data
 管理画面 → API 設定 → 画面プレビュー に入れる URL：
 
 ```
-https://<本番ドメイン>/blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
+https://honmyoujifuji.com/blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
 ```
 
 下書きはキャッシュせず毎回取り直す。画面下に「Draft preview」の帯が出る。
@@ -62,7 +62,7 @@ https://<本番ドメイン>/blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
 
 管理画面 → API 設定 → Webhook → **カスタム通知**
 
-- URL: `https://<本番ドメイン>/api/revalidate`
+- URL: `https://honmyoujifuji.com/api/revalidate`
 - シークレット: `MICROCMS_WEBHOOK_SECRET` と同じ文字列
 
 `X-MICROCMS-Signature`（ボディの HMAC-SHA256）を検証してから
