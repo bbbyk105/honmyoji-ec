@@ -55,6 +55,15 @@ function buildEnv() {
   return Object.fromEntries(BUILD_ENV_KEYS.filter((key) => merged[key]).map((key) => [key, merged[key]]));
 }
 
+/**
+ * Worker の secrets にその名前があるか（値は読めないし読まない）。Stripe の鍵があれば、
+ * 作り置きのページに決済ボタンを出すよう、ビルドに印だけ渡す（lib/stripe-config.ts）。
+ */
+function workerHasSecret(name) {
+  const out = execFileSync("npx", ["wrangler", "secret", "list", "--format", "json"], { cwd: dir, encoding: "utf8" });
+  return JSON.parse(out).some((secret) => secret.name === name);
+}
+
 /** ビルドの出力（Worker に上がるもの全部）に秘密の値がそのまま入っていたら止める。 */
 function assertNoSecrets(outDir, env) {
   const values = SECRET_KEYS.map((key) => env[key]).filter(Boolean).map((value) => Buffer.from(value));
@@ -97,7 +106,9 @@ try {
   run("npm", ["ci", "--no-audit", "--no-fund"]);
   const env = buildEnv();
   console.log(`ビルドに渡す値: ${Object.keys(env).join(", ") || "なし（作り置きのページはコード側の値になる）"}`);
-  run("npx", ["opennextjs-cloudflare", "build"], env);
+  const checkout = workerHasSecret("STRIPE_SECRET_KEY");
+  console.log(`決済ボタン: ${checkout ? "出す（Worker に STRIPE_SECRET_KEY がある）" : "出さない（Worker に STRIPE_SECRET_KEY が無い）"}`);
+  run("npx", ["opennextjs-cloudflare", "build"], checkout ? { ...env, STRIPE_CHECKOUT_AT_BUILD: "1" } : env);
   assertNoSecrets(join(dir, ".open-next"), env);
   if (!dry) run("npx", ["opennextjs-cloudflare", "deploy"]);
 } finally {

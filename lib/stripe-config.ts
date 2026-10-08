@@ -11,8 +11,15 @@ import "server-only";
    （thank-you）の三か所だけ。それ以外はここを読む。
    ------------------------------------------------------------------ */
 
-/** 鍵があるか。無ければ決済ボタンは「準備中」に落ち、Contact からの取り置きが残る。 */
-export const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY);
+/**
+ * 鍵があるか。無ければ決済ボタンは「準備中」に落ち、Contact からの取り置きが残る。
+ *
+ * 外枠（SiteChrome）がこれで決済ボタンを出すので、作り置きのページにはビルドの時点の値が
+ * 残る。ビルドには鍵を渡さないので、`scripts/cf-deploy.mjs` が Worker の secrets に
+ * STRIPE_SECRET_KEY があるか（名前だけ）を見て、ビルドにだけ `STRIPE_CHECKOUT_AT_BUILD=1`
+ * を渡す。無いと、デプロイのたびに次の再検証（10 分）まで決済ボタンが消える。
+ */
+export const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_CHECKOUT_AT_BUILD);
 
 /**
  * 国際発送の送料（AUD）。0 にすると「送料込み」で送料の行が出なくなる。
