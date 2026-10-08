@@ -137,7 +137,7 @@ export const products: Product[] = [
     reading: "あかね",
     line: "tatami-beri",
     priceAud: 145,
-    status: "sold_out",
+    status: "coming_soon",
     note: "Madder red and blossom pink, with gold medallions and a red handle.",
     noteJa: "茜と桜色に金の紋。持ち手も赤で。",
     story:
@@ -225,7 +225,7 @@ export const products: Product[] = [
     reading: "はなだ",
     line: "tatami-beri",
     priceAud: 145,
-    status: "sold_out",
+    status: "coming_soon",
     note: "Pale indigo and blue-grey, under a woven paper handle.",
     noteJa: "縹色と青鈍に、紙バンドの編み手。",
     story:
@@ -489,7 +489,7 @@ export const products: Product[] = [
     reading: "さくらねずみ",
     line: "origami",
     priceAud: 50,
-    status: "sold_out",
+    status: "coming_soon",
     note: "Dove grey and pale pink hemp-leaf, the softest of the folds.",
     noteJa: "桜鼠と薄紅の麻の葉。折り紙でいちばん柔らかな色。",
     story:
@@ -535,7 +535,7 @@ export const products: Product[] = [
     reading: "かご",
     line: "handbag",
     priceAud: 110,
-    status: "sold_out",
+    status: "coming_soon",
     note: "Woven like a basket in green and gold, with a drawstring lining.",
     noteJa: "緑と金の縁を籠のように編み、巾着の内袋を。",
     story:
@@ -665,7 +665,7 @@ export const products: Product[] = [
     reading: "うきよ",
     line: "apron",
     priceAud: 40,
-    status: "sold_out",
+    status: "coming_soon",
     note: "White arrow-feather weave with a panel of figures on gold.",
     noteJa: "白い矢絣に、金地の人物柄の面。",
     story:
