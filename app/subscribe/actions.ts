@@ -1,5 +1,6 @@
 "use server";
 
+import { isEmail } from "@/lib/email";
 import { notifyStore } from "@/lib/mail";
 
 export type SubscribeState =
@@ -10,7 +11,7 @@ export type SubscribeState =
 /** 新作のお知らせの登録。お店にメールで届ける（Resend、`lib/mail.ts`）。 */
 export async function subscribeNote(_prev: SubscribeState, formData: FormData): Promise<SubscribeState> {
   const email = String(formData.get("email") ?? "").trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isEmail(email)) {
     return { status: "error", message: "Please enter a valid email address." };
   }
 

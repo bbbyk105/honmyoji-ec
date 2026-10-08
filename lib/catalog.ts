@@ -19,7 +19,7 @@ const STATUSES: ProductStatus[] = ["available", "made_to_order", "reserved", "so
 /**
  * DB を待つ上限。健全な Supabase なら九行の select は 0.3 秒もかからない。
  *
- * supabase-js は fetch が失敗すると内部で数回やり直す。ホストごと消えていると
+ * postgrest-js は fetch が失敗すると内部で数回やり直す（1・2・4 秒）。ホストごと消えていると
  * その再試行が 7 秒かかり、SiteChrome が getCatalog() を呼ぶので**公開ページ全部**
  * がその 7 秒を払うことになる（2026-09-16 に実際に踏んだ）。落ちている DB を
  * 待つ時間は、コード側の値で出せると分かっている以上ただの無駄。
@@ -43,7 +43,7 @@ let coolUntil = 0;
 let degraded = false;
 
 /**
- * ログに出す一行。supabase-js のエラーは message に Cloudflare の 521 ページが
+ * ログに出す一行。Supabase のエラーは message に Cloudflare の 521 ページが
  * 丸ごと入ってくることがあるので、改行を潰して頭だけ拾う（2026-09-16 に実際に
  * 踏んだ —— 端末が HTML で埋まった）。
  */
@@ -58,7 +58,7 @@ function raw(error: unknown): string {
   if (typeof error === "object" && error !== null) {
     const { message } = error as { message?: unknown };
     if (typeof message === "string" && message) return message;
-    // supabase-js の PostgrestError は素のオブジェクト。String() だと
+    // postgrest-js の PostgrestError は素のオブジェクト。String() だと
     // [object Object] になって何も分からない。
     try {
       return JSON.stringify(error);
@@ -169,10 +169,22 @@ export async function getPiece(key: string): Promise<Product | undefined> {
   return findByKey(await getCatalog(), key);
 }
 
-/** カートの slug 配列 → 商品。見つからない slug は落とす。 */
+/**
+ * カートの slug 配列 → 商品。見つからない slug は落とし、**同じ作品は一つにする**。
+ *
+ * 決済の slugs はお客さまが書き換えられる欄で、`x,x` も `<slug>,<folder>` も同じ一点に
+ * 解ける。重ねたまま通すと、一点物を二度請求したうえ、Webhook が同じ slug を二行
+ * upsert して DB に弾かれ続け、売れた作品が販売中のまま残る。
+ */
 export async function getPieces(keys: string[]): Promise<Product[]> {
   const catalog = await getCatalog();
-  return keys.map((k) => findByKey(catalog, k)).filter((p): p is Product => Boolean(p));
+  const seen = new Set<string>();
+  return keys.flatMap((k) => {
+    const piece = findByKey(catalog, k);
+    if (!piece || seen.has(piece.slug)) return [];
+    seen.add(piece.slug);
+    return [piece];
+  });
 }
 
 /** Stripe はセント単位。A$220 → 22000。 */

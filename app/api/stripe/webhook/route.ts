@@ -7,7 +7,7 @@ import { getPieces } from "@/lib/catalog";
 import { notifyStoreQuietly, siteLink } from "@/lib/mail";
 import { clashesBefore, doubleSaleMail, orderPlacedMail } from "@/lib/order-mail";
 import { orderAmount, orderRef } from "@/lib/orders";
-import { stripe } from "@/lib/stripe";
+import { stripe, webCrypto } from "@/lib/stripe";
 import { db } from "@/lib/supabase";
 
 /* ------------------------------------------------------------------
@@ -56,7 +56,13 @@ export async function POST(request: NextRequest) {
 
   let event: Stripe.Event;
   try {
-    event = client.webhooks.constructEvent(raw, signature, webhookSecret);
+    event = await client.webhooks.constructEventAsync(
+      raw,
+      signature,
+      webhookSecret,
+      undefined,
+      webCrypto,
+    );
   } catch (error) {
     console.error("[stripe] 署名の検証に失敗", error);
     return NextResponse.json({ error: "bad signature" }, { status: 400 });
@@ -78,10 +84,17 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "no database" }, { status: 500 });
   }
 
-  const slugs = String(session.metadata?.slugs ?? "")
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean);
+  // 重ねない。同じ slug が二つあると、下の piece_overrides の upsert が同じ主キーを
+  // 二行出して DB に弾かれ、再送のたびに 500 になる（作品は販売中のまま残る）。
+  // 決済を作る側でも一つにしているが、それ以前に作られた決済画面のぶんもここで受ける。
+  const slugs = [
+    ...new Set(
+      String(session.metadata?.slugs ?? "")
+        .split(",")
+        .map((s) => s.trim())
+        .filter(Boolean),
+    ),
+  ];
 
   // 印を付ける前の状態。決済が通る前にもう売れていた（取り置かれていた）作品が無いかを
   // 見る —— 一点物で、同じ作品の決済画面が二つ開いていれば二人とも払えてしまう。

@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { isPurchasable } from "@/data/products";
 import { getPieces, toCents } from "@/lib/catalog";
-import { SHIPPING_AUD, SHIPPING_COUNTRIES, stripe } from "@/lib/stripe";
+import { SHIPPING_AUD, SHIPPING_COUNTRIES } from "@/lib/stripe-config";
 
 /* ------------------------------------------------------------------
    カート → Stripe Checkout。
@@ -33,6 +33,9 @@ export async function startCheckout(
   _prev: CheckoutState,
   formData: FormData,
 ): Promise<CheckoutState> {
+  // SDK は読むだけで重いので、決済を作るときにだけ読む（MiniCart がこの action を
+  // 全ページで参照しているので、上で import すると全ページが SDK を背負う）
+  const { stripe } = await import("@/lib/stripe");
   const client = stripe();
   if (!client) {
     return { error: "決済の準備がまだできていません。お問い合わせからご連絡ください。" };

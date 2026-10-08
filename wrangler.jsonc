@@ -1,0 +1,63 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	// OpenNext（@opennextjs/cloudflare）で Workers に載せる。vinext ではないのは、
+	// vinext が React の <ViewTransition> をまだ動かさない（一覧 → 詳細のモーフが止まる）ため。
+	"main": ".open-next/worker.js",
+	"name": "honmyoji-ec",
+	"compatibility_date": "2026-10-06",
+	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+	// 試しのあいだは workers.dev だけ。本番のドメインは確かめてから routes に足す。
+	"workers_dev": true,
+	"preview_urls": false,
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	// 1 アクセスの CPU 時間を Workers Logs で見る（無料プランは 10ms まで）
+	"observability": {
+		"enabled": true
+	},
+	// ここから下は open-next.config.ts のキャッシュの置き場所（https://opennext.js.org/cloudflare/caching）。
+	// 管理画面の保存と Stripe の Webhook が revalidatePath を呼ぶので、読み取り専用の
+	// static-assets のキャッシュ（fujisan の形）では完売が出ない。
+	"services": [
+		{
+			// ISR の作り直しを自分自身に頼むための参照。service は name と同じにする
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "honmyoji-ec"
+		}
+	],
+	"r2_buckets": [
+		{
+			"binding": "NEXT_INC_CACHE_R2_BUCKET",
+			"bucket_name": "honmyoji-ec-opennext-cache"
+		}
+	],
+	"d1_databases": [
+		{
+			// revalidatePath / revalidateTag の印。表は deploy のときに OpenNext が作る
+			"binding": "NEXT_TAG_CACHE_D1",
+			"database_name": "honmyoji-ec-tag-cache",
+			"database_id": "77c4da83-4acc-4a32-83b1-42740fb5bfff"
+		}
+	],
+	"durable_objects": {
+		"bindings": [
+			{
+				"name": "NEXT_CACHE_DO_QUEUE",
+				"class_name": "DOQueueHandler"
+			}
+		]
+	},
+	"migrations": [
+		{
+			// 無料プランの Durable Objects は SQLite のものだけ
+			"tag": "v1",
+			"new_sqlite_classes": ["DOQueueHandler"]
+		}
+	],
+	// next/image の縮小は Cloudflare Images（無料で月 5,000 回の変換まで）
+	"images": {
+		"binding": "IMAGES"
+	}
+}

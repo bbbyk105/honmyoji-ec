@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createClient, type SupabaseClient } from "@supabase/supabase-js";
+import { PostgrestClient } from "@supabase/postgrest-js";
 
 /* ------------------------------------------------------------------
    Supabase — 管理画面が書き、公開ページが読む一つの DB。
@@ -11,6 +11,13 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
    —— microCMS と同じ考え方で、鍵の無い環境（ローカル・プレビュー）でも
    ビルドと表示が通る。「DB が未設定だからサイトが 500」は EC では一番やっては
    いけない壊れ方で、管理画面のために公開ページを人質に取ることになる。
+
+   **supabase-js ではなく postgrest-js を直に使う**（2026-10-08）。使っているのは
+   表の読み書き（`.from()`）だけで、supabase-js はそれに認証・Storage・Realtime を
+   抱き合わせて読み込みに 32ms かかる（postgrest-js だけなら 1ms）。SiteChrome が
+   全ページでカタログを引くので、Cloudflare Workers では起動のたびの CPU 時間に乗る。
+   ヘッダーは supabase-js が service_role キーで付けるものと同じ（apikey と Bearer）。
+   認証や Storage が要るようになったら supabase-js に戻す。
    ------------------------------------------------------------------ */
 
 const url = process.env.SUPABASE_URL;
@@ -19,10 +26,10 @@ const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 /** 鍵が揃っているか。管理画面が「未接続」の案内を出すのに使う。 */
 export const dbEnabled = Boolean(url && serviceKey);
 
-let cached: SupabaseClient | null = null;
+let cached: PostgrestClient | null = null;
 let warned = false;
 
-export function db(): SupabaseClient | null {
+export function db(): PostgrestClient | null {
   if (!url || !serviceKey) {
     if (!warned) {
       warned = true;
@@ -32,8 +39,8 @@ export function db(): SupabaseClient | null {
     }
     return null;
   }
-  cached ??= createClient(url, serviceKey, {
-    auth: { persistSession: false, autoRefreshToken: false },
+  cached ??= new PostgrestClient(new URL("rest/v1", url.endsWith("/") ? url : `${url}/`).href, {
+    headers: { apikey: serviceKey, Authorization: `Bearer ${serviceKey}` },
   });
   return cached;
 }

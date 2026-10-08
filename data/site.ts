@@ -10,6 +10,8 @@ export const site = {
     "One-of-a-kind bags handwoven at Honmyoji Temple in Fuji City, Japan, from tatami-beri remnants and recycled paper band. Made once. Made for you.",
   location: "Honmyoji Temple, Fuji City, Shizuoka, Japan",
   locationJa: "静岡県富士市 本妙寺",
+  /** 本番の URL。OG 画像の基準とメールのリンクに使う（`NEXT_PUBLIC_SITE_URL` があればそちら）。 */
+  url: "https://honmyoujifuji.com",
   email: "hello@miroku.example", // TODO: 本番のメールアドレスに差し替え
   instagram: "https://www.instagram.com/", // TODO: 実アカウント URL
   nav: [

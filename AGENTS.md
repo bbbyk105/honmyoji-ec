@@ -35,7 +35,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
 - `app/api/` — `revalidate`（microCMS Webhook）と `stripe/webhook`（決済の確定）。
 - `app/layout.tsx` は html / body / フォントだけ。**ヘッダーやフッターをここに戻さない** — 親 layout は子から外せないので、`/studio` にサイトの外枠が付いてくる。公開サイトの外枠は `components/site/SiteChrome.tsx`（`app/(site)/layout.tsx` と `app/not-found.tsx` が共有する。404 は route group の layout を通らない）。
-- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。`import "server-only"` 付き（`lib/microcms.ts` / `supabase.ts` / `stripe.ts` / `orders.ts` も同じ）— client から import するとビルドで止まる。
+- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。`import "server-only"` 付き（`lib/microcms.ts` / `supabase.ts` / `stripe.ts` / `stripe-config.ts` / `orders.ts` も同じ）— client から import するとビルドで止まる。
 - `proxy.ts` — Next 16 で `middleware.ts` から改名。`/studio/*` の `noindex` ヘッダーと、cookie の無い訪問者をログインへ返す処理。**認可の本体はここではない**（Edge に node:crypto が無い）— 検証は `lib/studio-session.ts` の `requireSession()` で、ページと Server Action が毎回通る。
 - `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。当たり判定の本体は `ZoomHit` — Provider が無い場所では何も出さないので、Server Component の `ProductHero` もこれを置くだけ。**ビューア本体は `LightboxViewer.tsx` に分けて `next/dynamic` で遅延読み込み**（写真を開かない人の初回 JS に載せない。idle で先読みはする）。倍率と位置の計算は `lib/pan-zoom.ts`（純粋関数・テストあり）。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地は開いたページの面と同じ（商品ページは紙なので紙。`bg-sumi` がトークンで入れ替わる）— 一枚だけ別の明るさの部屋に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。背後のスクロールはカートと同じ `useScrollLock`。
 - **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
@@ -121,11 +121,22 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・ログインのメール通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
 - **`.env` の値に `$` を入れない**。dotenv は `scrypt$abc$def` の `$abc` / `$def` を未定義の変数として空に置き換えるので、値が `scrypt` の 6 文字になってログインが必ず失敗する（実際に踏んだ）。パスワードハッシュの区切りは `:`、生成する秘密は base64url（`+/=` も避ける）。
 - セッション cookie は `SameSite=Lax`。`Strict` にすると外部サイトのリンクから `/studio` を開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST なので、`Lax` でもクロスサイトからの書き込みには cookie が付かない。
+- **回数制限は「記録してから数える」**（`lib/studio-guard.ts` の `takeAttempt`。照合の前に失敗を一つ書き、窓の中を数え、合っていたら `recordSuccess` が消す）。数えてから記録する順に戻すと、同時に送った N 本が全部「まだ 0 回」を見て通り、上限が N 回になる。**IP は Workers では `cf-connecting-ip` だけ** —— `x-forwarded-for` は Cloudflare が客の値の後ろに足すだけなので、先頭を鍵にすると送るたびに IP を変えてすり抜けられる（2026-10-08 の監査）。
+- **作品の編集の保存は、ステータスを選び直したときだけ status を書く**（`savePiece` と `PieceForm` の隠し欄 `status_was`）。毎回書くと、画面を開いたままの間に Webhook が付けた「完売」を、開いたときの「販売中」で上書きして、売れた一点物がまた買える。選び直していても、開いたあとで DB の値が変わっていたら書かずに再読み込みを頼む。
+- **決済の作品の並びは `getPieces` が一つにする**（`x,x` や `<slug>,<folder>` は同じ一点）。重ねたまま通すと二度請求し、Webhook が同じ主キーを二行 upsert して 500 を返し続け、作品が販売中のまま残る。Webhook も metadata の slugs を `Set` で一つにしている。
+- 公開フォームのメールアドレスは `isEmail()`（`lib/email.ts`）で見る。正規表現を手書きしない —— 長さ（254 字）を先に見ないと、`.` を並べた長い文字列で計算量が 2 乗になる。
 - ログインの失敗理由（メールかパスワードか）を画面に出さない。メールが違ってもパスワードは必ず照合する — 早く返すと、応答の速さの差で「このアドレスは登録されている」が伝わる。
 - `lib/studio-cookie.ts` を `lib/studio-session.ts` と分けてあるのは、proxy.ts（Edge）が cookie 名だけを必要とするため。session 側を import すると node:crypto が Edge に載って落ちる。
 - `lib/studio-credentials.ts` は Next に依存しない。`node --experimental-strip-types` で直接読めるので、素の Node で照合を確かめられる。
 
 ## 落とし穴
+
+- **Cloudflare Workers（OpenNext）では、モジュールを読み込む時間が 1 アクセスの CPU 時間に乗る**（2026-10-08 に移行を始めた）。外枠（`SiteChrome`）や全ページから重いライブラリを読まないこと。
+  - **Stripe の SDK は読むだけで 80ms**。「決済が使えるか」と送料は `lib/stripe-config.ts`、SDK（`lib/stripe.ts`）は決済を作る・確かめる所だけ。`checkout/actions.ts` は `MiniCart` 経由で全ページが参照するので、SDK は関数の中で `await import()` する。
+  - **DB は supabase-js ではなく postgrest-js**（`lib/supabase.ts`。読み込み 32ms → 1ms）。使っているのは `.from()` だけ。認証や Storage が要るようになったら戻す。
+  - どちらも eslint の `no-restricted-imports` が止める（`eslint.config.mjs`）。
+  - 実測（workers.dev・各 12 回）: 作り置きのページは中央値 8ms、毎回組み立てるページ（contact・studio/login・checkout/thank-you・404）は 17〜53ms、起きたばかりの Worker では 200〜500ms。
+- **OpenNext はプロジェクトの `.env*` を値ごと Worker に焼き込む**（`.open-next/cloudflare/next-env.mjs`。止める設定は無い）。手元の .env には Stripe の本番の鍵もあるので、デプロイは必ず `npm run deploy`（`scripts/cf-deploy.mjs` が git の追うファイルだけを一時ディレクトリに写してビルドする）。`npx opennextjs-cloudflare deploy` をプロジェクトで直に叩かない。秘密は `npx wrangler secret put <NAME>`。
 
 - **client 部品に `Product` を丸ごと渡さない。** client に渡した props は RSC ペイロードとして HTML に焼き込まれる。以前は `MiniCart` に全九点を渡していて、どのページの HTML にも九点ぶんの物語（英日）が載っていた（2026-09-25 に削って、HTML は gzip で 7〜26% 減った）。渡すのは `CartPiece`（`data/products.ts` の `toCartPiece`）か slug だけ。client から `getProduct` / `productImage` を呼ばない（`products` 本体がバンドルに入る）— 画像は `leadSrc(folder)`。一覧（`PieceTile`）と商品ページのヒーローは Server Component なので `Product` をそのまま受けてよい。
 - **state も effect も無い部品に `"use client"` を付けない**（`PieceTile` / `ProductHero` / `InquiryCta` は Server Component）。マークアップが大きくて動きだけが client の部品は、本体（server）+ `XxxMotion`（client、children を受けて `data-*` を探して動かす）に分ける — `HomeHero` / `EntryCurtain` がこの形。ただし `next/image` をサーバーで描くと srcset がペイロードに載るので、生のバイト数は増えることがある（gzip 後で判断する）。
@@ -170,5 +181,6 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 npm run dev     # localhost:3000
 npm run lint    # eslint
 npm run build   # next build（デプロイ前必須）
+npm run deploy  # Cloudflare Workers へ（.env を載せないよう一時ディレクトリでビルドする）
 npm test        # jest（__tests__/。変換は next/jest）
 ```

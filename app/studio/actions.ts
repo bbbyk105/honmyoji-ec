@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
 import { getProduct } from "@/data/products";
 import { db, dbEnabled } from "@/lib/supabase";
-import { LOGIN_LIMITS, checkGate, clientIp, recordAttempt } from "@/lib/studio-guard";
+import { LOGIN_LIMITS, clientIp, recordSuccess, takeAttempt } from "@/lib/studio-guard";
 import { notifyStudio } from "@/lib/studio-notify";
 import {
   createSession,
@@ -59,37 +59,36 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
     return { error: "STUDIO_EMAIL / STUDIO_PASSWORD_HASH / STUDIO_SESSION_SECRET が未設定です。" };
   }
 
+  const email = String(formData.get("email") ?? "");
+  const password = String(formData.get("password") ?? "");
+
+  // 空欄は試行に数えない（照合まで行かない）
+  if (!email || !password) return { error: "メールアドレスとパスワードを入力してください。" };
+
   const ip = await clientIp();
 
-  const gate = await checkGate(ip);
+  // 照合の前に一回ぶんを取る。失敗はここで先に記録される（lib/studio-guard.ts）
+  const gate = await takeAttempt(ip);
   if (!gate.allowed) {
     return {
       error: `試行が多すぎます。${gate.retryAfterMinutes} 分ほど置いてからもう一度お試しください。`,
     };
   }
 
-  const email = String(formData.get("email") ?? "");
-  const password = String(formData.get("password") ?? "");
-
-  if (!email || !password) return { error: "メールアドレスとパスワードを入力してください。" };
-
   const who = matchAccount(email, password);
   if (!who) {
-    await recordAttempt(ip, false);
-
-    const failures = await checkGate(ip);
-    if (!failures.allowed) {
+    if (gate.lockoutMinutes !== null) {
       await notifyStudio(
         `MIROKU Studio — ログインを ${LOGIN_LIMITS.maxFailures} 回続けて失敗したため、${ip} を ${LOGIN_LIMITS.windowMinutes} 分締め出しました。`,
       );
       return {
-        error: `試行が多すぎます。${failures.retryAfterMinutes} 分ほど置いてからもう一度お試しください。`,
+        error: `試行が多すぎます。${gate.lockoutMinutes} 分ほど置いてからもう一度お試しください。`,
       };
     }
     return { error: "メールアドレスかパスワードが違います。" };
   }
 
-  await recordAttempt(ip, true);
+  await recordSuccess(ip);
   await createSession();
   await notifyStudio(`MIROKU Studio — ${who} が ${ip} からログインしました。`);
 
@@ -124,19 +123,41 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
     price = parsed;
   }
 
-  const { error } = await client.from("piece_overrides").upsert(
-    {
-      slug,
-      price_aud: price,
-      status: optional(formData, "status"),
-      note: optional(formData, "note"),
-      note_ja: optional(formData, "note_ja"),
-      story: optional(formData, "story"),
-      story_ja: optional(formData, "story_ja"),
-      updated_at: new Date().toISOString(),
-    },
-    { onConflict: "slug" },
-  );
+  const row: Record<string, unknown> = {
+    slug,
+    price_aud: price,
+    note: optional(formData, "note"),
+    note_ja: optional(formData, "note_ja"),
+    story: optional(formData, "story"),
+    story_ja: optional(formData, "story_ja"),
+    updated_at: new Date().toISOString(),
+  };
+
+  // ステータスは**選び直したときだけ**書く。画面を開いたまま置いている間に注文が入ると、
+  // Webhook が完売にする。そのあと価格だけ直して保存すると、開いたときの「販売中」で
+  // 上書きして、売れた一点物がまた買える。列を送らなければ upsert は今の値に触れない。
+  const status = optional(formData, "status");
+  const statusWas = optional(formData, "status_was");
+  if (status !== statusWas) {
+    // 選び直していても、開いたあとで DB の方が変わっていたら書かない（取り違えに気づかせる）
+    const { data: current, error: readError } = await client
+      .from("piece_overrides")
+      .select("status")
+      .eq("slug", slug)
+      .maybeSingle();
+    if (readError) {
+      console.error("[studio] piece の状態を読めませんでした", readError);
+      return { error: saveError(readError) };
+    }
+    if ((current?.status ?? null) !== statusWas) {
+      return {
+        error: "画面を開いたあとで、この作品のステータスが変わっています（注文が入ったなど）。再読み込みしてから保存してください。",
+      };
+    }
+    row.status = status;
+  }
+
+  const { error } = await client.from("piece_overrides").upsert(row, { onConflict: "slug" });
 
   if (error) {
     console.error("[studio] piece の保存に失敗", error);

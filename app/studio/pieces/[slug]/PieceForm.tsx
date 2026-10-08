@@ -33,6 +33,8 @@ export function PieceForm({
   return (
     <form onSubmit={onSubmit} className="space-y-8">
       <input type="hidden" name="slug" value={base.slug} />
+      {/* 開いたときのステータス。変えていなければ保存で書かない（savePiece） */}
+      <input type="hidden" name="status_was" value={override?.status ?? ""} />
 
       <div className="grid gap-8 sm:grid-cols-2">
         <Field
