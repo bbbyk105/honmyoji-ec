@@ -1,4 +1,4 @@
-import { isLang, langFromAcceptLanguage } from "@/lib/lang";
+import { isLang, langFromAcceptLanguage, langFromLanguages } from "@/lib/lang";
 
 describe("langFromAcceptLanguage", () => {
   it("一番目が日本語なら日本語", () => {
@@ -33,5 +33,18 @@ describe("isLang", () => {
     expect(isLang("en")).toBe(true);
     expect(isLang("fr")).toBe(false);
     expect(isLang(undefined)).toBe(false);
+  });
+});
+
+describe("langFromLanguages", () => {
+  it("一番目が日本語なら日本語（Chrome の並び・Safari の一つだけ、どちらも）", () => {
+    expect(langFromLanguages(["ja", "en-US", "en"])).toBe("ja");
+    expect(langFromLanguages(["ja-JP"])).toBe("ja");
+  });
+
+  it("一番目が日本語以外なら英語、空なら英語", () => {
+    expect(langFromLanguages(["en-AU", "ja"])).toBe("en");
+    expect(langFromLanguages([])).toBe("en");
+    expect(langFromLanguages(undefined)).toBe("en");
   });
 });

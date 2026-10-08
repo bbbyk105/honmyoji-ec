@@ -7,8 +7,10 @@ import { isPurchasable, leadSrc, priceLabel, productPath, aud } from "@/data/pro
 import { startCheckout, type CheckoutState } from "@/app/(site)/checkout/actions";
 import { Arrow } from "@/components/site/Arrow";
 import { Button } from "@/components/site/Button";
+import { useBrowserLang } from "@/hooks/useBrowserLang";
 import { useScrollLock } from "@/hooks/useScrollLock";
 import { useWindowEvent } from "@/hooks/useWindowEvent";
+import { CART_TEXT } from "./cart-text";
 import { useCart } from "./CartProvider";
 
 /**
@@ -25,6 +27,11 @@ const QUIET =
 export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
   const { pieces, open, setOpen, remove, clear } = useCart();
   const [state, checkout, pending] = useActionState<CheckoutState, FormData>(startCheckout, {});
+  // 言語はブラウザの設定。決済のフォームでも送り、決済画面・確認メール・thank-you を同じ言語にする
+  const lang = useBrowserLang();
+  const t = CART_TEXT[lang];
+  /** 本文の書体。和文はサイトの他の日本語と同じ明朝（--font-jp） */
+  const body = lang === "ja" ? "font-jp" : "font-sans";
 
   const query = pieces.map((p) => p.slug).join(",");
   const sold = pieces.filter((p) => !isPurchasable(p));
@@ -44,34 +51,36 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
     <div
       className={`fixed inset-0 z-[60] ${open ? "pointer-events-auto" : "pointer-events-none"}`}
       aria-hidden={!open}
+      lang={lang}
     >
       <button
         type="button"
-        aria-label="Close cart"
+        aria-label={t.closeLabel}
         onClick={() => setOpen(false)}
         className={`absolute inset-0 bg-sumi/70 transition-opacity duration-500 ${open ? "opacity-100" : "opacity-0"}`}
       />
       <aside
         role="dialog"
         aria-modal="true"
-        aria-label="Cart"
+        aria-label={t.dialogLabel}
         inert={!open}
         className={`absolute inset-y-0 right-0 flex w-full max-w-[440px] flex-col border-l border-line bg-sumi transition-transform duration-700 ease-[var(--ease-soft)] ${
           open ? "translate-x-0" : "translate-x-full"
         }`}
       >
         <div className="flex items-center justify-between border-b border-line px-7 py-6">
-          <p className="font-display text-[30px] font-light leading-none text-ivory">Cart</p>
+          <p className={`${lang === "ja" ? "font-jp text-[26px]" : "font-display text-[30px]"} font-light leading-none text-ivory`}>
+            {t.title}
+          </p>
           <button type="button" onClick={() => setOpen(false)} className="caps link-line min-h-11 text-ivory">
-            Close
+            {t.close}
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto px-7 py-8">
           {pieces.length === 0 ? (
-            <p className="max-w-[30ch] font-sans text-small text-bone">
-              Your cart is empty. Add a piece from the collection, then take it to checkout — or
-              write to us first if you would rather ask.
+            <p className={`${lang === "ja" ? "max-w-[22em] leading-[1.9]" : "max-w-[30ch]"} ${body} text-small text-bone`}>
+              {t.empty}
             </p>
           ) : (
             <ul className="space-y-8">
@@ -99,14 +108,14 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                       {p.name}
                       <span lang="ja" className="ml-2.5 font-jp text-[13px] tracking-[0.04em] text-mist">{p.kanji}</span>
                     </Link>
-                    <p className="mt-2 font-sans text-meta tabular-nums text-bone">
-                      {priceLabel(p) ?? "Price to come"}
+                    <p className={`mt-2 ${body} text-meta tabular-nums text-bone`}>
+                      {priceLabel(p) ?? t.priceToCome}
                     </p>
                     {!isPurchasable(p) ? (
-                      <p className="mt-1 font-sans text-meta text-clay">No longer available</p>
+                      <p className={`mt-1 ${body} text-meta text-clay`}>{t.unavailable}</p>
                     ) : null}
-                    <button type="button" onClick={() => remove(p.slug)} className={`mt-1 ${QUIET}`}>
-                      Remove
+                    <button type="button" onClick={() => remove(p.slug)} className={`mt-1 ${QUIET} ${body}`}>
+                      {t.remove}
                     </button>
                   </div>
                 </li>
@@ -118,19 +127,17 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
         <div className="border-t border-line px-7 py-7">
           {pieces.length > 0 && canCheckout ? (
             <div className="mb-5 flex items-baseline justify-between border-b border-line pb-4">
-              <span className="font-sans text-meta text-mist">Subtotal</span>
+              <span className={`${body} text-meta text-mist`}>{t.subtotal}</span>
               <span className="font-display text-[22px] font-light leading-none tabular-nums text-ivory">{aud.format(total)}</span>
             </div>
           ) : null}
 
-          <p className="font-sans text-meta text-mist">
-            {canCheckout
-              ? "Shipping is added at the next step. Payment is handled by Stripe — we never see your card."
-              : "Nothing is charged here. Send us your cart and a person writes back with payment details."}
+          <p className={`${body} text-meta text-mist ${lang === "ja" ? "leading-[1.9]" : ""}`}>
+            {canCheckout ? t.noteCheckout : t.noteContact}
           </p>
 
           {state.error ? (
-            <p role="alert" className="mt-4 font-sans text-meta text-clay">
+            <p role="alert" className={`mt-4 ${body} text-meta text-clay`}>
               {state.error}
             </p>
           ) : null}
@@ -141,8 +148,9 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                 <>
                   <form action={checkout}>
                     <input type="hidden" name="slugs" value={query} />
+                    <input type="hidden" name="lang" value={lang} />
                     <button type="submit" disabled={pending || sold.length > 0} className={SOLID}>
-                      {pending ? "Opening checkout" : "Check out"}
+                      {pending ? t.opening : t.checkout}
                       <Arrow className="cta-arrow" />
                     </button>
                   </form>
@@ -151,7 +159,7 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                     onClick={() => setOpen(false)}
                     className="cta caps link-cta inline-flex min-h-11 w-fit items-center gap-7 self-center text-ivory no-underline"
                   >
-                    <span className="cta-label">Ask about these</span>
+                    <span className="cta-label">{t.askAbout}</span>
                     <Arrow className="cta-arrow" />
                   </Link>
                 </>
@@ -161,17 +169,17 @@ export function MiniCart({ canCheckout }: { canCheckout: boolean }) {
                   onClick={() => setOpen(false)}
                   className={SOLID}
                 >
-                  Send this cart
+                  {t.sendCart}
                   <Arrow className="cta-arrow" />
                 </Link>
               )}
-              <button type="button" onClick={clear} className={`self-center ${QUIET}`}>
-                Clear all
+              <button type="button" onClick={clear} className={`self-center ${QUIET} ${body}`}>
+                {t.clearAll}
               </button>
             </div>
           ) : (
             <Button href="/collection" className="mt-5">
-              View the collection
+              {t.viewCollection}
             </Button>
           )}
         </div>

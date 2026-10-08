@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { isPurchasable } from "@/data/products";
 import { getPieces, toCents } from "@/lib/catalog";
-import { langFromAcceptLanguage } from "@/lib/lang";
+import { isLang, langFromAcceptLanguage, type Lang } from "@/lib/lang";
 import { SHIPPING_AUD, SHIPPING_COUNTRIES } from "@/lib/stripe-config";
 
 /* ------------------------------------------------------------------
@@ -21,6 +21,27 @@ export type CheckoutState = { error?: string };
 /** 決済画面が開いていられる時間（分）。定数は "use server" から export しない。 */
 const CHECKOUT_HOLD_MINUTES = 35;
 
+/** カートに出す失敗の文言。言語はカートの表示と同じ（フォームの lang）。 */
+const ERRORS = {
+  notReady: {
+    en: "Checkout is not ready yet. Please write to us from the contact page.",
+    ja: "決済の準備がまだできていません。お問い合わせからご連絡ください。",
+  },
+  empty: { en: "Your cart is empty.", ja: "カートが空です。" },
+  notFound: { en: "We could not find the pieces in your cart.", ja: "カートの品が見つかりませんでした。" },
+  noPage: { en: "We could not open the checkout page.", ja: "決済ページを開けませんでした。" },
+  failed: {
+    en: "We could not open the checkout page. Please try again in a moment.",
+    ja: "決済ページを開けませんでした。少し待ってからもう一度お試しください。",
+  },
+} satisfies Record<string, Record<Lang, string>>;
+
+function unavailableError(names: string, lang: Lang): string {
+  return lang === "ja"
+    ? `${names} は今お求めいただけません。カートから外してからお進みください。`
+    : `${names} can no longer be bought. Please remove it from your cart to continue.`;
+}
+
 async function origin(): Promise<string> {
   const configured = process.env.NEXT_PUBLIC_SITE_URL;
   if (configured) return configured.replace(/\/$/, "");
@@ -34,12 +55,17 @@ export async function startCheckout(
   _prev: CheckoutState,
   formData: FormData,
 ): Promise<CheckoutState> {
+  // お客さまの言語。カートが表示に使った言語（フォームの lang）を優先し、無ければブラウザの
+  // Accept-Language。決済画面・確認メール・thank-you をこれで揃える（lib/lang.ts）
+  const sent = formData.get("lang");
+  const lang: Lang = isLang(sent) ? sent : langFromAcceptLanguage((await headers()).get("accept-language"));
+
   // SDK は読むだけで重いので、決済を作るときにだけ読む（MiniCart がこの action を
   // 全ページで参照しているので、上で import すると全ページが SDK を背負う）
   const { stripe } = await import("@/lib/stripe");
   const client = stripe();
   if (!client) {
-    return { error: "決済の準備がまだできていません。お問い合わせからご連絡ください。" };
+    return { error: ERRORS.notReady[lang] };
   }
 
   const slugs = String(formData.get("slugs") ?? "")
@@ -47,25 +73,20 @@ export async function startCheckout(
     .map((s) => s.trim())
     .filter(Boolean);
 
-  if (slugs.length === 0) return { error: "カートが空です。" };
+  if (slugs.length === 0) return { error: ERRORS.empty[lang] };
 
   const pieces = await getPieces(slugs);
-  if (pieces.length === 0) return { error: "カートの品が見つかりませんでした。" };
+  if (pieces.length === 0) return { error: ERRORS.notFound[lang] };
 
   // 一点物なので、決済に進む直前にもう一度状態を見る。カートに入れたあとで
   // 別の人が買った、という取り違えがいちばん起きやすい。
   // 値段の無いものも通さない（管理画面で Available にだけして価格を入れ忘れた、を止める）。
   const unavailable = pieces.filter((p) => !isPurchasable(p));
   if (unavailable.length > 0) {
-    const names = unavailable.map((p) => p.name).join(", ");
-    return {
-      error: `${names} は今お求めいただけません。カートから外してからお進みください。`,
-    };
+    return { error: unavailableError(unavailable.map((p) => p.name).join(", "), lang) };
   }
 
   const base = await origin();
-  // お客さまの言語。決済画面・確認メール・thank-you をこれで揃える（lib/lang.ts）
-  const lang = langFromAcceptLanguage((await headers()).get("accept-language"));
 
   try {
     const session = await client.checkout.sessions.create({
@@ -112,12 +133,12 @@ export async function startCheckout(
       cancel_url: `${base}/collection`,
     });
 
-    if (!session.url) return { error: "決済ページを開けませんでした。" };
+    if (!session.url) return { error: ERRORS.noPage[lang] };
     redirect(session.url);
   } catch (error) {
     // redirect() は例外で制御を返すので、それは握り潰さずに投げ直す
     if (error && typeof error === "object" && "digest" in error) throw error;
     console.error("[stripe] checkout session の作成に失敗", error);
-    return { error: "決済ページを開けませんでした。少し待ってからもう一度お試しください。" };
+    return { error: ERRORS.failed[lang] };
   }
 }
