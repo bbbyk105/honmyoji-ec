@@ -1,7 +1,9 @@
 import "server-only";
 
+import { site } from "@/data/site";
+
 /* ------------------------------------------------------------------
-   お店への知らせ（Resend）。**サーバ専用** —— API キーを client に渡さない。
+   お店への知らせと、お客さまへの注文の確認（Resend）。**サーバ専用** —— API キーを client に渡さない。
 
    以前は Telegram に送っていたが、本番に TELEGRAM_* が入っておらず、公開から
    2026-09-29 までお問い合わせが一通もお店に届いていなかった（ログに残るだけ）。
@@ -46,19 +48,24 @@ export type Mail = {
 export async function notifyStore(mail: Mail): Promise<void> {
   if (!mailEnabled) {
     // 本番でここに来るのは設定漏れ。warn だと埋もれるので error で残す。
-    const log = process.env.VERCEL_ENV === "production" ? console.error : console.info;
+    const log = process.env.NODE_ENV === "production" ? console.error : console.info;
     log(
       `[mail] RESEND_API_KEY / NOTIFY_EMAILS が無いので送っていません\n  subject: ${mail.subject}\n${mail.text}`,
     );
     return;
   }
 
+  await send(notifyRecipients, mail);
+}
+
+/** Resend に一通頼む。失敗したら投げる。 */
+async function send(to: string[], mail: Mail): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
     body: JSON.stringify({
       from,
-      to: notifyRecipients,
+      to,
       subject: mail.subject,
       text: mail.text,
       // Resend のフィールド名は snake_case
@@ -72,6 +79,24 @@ export async function notifyStore(mail: Mail): Promise<void> {
   }
 }
 
+/**
+ * お客さまに送る（注文の確認）。返信はお店の公開アドレス（`site.email`。Cloudflare の
+ * Email Routing でお店の Gmail へ転送される）に届く —— 送り元の notify@ には受信箱が無い。
+ *
+ * 失敗しても投げない（Webhook を止めない。注文はもう保存できている）。鍵が無ければログだけ。
+ */
+export async function sendToCustomerQuietly(to: string, mail: Mail): Promise<void> {
+  if (!apiKey) {
+    console.info(`[mail] RESEND_API_KEY が無いのでお客さまに送っていません: ${mail.subject}`);
+    return;
+  }
+  try {
+    await send([to], { replyTo: site.email, ...mail });
+  } catch (error) {
+    console.error("[mail] お客さまに送れませんでした", mail.subject, error);
+  }
+}
+
 /** 知らせるだけで、失敗しても呼び出し元を止めない（Webhook・ログイン通知）。 */
 export async function notifyStoreQuietly(mail: Mail): Promise<void> {
   try {
@@ -82,12 +107,10 @@ export async function notifyStoreQuietly(mail: Mail): Promise<void> {
 }
 
 /**
- * 本文の下に付ける、管理画面への絶対 URL。本番のドメインが決まるまでは
- * Vercel が入れる本番の URL（`VERCEL_PROJECT_PRODUCTION_URL`）を使う。
+ * 本文の下に付ける、管理画面への絶対 URL。`NEXT_PUBLIC_SITE_URL` が無ければ
+ * 本番のドメイン（`site.url`）。
  */
 export function siteLink(path: string): string {
-  const configured = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "");
-  const vercel = process.env.VERCEL_PROJECT_PRODUCTION_URL;
-  const base = configured || (vercel ? `https://${vercel}` : "");
+  const base = (process.env.NEXT_PUBLIC_SITE_URL || site.url).replace(/\/$/, "");
   return `${base}${path}`;
 }

@@ -10,7 +10,7 @@ import { SiteHeader } from "@/components/site/SiteHeader";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { toCartPiece } from "@/data/products";
 import { getCatalog } from "@/lib/catalog";
-import { stripeEnabled } from "@/lib/stripe";
+import { stripeEnabled } from "@/lib/stripe-config";
 
 /**
  * 公開サイトの外枠 — ヘッダー・フッター・カート・Lenis。

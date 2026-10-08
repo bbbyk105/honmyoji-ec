@@ -65,7 +65,9 @@ STUDIO_EMAIL_3=        / STUDIO_PASSWORD_HASH_3=     # 3 人目 … 5 まで
 同じ IP から **15 分に 5 回**失敗すると、窓が抜けるまで受け付けない。これが無いと、
 パスワードをいくら長くしても総当たりは時間の問題になる。記録は Supabase
 （`studio_auth_attempts`）— サーバーレスでは実行ごとにメモリが別なので、プロセス内の
-カウンタは本番で意味を成さない。
+カウンタは本番で意味を成さない。照合の前に失敗を一つ先に書いてから数える（数えてから
+書くと、同時に送った分が全部「まだ 0 回」を見て通る）。IP は Cloudflare では
+`cf-connecting-ip`（`x-forwarded-for` の先頭は客が書ける）、Vercel では `x-forwarded-for`。
 
 **3. セッションをブラウザに縛る**
 cookie には有効期限とブラウザの印（User-Agent のハッシュ）を入れて署名している。
@@ -163,7 +165,8 @@ vercel env pull .env.local --yes    # 逆向き（本番の値を手元へ）
 **Webhook** — 開発者 → Webhook → エンドポイントを追加。
 
 - URL: `https://<本番ドメイン>/api/stripe/webhook`
-- イベント: `checkout.session.completed` の一つだけ
+- イベント: `checkout.session.completed` と `checkout.session.async_payment_succeeded` の二つ（後者は銀行振込のような後払い型の支払い方法の入金。カードだけなら来ないが、ダッシュボードで後払い型を有効にしたときに入金済みの注文が消えないように）
+- API バージョン: Stripe の SDK と同じ（`node_modules/stripe` の `ApiVersion`。2026-10 時点で `2026-08-26.dahlia`）。古いと注文に届け先が入らない
 - 出てくる `whsec_…` を `STRIPE_WEBHOOK_SECRET` へ
 
 ローカルで試すときは Stripe CLI。
@@ -175,7 +178,7 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 stripe trigger checkout.session.completed
 ```
 
-**送料** — `lib/stripe.ts` の `SHIPPING_AUD`（既定 A$35）。0 にすると送料の行が出ず、送料込みになる。作品ごとには変えていない（一箱一点で、重さの差が送料の段に届かないため）。発送先の国も同じファイルの `SHIPPING_COUNTRIES`。
+**送料** — `lib/stripe-config.ts` の `SHIPPING_AUD`（既定 A$35）。0 にすると送料の行が出ず、送料込みになる。作品ごとには変えていない（一箱一点で、重さの差が送料の段に届かないため）。発送先の国も同じファイルの `SHIPPING_COUNTRIES`。
 
 ---
 

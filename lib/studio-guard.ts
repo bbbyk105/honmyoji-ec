@@ -1,6 +1,7 @@
-import { headers } from "next/headers";
-
 import { db } from "@/lib/supabase";
+
+// IP の取り方は lib/client-ip.ts（公開フォームも使う）。ここからも読めるように
+export { clientIp, pickClientIp } from "@/lib/client-ip";
 
 /* ------------------------------------------------------------------
    ログインの回数制限。**サーバ専用**。
@@ -11,6 +12,11 @@ import { db } from "@/lib/supabase";
    記録先は Supabase。サーバーレスでは実行ごとにメモリが別なので、プロセス内の
    カウンタは本番で意味を成さない。DB が無いとき（ローカル・鍵を入れる前）だけ
    メモリに落ちる。
+
+   **数える前に記録する**。以前は「数える → 照合する → 失敗を記録する」の順で、
+   同時に送った N 本が全部「まだ 0 回」を見て通り、15 分 5 回の上限が N 回になった。
+   失敗を一つ先に書いてから数えれば、後から書いた方は必ず先の分を数えるので、
+   同時に送っても上限を超えては通らない。合っていたら、その IP の失敗ごと消す。
    ------------------------------------------------------------------ */
 
 /** 直近この分数の失敗を数える。 */
@@ -19,107 +25,97 @@ const WINDOW_MINUTES = 15;
 /** これだけ失敗したら、窓が抜けるまで受け付けない。 */
 const MAX_FAILURES = 5;
 
-export type Gate = { allowed: true } | { allowed: false; retryAfterMinutes: number };
-
-/**
- * 呼び出し元の IP。
- *
- * Vercel は `x-forwarded-for` を自分で書き直すので信頼できる。自前のリバース
- * プロキシを挟むなら、そこで詐称できないことを確かめること。
- */
-export async function clientIp(): Promise<string> {
-  const h = await headers();
-  const forwarded = h.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return h.get("x-real-ip")?.trim() || "unknown";
-}
+export type Gate =
+  | {
+      allowed: true;
+      /** これが上限の一回なら、外したときに締め出す分数。まだ余裕があれば null */
+      lockoutMinutes: number | null;
+    }
+  | { allowed: false; retryAfterMinutes: number };
 
 // DB が無いときの受け皿。プロセスが生きている間だけ。
 const memory = new Map<string, number[]>();
 
-function memoryFailures(ip: string): number {
-  const since = Date.now() - WINDOW_MINUTES * 60_000;
-  const kept = (memory.get(ip) ?? []).filter((t) => t > since);
-  memory.set(ip, kept);
-  return kept.length;
+/** 一番古い失敗が窓から抜けるまでの分数。 */
+function minutesUntilFree(oldest: number): number {
+  const remainingMs = oldest + WINDOW_MINUTES * 60_000 - Date.now();
+  return Math.max(1, Math.ceil(remainingMs / 60_000));
 }
 
-export async function checkGate(ip: string): Promise<Gate> {
+/**
+ * 一回ぶんの試行を取る。**パスワードを照合する前に**呼ぶ。
+ *
+ * 失敗を一つ先に書き、窓の中の失敗（いま書いた分を含む）を数える。上限を超えていたら
+ * 書いた分を消して断る —— 締め出している間の試行まで数えると、攻撃が続く限り持ち主も
+ * 入れない。照合に通ったら `recordSuccess()` がこの分ごと消す。通らなければ、書いた分が
+ * そのまま失敗の記録になる。
+ */
+export async function takeAttempt(ip: string): Promise<Gate> {
+  const since = Date.now() - WINDOW_MINUTES * 60_000;
   const client = db();
 
   if (!client) {
-    const failures = memoryFailures(ip);
-    return failures >= MAX_FAILURES
-      ? { allowed: false, retryAfterMinutes: WINDOW_MINUTES }
-      : { allowed: true };
+    const kept = (memory.get(ip) ?? []).filter((t) => t > since);
+    if (kept.length >= MAX_FAILURES) {
+      memory.set(ip, kept);
+      return { allowed: false, retryAfterMinutes: minutesUntilFree(kept[0]) };
+    }
+    kept.push(Date.now());
+    memory.set(ip, kept);
+    return { allowed: true, lockoutMinutes: kept.length >= MAX_FAILURES ? minutesUntilFree(kept[0]) : null };
   }
 
-  const since = new Date(Date.now() - WINDOW_MINUTES * 60_000).toISOString();
   try {
+    const { data: mine, error: insertError } = await client
+      .from("studio_auth_attempts")
+      .insert({ ip, ok: false })
+      .select("id")
+      .single();
+    if (insertError) throw insertError;
+
     const { data, error } = await client
       .from("studio_auth_attempts")
       .select("at")
       .eq("ip", ip)
       .eq("ok", false)
-      .gte("at", since)
+      .gte("at", new Date(since).toISOString())
       .order("at", { ascending: true });
     if (error) throw error;
 
     const failures = data ?? [];
-    if (failures.length < MAX_FAILURES) return { allowed: true };
+    const oldest = failures.length > 0 ? new Date(failures[0].at as string).getTime() : Date.now();
+    if (failures.length <= MAX_FAILURES) {
+      return { allowed: true, lockoutMinutes: failures.length >= MAX_FAILURES ? minutesUntilFree(oldest) : null };
+    }
 
-    // 一番古い失敗が窓から抜けるまで待たせる
-    const oldest = new Date(failures[0].at as string).getTime();
-    const remainingMs = oldest + WINDOW_MINUTES * 60_000 - Date.now();
-    return { allowed: false, retryAfterMinutes: Math.max(1, Math.ceil(remainingMs / 60_000)) };
+    await client.from("studio_auth_attempts").delete().eq("id", mine.id);
+    return { allowed: false, retryAfterMinutes: minutesUntilFree(oldest) };
   } catch (error) {
     // 数えられないときは通す。ここで閉じると、DB の不調がそのまま締め出しになる
     console.error("[studio] ログイン試行を数えられませんでした", error);
-    return { allowed: true };
+    return { allowed: true, lockoutMinutes: null };
   }
 }
 
-export async function recordAttempt(ip: string, ok: boolean, reason?: string): Promise<void> {
+/** 照合に通った。この IP の失敗（`takeAttempt` が先に書いた分を含む）を帳消しにする。 */
+export async function recordSuccess(ip: string): Promise<void> {
   const client = db();
 
   if (!client) {
-    if (!ok) memory.set(ip, [...(memory.get(ip) ?? []), Date.now()]);
-    else memory.delete(ip);
+    memory.delete(ip);
     return;
   }
 
   try {
-    await client.from("studio_auth_attempts").insert({ ip, ok, reason: reason ?? null });
-    if (ok) {
-      // 入れた人を疑い続けない。成功したらその IP の失敗は帳消し
-      await client.from("studio_auth_attempts").delete().eq("ip", ip).eq("ok", false);
-      // ついでに古い記録を落とす。ログインは一日に数回なので、掃除の口を
-      // ここに置いておけば表が無限に伸びない
-      const old = new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString();
-      await client.from("studio_auth_attempts").delete().lt("at", old);
-    }
+    await client.from("studio_auth_attempts").insert({ ip, ok: true });
+    // 入れた人を疑い続けない。成功したらその IP の失敗は帳消し
+    await client.from("studio_auth_attempts").delete().eq("ip", ip).eq("ok", false);
+    // ついでに古い記録を落とす。ログインは一日に数回なので、掃除の口を
+    // ここに置いておけば表が無限に伸びない
+    const old = new Date(Date.now() - 30 * 24 * 60 * 60_000).toISOString();
+    await client.from("studio_auth_attempts").delete().lt("at", old);
   } catch (error) {
     console.error("[studio] ログイン試行を記録できませんでした", error);
-  }
-}
-
-/** 直近の失敗回数。あと何回で締まるかを画面に出すのに使う。 */
-export async function recentFailures(ip: string): Promise<number> {
-  const client = db();
-  if (!client) return memoryFailures(ip);
-
-  const since = new Date(Date.now() - WINDOW_MINUTES * 60_000).toISOString();
-  try {
-    const { count, error } = await client
-      .from("studio_auth_attempts")
-      .select("id", { count: "exact", head: true })
-      .eq("ip", ip)
-      .eq("ok", false)
-      .gte("at", since);
-    if (error) throw error;
-    return count ?? 0;
-  } catch {
-    return 0;
   }
 }
 

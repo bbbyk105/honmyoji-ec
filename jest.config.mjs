@@ -11,6 +11,8 @@ const config = {
     "^@/(.*)$": "<rootDir>/$1",
   },
   testMatch: ["<rootDir>/__tests__/**/*.test.{ts,tsx}"],
+  // ビルドの書き出し（standalone の package.json）を拾うと名前が衝突する
+  modulePathIgnorePatterns: ["<rootDir>/.next/", "<rootDir>/.open-next/"],
 };
 
 export default createJestConfig(config);

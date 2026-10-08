@@ -1,9 +1,12 @@
 import { STATUS_LABEL, type Product, type ProductStatus } from "@/data/products";
+import { site } from "@/data/site";
+import type { Lang } from "@/lib/lang";
 import type { ShippingAddress } from "@/lib/orders";
 
 /* ------------------------------------------------------------------
-   注文のときにお店へ送るメールの文面。**組むだけで送らない**（送るのは Webhook が
-   `lib/mail.ts` で）。DB にも Stripe にも触らない純粋な関数なので、テストで直に叩く。
+   注文のときに送るメールの文面（お店へ二通、お客さまへ一通）。**組むだけで送らない**
+   （送るのは Webhook が `lib/mail.ts` で）。DB にも Stripe にも触らない純粋な関数なので、
+   テストで直に叩く。
    ------------------------------------------------------------------ */
 
 export type Mail = { subject: string; text: string };
@@ -17,6 +20,8 @@ export type OrderMailInput = {
   amount: string;
   customerName: string | null;
   customerEmail: string | null;
+  /** お客さまの言語（決済を始めたときのブラウザの設定）。返信をどちらで書くかの目安 */
+  customerLang?: Lang;
   shipping: ShippingAddress | null;
   pieces: PieceLine[];
   /** 管理画面の注文ページ（絶対 URL） */
@@ -52,6 +57,7 @@ export function orderPlacedMail(o: OrderMailInput): Mail {
       ...o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`),
       "",
       `お客さま: ${o.customerName ?? "—"}${o.customerEmail ? ` <${o.customerEmail}>` : ""}`,
+      ...(o.customerLang ? [`お客さまの言語: ${o.customerLang === "ja" ? "日本語" : "英語"}（確認メールもこの言語で送っています）`] : []),
       "",
       "送り先:",
       ...(address.length ? address.map((line) => `  ${line}`) : ["  （住所が届いていません。Stripe で確認してください）"]),
@@ -63,16 +69,6 @@ export function orderPlacedMail(o: OrderMailInput): Mail {
 }
 
 type Clash = Pick<Product, "name" | "kanji"> & { status: ProductStatus };
-
-/**
- * 決済が通る前に、もう買えない状態になっていた作品。
- *
- * 決済画面を開いたあとで別の人が先に払った（完売）、展示会で売れて手で完売にした、
- * 取り置きにした —— どれも、同じ一点を二人に売った可能性がある。
- */
-export function clashesBefore(before: Clash[]): Clash[] {
-  return before.filter((p) => p.status === "sold_out" || p.status === "reserved");
-}
 
 /** 二重に売れたかもしれない。どちらに渡すかはお店が決めるので、事実と手順だけを書く。 */
 export function doubleSaleMail(o: {
@@ -91,9 +87,80 @@ export function doubleSaleMail(o: {
       "",
       "どちらのお客さまにお渡しするかを決めて、もう一方には Stripe のダッシュボードから返金し、",
       "お詫びのメールを送ってください。",
+      "この注文のお客さまには、注文の確認メールを自動では送っていません。決めたあとでご連絡ください。",
       "",
       `この注文: ${o.studioUrl}`,
       ...(o.stripeUrl ? [`Stripe: ${o.stripeUrl}`] : []),
+    ].join("\n"),
+  };
+}
+
+/**
+ * お客さまへの注文の確認。言語は決済を始めたときのブラウザの設定（`lib/lang.ts`）。
+ * 文面は /checkout/thank-you の画面と同じ言葉にしてある —— 画面で読んだことと、
+ * あとでメールで読み返すことが食い違わないように。
+ *
+ * 電話番号は載せない（お客さま自身の情報で、確認に要らない）。返信はお店の公開アドレスに
+ * 届く（`lib/mail.ts` の `sendToCustomerQuietly`）。
+ */
+export function orderConfirmationMail(o: {
+  ref: string;
+  amount: string;
+  customerName: string | null;
+  shipping: ShippingAddress | null;
+  pieces: PieceLine[];
+  lang?: Lang;
+}): Mail {
+  const address = addressLines(o.shipping ? { ...o.shipping, phone: undefined } : null);
+  const pieces = o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`);
+
+  if (o.lang === "ja") {
+    return {
+      subject: `【MIROKU】ご注文ありがとうございます（${o.ref}）`,
+      text: [
+        ...(o.customerName ? [`${o.customerName} 様`, ""] : []),
+        "このたびは MIROKU の作品をお求めいただき、ありがとうございます。",
+        "",
+        "作品は数日のうちに、本妙寺から手で包んでお送りします。",
+        "発送しましたら、追跡番号をメールでお知らせします。",
+        "",
+        `ご注文番号: ${o.ref}`,
+        ...pieces,
+        `合計: ${o.amount}（送料込み）`,
+        ...(address.length ? ["", "お届け先:", ...address.map((line) => `  ${line}`)] : []),
+        "",
+        "バッグはどれも、ひと巻きの畳縁から一つずつ作っています。お選びいただいたものと",
+        "同じ作品は、二度と作られません。",
+        "ご注文について変えたいことがあれば、このメールにそのまま返信してください。",
+        "寺の者が読んでお返事します。",
+        "",
+        site.name,
+        site.locationJa,
+        site.url,
+      ].join("\n"),
+    };
+  }
+
+  return {
+    subject: `Thank you — your MIROKU order ${o.ref}`,
+    text: [
+      o.customerName ? `Thank you, ${o.customerName}.` : "Thank you.",
+      "ありがとうございます",
+      "",
+      "The piece is yours. It leaves Honmyoji within a few days, wrapped by hand, and we write",
+      "to you with the tracking number as soon as it is on its way.",
+      "",
+      `Order ${o.ref}`,
+      ...pieces,
+      `Total: ${o.amount} (shipping included)`,
+      ...(address.length ? ["", "Shipping to:", ...address.map((line) => `  ${line}`)] : []),
+      "",
+      "Each bag is made from the edging of a single roll, so the one you chose will not be made",
+      "again. If anything about the order needs changing, reply to this email — a person reads it.",
+      "",
+      site.name,
+      site.location,
+      site.url,
     ].join("\n"),
   };
 }

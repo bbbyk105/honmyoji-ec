@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BlogArticle } from "@/components/blog/BlogArticle";
-import { getBlogDraft } from "@/lib/microcms";
+import { getBlogDraft, isDraftParam } from "@/lib/microcms";
 
 /* microCMS の「画面プレビュー」用。管理画面 → API 設定 → 画面プレビューに
    https://<本番ドメイン>/blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
@@ -22,7 +22,7 @@ export default async function BlogPreviewPage({
   searchParams: Promise<Search>;
 }) {
   const { slug, draftKey } = await searchParams;
-  if (!slug || !draftKey) notFound();
+  if (!slug || !draftKey || !isDraftParam(slug) || !isDraftParam(draftKey)) notFound();
 
   const entry = await getBlogDraft(slug, draftKey);
   if (!entry) notFound();

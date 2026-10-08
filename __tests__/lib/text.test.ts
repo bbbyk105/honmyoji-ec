@@ -1,3 +1,4 @@
+import { EMAIL_MAX_LENGTH, isEmail } from "@/lib/email";
 import { twoDigits } from "@/lib/format";
 import { headingId } from "@/lib/heading-id";
 
@@ -35,5 +36,29 @@ describe("headingId", () => {
 
   it("長い見出しは 60 字で切る", () => {
     expect(headingId("a".repeat(100), new Set())).toHaveLength(60);
+  });
+});
+
+describe("isEmail", () => {
+  it("普通のアドレスは通す", () => {
+    expect(isEmail("hello@honmyoujifuji.com")).toBe(true);
+    expect(isEmail("a.b+c@mail.example.co.jp")).toBe(true);
+  });
+
+  it("形の崩れたものは通さない", () => {
+    expect(isEmail("hello")).toBe(false);
+    expect(isEmail("hello@example")).toBe(false);
+    expect(isEmail("he llo@example.com")).toBe(false);
+  });
+
+  it("254 文字を超えたら正規表現に渡す前に断る（. を並べた長い文字列で計算量が 2 乗になる）", () => {
+    const longest = `${"a".repeat(64)}@${"b".repeat(185)}.com`;
+    expect(longest).toHaveLength(EMAIL_MAX_LENGTH);
+    expect(isEmail(longest)).toBe(true);
+    expect(isEmail(`a${longest}`)).toBe(false);
+
+    const started = performance.now();
+    expect(isEmail(`a@${".".repeat(200_000)}@`)).toBe(false);
+    expect(performance.now() - started).toBeLessThan(50);
   });
 });

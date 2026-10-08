@@ -29,6 +29,13 @@ import {
 
 type Params = { slug: string };
 
+/**
+ * 作品は data/products.ts で決まっていて増えない。一覧に無い URL は作らずに 404 にする
+ * —— 開いたままにしておくと、でたらめな URL ごとに 404 のページが R2 のキャッシュへ
+ * 溜まり続ける（監査 18）。旧 folder 名（`bottle-07`）の URL は next.config.ts の redirects で送る。
+ */
+export const dynamicParams = false;
+
 export function generateStaticParams(): Params[] {
   return products.map((p) => ({ slug: p.slug }));
 }

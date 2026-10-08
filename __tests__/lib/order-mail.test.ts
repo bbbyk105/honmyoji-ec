@@ -1,4 +1,4 @@
-import { addressLines, clashesBefore, doubleSaleMail, orderPlacedMail } from "@/lib/order-mail";
+import { addressLines, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 
 const base = {
   ref: "MI-0007",
@@ -32,6 +32,12 @@ describe("orderPlacedMail", () => {
     expect(text).toContain("管理画面: https://example.com/studio/orders/7");
   });
 
+  it("お客さまの言語を書く（返信をどちらで書くかの目安）", () => {
+    expect(orderPlacedMail({ ...base, customerLang: "ja" }).text).toContain("お客さまの言語: 日本語");
+    expect(orderPlacedMail({ ...base, customerLang: "en" }).text).toContain("お客さまの言語: 英語");
+    expect(orderPlacedMail(base).text).not.toContain("お客さまの言語");
+  });
+
   it("住所が無ければ、無いと書く（空欄で黙らない）", () => {
     expect(orderPlacedMail({ ...base, shipping: null }).text).toContain("住所が届いていません");
   });
@@ -40,18 +46,6 @@ describe("orderPlacedMail", () => {
 describe("addressLines", () => {
   it("空の行を落とす", () => {
     expect(addressLines({ name: "A", line1: "1 St", line2: "", country: "JP" })).toEqual(["A", "1 St", "JP"]);
-  });
-});
-
-describe("clashesBefore", () => {
-  it("完売と取り置き中だけを拾う", () => {
-    const got = clashesBefore([
-      { name: "A", kanji: "一", status: "available" },
-      { name: "B", kanji: "二", status: "sold_out" },
-      { name: "C", kanji: "三", status: "reserved" },
-      { name: "D", kanji: "四", status: "coming_soon" },
-    ]);
-    expect(got.map((p) => p.name)).toEqual(["B", "C"]);
   });
 });
 
@@ -77,5 +71,45 @@ describe("doubleSaleMail", () => {
     });
     expect(text).not.toContain("Stripe:");
     expect(text).toContain("「取り置き中」");
+  });
+});
+
+describe("orderConfirmationMail", () => {
+  it("件名と書き出しはお客さまの名前と注文番号（英語）", () => {
+    const mail = orderConfirmationMail(base);
+    expect(mail.subject).toBe("Thank you — your MIROKU order MI-0007");
+    expect(mail.text.split("\n")[0]).toBe("Thank you, Jane Doe.");
+  });
+
+  it("作品・合計・送り先が入り、電話番号は載せない", () => {
+    const { text } = orderConfirmationMail(base);
+    expect(text).toContain("Order MI-0007");
+    expect(text).toContain("  Hishi 菱 — A$148");
+    expect(text).toContain("Total: A$183 (shipping included)");
+    expect(text).toContain("  Sydney NSW 2000");
+    expect(text).not.toContain("+61 400 000 000");
+    expect(text).not.toContain("電話");
+  });
+
+  it("日本語のお客さまには日本語で（様付け・住所あり・電話なし）", () => {
+    const mail = orderConfirmationMail({ ...base, customerName: "近藤 白虎", lang: "ja" });
+    expect(mail.subject).toBe("【MIROKU】ご注文ありがとうございます（MI-0007）");
+    expect(mail.text.split("\n")[0]).toBe("近藤 白虎 様");
+    expect(mail.text).toContain("ご注文番号: MI-0007");
+    expect(mail.text).toContain("合計: A$183（送料込み）");
+    expect(mail.text).toContain("お届け先:");
+    expect(mail.text).toContain("静岡県富士市 本妙寺");
+    expect(mail.text).not.toContain("+61 400 000 000");
+    expect(mail.text).not.toContain("Thank you");
+  });
+
+  it("言語が無ければ英語", () => {
+    expect(orderConfirmationMail(base).subject).toBe("Thank you — your MIROKU order MI-0007");
+  });
+
+  it("名前も住所も無くても崩れない", () => {
+    const { text } = orderConfirmationMail({ ...base, customerName: null, shipping: null });
+    expect(text.split("\n")[0]).toBe("Thank you.");
+    expect(text).not.toContain("Shipping to:");
   });
 });

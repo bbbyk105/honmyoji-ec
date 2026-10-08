@@ -37,6 +37,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# cloudflare（OpenNext の書き出しと wrangler の手元の状態・秘密）
+.open-next
+.wrangler
+.dev.vars*
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

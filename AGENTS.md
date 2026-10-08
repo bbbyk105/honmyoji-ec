@@ -35,7 +35,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
 - `app/api/` — `revalidate`（microCMS Webhook）と `stripe/webhook`（決済の確定）。
 - `app/layout.tsx` は html / body / フォントだけ。**ヘッダーやフッターをここに戻さない** — 親 layout は子から外せないので、`/studio` にサイトの外枠が付いてくる。公開サイトの外枠は `components/site/SiteChrome.tsx`（`app/(site)/layout.tsx` と `app/not-found.tsx` が共有する。404 は route group の layout を通らない）。
-- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。`import "server-only"` 付き（`lib/microcms.ts` / `supabase.ts` / `stripe.ts` / `orders.ts` も同じ）— client から import するとビルドで止まる。
+- `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。`import "server-only"` 付き（`lib/microcms.ts` / `supabase.ts` / `stripe.ts` / `stripe-config.ts` / `orders.ts` も同じ）— client から import するとビルドで止まる。
 - `proxy.ts` — Next 16 で `middleware.ts` から改名。`/studio/*` の `noindex` ヘッダーと、cookie の無い訪問者をログインへ返す処理。**認可の本体はここではない**（Edge に node:crypto が無い）— 検証は `lib/studio-session.ts` の `requireSession()` で、ページと Server Action が毎回通る。
 - `components/collection/Lightbox.tsx` — **写真を一枚で開くビューア**。`LightboxProvider` で囲み、`Zoomable index={n}` で `Frame` を包むと押せるようになる（`Frame` は Server Component からも使うので、onClick を生やさず透明な button を上に被せている）。当たり判定の本体は `ZoomHit` — Provider が無い場所では何も出さないので、Server Component の `ProductHero` もこれを置くだけ。**ビューア本体は `LightboxViewer.tsx` に分けて `next/dynamic` で遅延読み込み**（写真を開かない人の初回 JS に載せない。idle で先読みはする）。倍率と位置の計算は `lib/pan-zoom.ts`（純粋関数・テストあり）。**通し番号は 0 がヒーローの像、1 以降がギャラリー**。`GalleryStrip` には `offset={1}` を渡してずらす。地は開いたページの面と同じ（商品ページは紙なので紙。`bg-sumi` がトークンで入れ替わる）— 一枚だけ別の明るさの部屋に持っていくと、そこだけ別のサイトになる。ホイール（カーソルの下を中心に）／ピンチ／＋− でズーム、拡大中は掴んで移動、等倍で横に払うと隣へ、下のバーの `← 01 / 06 →` とサムネイルで送れる、Esc で閉じる。**送りの矢印を写真の上に浮かせない** — stage が `setPointerCapture()` を取るので、押しても click が来ず反応しない（実際に踏んだ）。背後のスクロールはカートと同じ `useScrollLock`。
 - **倍率と位置は一つの state に持つ**（`Lightbox.tsx` の `view`）。別々の `useState` にして倍率の updater の中から位置の setState を呼ぶと、React が updater を二度走らせる開発時に位置だけ二重に適用され、掴んだ点から倍ずれる（実際に踏んだ）。updater は純粋に保つこと。
@@ -121,11 +121,34 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・ログインのメール通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
 - **`.env` の値に `$` を入れない**。dotenv は `scrypt$abc$def` の `$abc` / `$def` を未定義の変数として空に置き換えるので、値が `scrypt` の 6 文字になってログインが必ず失敗する（実際に踏んだ）。パスワードハッシュの区切りは `:`、生成する秘密は base64url（`+/=` も避ける）。
 - セッション cookie は `SameSite=Lax`。`Strict` にすると外部サイトのリンクから `/studio` を開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST なので、`Lax` でもクロスサイトからの書き込みには cookie が付かない。
+- **回数制限は「記録してから数える」**（`lib/studio-guard.ts` の `takeAttempt`。照合の前に失敗を一つ書き、窓の中を数え、合っていたら `recordSuccess` が消す）。数えてから記録する順に戻すと、同時に送った N 本が全部「まだ 0 回」を見て通り、上限が N 回になる。**IP は Workers では `cf-connecting-ip` だけ** —— `x-forwarded-for` は Cloudflare が客の値の後ろに足すだけなので、先頭を鍵にすると送るたびに IP を変えてすり抜けられる（2026-10-08 の監査）。
+- **作品の編集の保存は、ステータスを選び直したときだけ status を書く**（`savePiece` と `PieceForm` の隠し欄 `status_was`）。毎回書くと、画面を開いたままの間に Webhook が付けた「完売」を、開いたときの「販売中」で上書きして、売れた一点物がまた買える。選び直していても、開いたあとで DB の値が変わっていたら書かずに再読み込みを頼む。
+- **決済の作品の並びは `getPieces` が一つにする**（`x,x` や `<slug>,<folder>` は同じ一点）。重ねたまま通すと二度請求し、Webhook が同じ主キーを二行 upsert して 500 を返し続け、作品が販売中のまま残る。Webhook も metadata の slugs を `Set` で一つにしている。
+- 公開フォームのメールアドレスは `isEmail()`（`lib/email.ts`）で見る。正規表現を手書きしない —— 長さ（254 字）を先に見ないと、`.` を並べた長い文字列で計算量が 2 乗になる。
 - ログインの失敗理由（メールかパスワードか）を画面に出さない。メールが違ってもパスワードは必ず照合する — 早く返すと、応答の速さの差で「このアドレスは登録されている」が伝わる。
 - `lib/studio-cookie.ts` を `lib/studio-session.ts` と分けてあるのは、proxy.ts（Edge）が cookie 名だけを必要とするため。session 側を import すると node:crypto が Edge に載って落ちる。
 - `lib/studio-credentials.ts` は Next に依存しない。`node --experimental-strip-types` で直接読めるので、素の Node で照合を確かめられる。
 
 ## 落とし穴
+
+- **監査（2026-10-08）の直し — 戻さないこと**（2026-10-09）:
+  - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413 にする。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。`www.` と `http://` も入口で `https://honmyoujifuji.com` へ恒久の転送（www も Custom Domain として同じ Worker に付けてある）。
+  - **外の画像を Next に最適化させない**（`next.config.ts` に `remotePatterns` を置かない）。Cloudflare の画像変換は無料で月 5,000 件で、microCMS のホストを丸ごと許すと誰でも枠を使い切れた。Blog の写真は microCMS 自身の画像 API で縮め（`blogImage`）、`Frame` は外の URL を `unoptimized` で出す。
+  - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。
+  - **Blog の本文 HTML は描く前に無害化する**（`lib/blog-html.ts`、`xss`）。本文は `/studio` と同じオリジンで描かれるので、script が混ざるとログイン中の人の権限で管理画面を操作できた。プレビューの slug と draftKey は英数字と - _ だけ（SDK が URL にそのままつなぐ）。microCMS が落ちたら、ビルド中だけ予備の記事に落ち、動いている間は投げる（予備の記事が 10 分キャッシュされて本物が消えないように）。
+  - 管理画面のセッションはアカウントの指紋入り（v3）。パスワードを変えたりアカウントを消したりすると、その人の既存のセッションはその場で切れる。ログアウトは作ったときと同じ属性（Secure・Path=/）で上書きして消す —— `jar.delete()` だと Secure が付かず、本番の `__Host-` cookie が残っていた。
+  - Webhook は `checkout.session.async_payment_succeeded` も売れたものとして扱う。**二重販売の判定は書き込みで決める**（`lib/mark-sold.ts`。「まだ売れていない行だけ完売にする」update が 0 件になった作品が取り違え）。読んでから書くと、DB の不調や同時に来た Webhook で見逃す。thank-you は形の違う session_id では Stripe を呼ばない。
+  - **公開フォームは一日の上限つき**（`lib/form-quota.ts`。同じ IP から 5 通、サイト全体で 50 通。数えるのは Durable Object `FormQuota`、`worker/index.ts` が export）。Resend の無料枠（一日 100 通）を注文のメールに残すため。上限に達したら info@ へ直接と案内する。数えに行けないときは通す。お問い合わせの本文は 5,000 字まで。
+
+- **Cloudflare Workers（OpenNext）では、モジュールを読み込む時間が 1 アクセスの CPU 時間に乗る**（2026-10-08 に移行を始めた）。外枠（`SiteChrome`）や全ページから重いライブラリを読まないこと。
+  - **Stripe の SDK は読むだけで 80ms**。「決済が使えるか」と送料は `lib/stripe-config.ts`、SDK（`lib/stripe.ts`）は決済を作る・確かめる所だけ。`checkout/actions.ts` は `MiniCart` 経由で全ページが参照するので、SDK は関数の中で `await import()` する。
+  - **DB は supabase-js ではなく postgrest-js**（`lib/supabase.ts`。読み込み 32ms → 1ms）。使っているのは `.from()` だけ。認証や Storage が要るようになったら戻す。
+  - どちらも eslint の `no-restricted-imports` が止める（`eslint.config.mjs`）。
+  - 実測（workers.dev・各 12 回）: 作り置きのページは中央値 8ms、毎回組み立てるページ（contact・studio/login・checkout/thank-you・404）は 17〜53ms、起きたばかりの Worker では 200〜500ms。
+- **Worker の入口は `worker/index.ts`**（`.open-next/worker.js` を包んで `scheduled` を足しただけ。`wrangler.jsonc` の `main`）。OpenNext の Durable Object（`DOQueueHandler` など）はここから export し直している —— 入口を替えるときに落とすと、再検証の列が実行時に動かなくなる。`.open-next/` が無いときの型は `worker/open-next.d.ts`。
+- **Supabase（無料プラン）は 7 日アクセスが無いとプロジェクトごと止まる**。止まるとホスト名が DNS から消え、Worker からの読み書きは `error code: 1016` になる（2026-10-08 に踏んだ。管理画面のステータスが保存できなかった。ログインは回数制限が「数えられないときは通す」ので入れてしまい、公開ページはコード側の値で出るので、気づきにくい）。毎日 UTC 18:00 の定期実行（`worker/keep-alive.ts`）が一行読んで起こしておく。止まったら Supabase のダッシュボードで Restore（戻ってから数分は 521 → 404 → 200 と変わる）。
+- **OpenNext はプロジェクトの `.env*` を値ごと Worker に焼き込む**（`.open-next/cloudflare/next-env.mjs`。止める設定は無い）。手元の .env には Stripe の本番の鍵もあるので、デプロイは必ず `npm run deploy`（`scripts/cf-deploy.mjs` が git の追うファイルだけを一時ディレクトリに写してビルドする）。`npx opennextjs-cloudflare deploy` をプロジェクトで直に叩かない。秘密は `npx wrangler secret put <NAME>`。
+  - **ただし DB と microCMS の値だけは、ビルドに環境変数で渡す**（`cf-deploy.mjs` の `BUILD_ENV_KEYS`。手元の .env* から拾う）。作り置きのページはデプロイのたびに R2 のキャッシュを上書きするので、DB に届かないまま作ると、次の再検証（10 分）まで管理画面の値が消えてコード側の値が出る（2026-10-08、販売中にした 5 点が「Sold out」と出た）。OpenNext が焼き込むのは .env* ファイルの中身だけで、環境変数は載らない。上げる前に出力に秘密の値が無いかを確かめている。
 
 - **client 部品に `Product` を丸ごと渡さない。** client に渡した props は RSC ペイロードとして HTML に焼き込まれる。以前は `MiniCart` に全九点を渡していて、どのページの HTML にも九点ぶんの物語（英日）が載っていた（2026-09-25 に削って、HTML は gzip で 7〜26% 減った）。渡すのは `CartPiece`（`data/products.ts` の `toCartPiece`）か slug だけ。client から `getProduct` / `productImage` を呼ばない（`products` 本体がバンドルに入る）— 画像は `leadSrc(folder)`。一覧（`PieceTile`）と商品ページのヒーローは Server Component なので `Product` をそのまま受けてよい。
 - **state も effect も無い部品に `"use client"` を付けない**（`PieceTile` / `ProductHero` / `InquiryCta` は Server Component）。マークアップが大きくて動きだけが client の部品は、本体（server）+ `XxxMotion`（client、children を受けて `data-*` を探して動かす）に分ける — `HomeHero` / `EntryCurtain` がこの形。ただし `next/image` をサーバーで描くと srcset がペイロードに載るので、生のバイト数は増えることがある（gzip 後で判断する）。
@@ -135,6 +158,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `"use server"` ファイルから非 async 値（定数）を export すると 500。定数は `app/contact/subjects.ts` のような別モジュールへ。
 - 浮遊アニメ（`.bag-float`）は WCAG 2.2.2 のため 3 周で止める設計。無限ループにしない。
 - **お店への知らせは全部メール（Resend、`lib/mail.ts`）**: お問い合わせ（返信先はお客さま）・新作のお知らせの登録・注文（Webhook、初めて入ったときだけ）・二重販売の警告・管理画面のログイン。env は `RESEND_API_KEY` / `RESEND_FROM` / `NOTIFY_EMAILS`（カンマ区切り）。無ければサーバーログのみ。**以前は Telegram だったが、本番に `TELEGRAM_*` が入っておらず、公開から 2026-09-29 までお問い合わせが一通も届いていなかった**（お客さまの画面は「送れました」のまま）。Telegram に戻さない。鍵が無いとダッシュボードに赤い帯（`MailNotice`）が出る。
+- **お客さまへの注文の確認メール**（2026-10-09）: Webhook が注文を初めて保存したときに一通送る（`orderConfirmationMail`・`sendToCustomerQuietly`）。**言語は日本語か英語**（`lib/lang.ts`）: 決済を始めるとき（`startCheckout`）にブラウザの Accept-Language の一番目で決め、決済の `metadata.lang` に入れる。Stripe の決済画面（`locale`）は日本語なら `ja`、それ以外は `auto`（中国語・韓国語なども Stripe が持っていればその言語で出る。2026-10-09 本人判断）。Stripe の決済画面には言語の切り替えボタンが無い（決済を作る時点で決まる）。確認メールと /checkout/thank-you はその `metadata.lang` を読む —— あとで判定し直さない（決済画面とメールで言語が食い違う）。**カート（MiniCart）も同じ言語で出す**: 作り置きのページに載るのでサーバーでは決められず、ブラウザが `navigator.languages` で決める（`hooks/useBrowserLang.ts`、文言は `components/cart/cart-text.ts`）。決済のフォームがその言語を `lang` で送り、`startCheckout` はそれを Accept-Language より優先する。決済の失敗の文言（`ERRORS`）も同じ言語。お店へのメールにも「お客さまの言語」を書く。文面は /checkout/thank-you の画面と同じ言葉。送り元は `RESEND_FROM`（notify@、受信箱なし）、返信先は `site.email`（info@ → Email Routing でお店の Gmail）。**二重に売れたかもしれない注文には送らない**（「The piece is yours」を返金で取り消すことになる。お店が決めてから自分で書く）。
 - **二重販売の備え**: Checkout は 35 分で閉じる（`expires_at`。既定の 24 時間だと同じ一点の決済画面が二つ開ける）。それでも決済の前に作品がもう完売 / 取り置き中だったら、Webhook が「要確認」のメールを送る（文面は `lib/order-mail.ts`、テストあり）。
 - microCMS の API キーに `NEXT_PUBLIC_` を付けない。`lib/microcms.ts` はサーバ専用 — `"use client"` から import しない。
 - `NEXT_PUBLIC_SITE_URL` が OG 画像の `metadataBase`。本番ドメイン確定時に設定。
@@ -162,7 +186,7 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 - 日本語版ページ（i18n）。
 - 26 点の正式な名前・文言・寸法（今は仮）。価格は 2026-09-29 に 26 点とも入れたが、状態は Coming soon のまま —— 売り出す日を決めて /studio で Available に（`data/products.ts` の冒頭の註）。
 - 着姿のうち、どの作品か特定できていないカット（`image/` の 0.10.03・0.13.02/14/28）の割り当て。
-- `site.email` / `site.instagram` の実値差し替え。
+- `site.instagram` の実値差し替え（`site.email` は 2026-10-08 に info@honmyoujifuji.com にした。Cloudflare の Email Routing でお店の Gmail へ転送）。
 
 ## コマンド
 
@@ -170,5 +194,6 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 npm run dev     # localhost:3000
 npm run lint    # eslint
 npm run build   # next build（デプロイ前必須）
+npm run deploy  # Cloudflare Workers へ（.env を載せないよう一時ディレクトリでビルドする）
 npm test        # jest（__tests__/。変換は next/jest）
 ```

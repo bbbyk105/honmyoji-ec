@@ -1,5 +1,9 @@
 "use server";
 
+import { site } from "@/data/site";
+import { clientIp } from "@/lib/client-ip";
+import { isEmail } from "@/lib/email";
+import { takeFormQuota } from "@/lib/form-quota-gate";
 import { notifyStore } from "@/lib/mail";
 
 export type SubscribeState =
@@ -10,8 +14,17 @@ export type SubscribeState =
 /** 新作のお知らせの登録。お店にメールで届ける（Resend、`lib/mail.ts`）。 */
 export async function subscribeNote(_prev: SubscribeState, formData: FormData): Promise<SubscribeState> {
   const email = String(formData.get("email") ?? "").trim();
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+  if (!isEmail(email)) {
     return { status: "error", message: "Please enter a valid email address." };
+  }
+
+  // 一日の上限（lib/form-quota.ts）。お問い合わせと同じ枠
+  const quota = await takeFormQuota(await clientIp());
+  if (!quota.ok) {
+    return {
+      status: "error",
+      message: `We have received many sign-ups today. Please email us at ${site.email} and we will add you.`,
+    };
   }
 
   try {
