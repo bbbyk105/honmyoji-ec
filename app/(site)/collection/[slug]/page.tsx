@@ -19,6 +19,7 @@ import {
   LINE_LABEL,
   LINE_RATIO,
   cm,
+  isListed,
   isPurchasable,
   priceLabel,
   productImage,
@@ -49,6 +50,8 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     title: `${product.name} ${product.kanji}${price ? ` — ${price}` : ""}`,
     description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
     openGraph: { images: [{ url: productImage(product.slug, 1) }] },
+    // 試し買い用は検索エンジンに載せない
+    ...(product.test ? { robots: { index: false, follow: false } } : {}),
   };
 }
 
@@ -104,8 +107,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   if (!product) notFound();
   if (slug !== product.slug) redirect(productPath(product));
 
-  const catalog = await getCatalog();
-  const index = catalog.findIndex((p) => p.slug === product.slug);
+  // 前後と関連作品は一覧に出る作品だけ（試し買い用は混ぜない）
+  const catalog = (await getCatalog()).filter(isListed);
+  const index = Math.max(0, catalog.findIndex((p) => p.slug === product.slug));
   const prev = catalog[(index - 1 + catalog.length) % catalog.length];
   const next = catalog[(index + 1) % catalog.length];
   const related = catalog.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 4);

@@ -24,11 +24,10 @@ export const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY || process.en
 /**
  * 国際発送の送料（AUD）。0 にすると「送料込み」で送料の行が出なくなる。
  *
- * 静岡から豪州への EMS を一律で見た暫定値。実際の梱包と重量が決まったら
- * ここを直す —— 作品ごとに変える作りにはしていない（一箱一点で、重さの差が
- * 送料の段に届かないため）。
+ * 2026-10-09 に A$40 で確定（本人）。作品ごとに変える作りにはしていない（一箱一点で、
+ * 重さの差が送料の段に届かないため）。試し買い用の作品（`test`）だけは送料を付けない。
  */
-export const SHIPPING_AUD = 35;
+export const SHIPPING_AUD = 40;
 
 /** Checkout に出す国。発送できない国を選ばせないための一覧。 */
 export const SHIPPING_COUNTRIES = ["AU", "NZ", "JP", "SG", "US", "CA", "GB"] as const;

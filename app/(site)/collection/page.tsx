@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
-import { LINE_BLURB, LINE_LABEL, LINE_ORDER, LINE_RATIO } from "@/data/products";
+import { isListed, LINE_BLURB, LINE_LABEL, LINE_ORDER, LINE_RATIO } from "@/data/products";
 import { getCatalog } from "@/lib/catalog";
 import { twoDigits } from "@/lib/format";
 
@@ -23,7 +23,7 @@ const GRID: Record<"4/5" | "3/2", string> = {
 };
 
 export default async function CollectionPage() {
-  const pieces = await getCatalog();
+  const pieces = (await getCatalog()).filter(isListed);
   const groups = LINE_ORDER.map((line) => ({
     line,
     items: pieces.filter((p) => p.line === line),

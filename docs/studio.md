@@ -178,7 +178,7 @@ stripe listen --forward-to localhost:3000/api/stripe/webhook
 stripe trigger checkout.session.completed
 ```
 
-**送料** — `lib/stripe-config.ts` の `SHIPPING_AUD`（既定 A$35）。0 にすると送料の行が出ず、送料込みになる。作品ごとには変えていない（一箱一点で、重さの差が送料の段に届かないため）。発送先の国も同じファイルの `SHIPPING_COUNTRIES`。
+**送料** — `lib/stripe-config.ts` の `SHIPPING_AUD`（A$40。2026-10-09 に確定）。0 にすると送料の行が出ず、送料込みになる。作品ごとには変えていない（一箱一点で、重さの差が送料の段に届かないため）。発送先の国も同じファイルの `SHIPPING_COUNTRIES`。
 
 ---
 

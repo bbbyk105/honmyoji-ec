@@ -87,6 +87,8 @@ export async function startCheckout(
   }
 
   const base = await origin();
+  // 試し買い用（data/products.ts の test）だけの決済には送料を付けない
+  const shipping = pieces.every((p) => p.test) ? 0 : SHIPPING_AUD;
 
   try {
     const session = await client.checkout.sessions.create({
@@ -112,12 +114,12 @@ export async function startCheckout(
         allowed_countries: [...SHIPPING_COUNTRIES],
       },
       shipping_options:
-        SHIPPING_AUD > 0
+        shipping > 0
           ? [
               {
                 shipping_rate_data: {
                   type: "fixed_amount",
-                  fixed_amount: { amount: SHIPPING_AUD * 100, currency: "aud" },
+                  fixed_amount: { amount: shipping * 100, currency: "aud" },
                   display_name: "International shipping (tracked)",
                 },
               },
