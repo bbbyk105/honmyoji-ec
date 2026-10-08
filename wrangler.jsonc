@@ -6,7 +6,9 @@
 	"name": "honmyoji-ec",
 	"compatibility_date": "2026-10-06",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-	// 試しのあいだは workers.dev だけ。本番のドメインは確かめてから routes に足す。
+	// 本番は honmyoujifuji.com（Custom Domain。DNS のレコードと証明書は Cloudflare が作る）。
+	// workers.dev は切り替えを確かめ終えるまで残す。
+	"routes": [{ "pattern": "honmyoujifuji.com", "custom_domain": true }],
 	"workers_dev": true,
 	"preview_urls": false,
 	"assets": {

@@ -173,7 +173,7 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 - 日本語版ページ（i18n）。
 - 26 点の正式な名前・文言・寸法（今は仮）。価格は 2026-09-29 に 26 点とも入れたが、状態は Coming soon のまま —— 売り出す日を決めて /studio で Available に（`data/products.ts` の冒頭の註）。
 - 着姿のうち、どの作品か特定できていないカット（`image/` の 0.10.03・0.13.02/14/28）の割り当て。
-- `site.email` / `site.instagram` の実値差し替え。
+- `site.instagram` の実値差し替え（`site.email` は 2026-10-08 に info@honmyoujifuji.com にした。Cloudflare の Email Routing でお店の Gmail へ転送）。
 
 ## コマンド
 
