@@ -1,4 +1,4 @@
-import { addressLines, clashesBefore, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
+import { addressLines, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 
 const base = {
   ref: "MI-0007",
@@ -46,18 +46,6 @@ describe("orderPlacedMail", () => {
 describe("addressLines", () => {
   it("空の行を落とす", () => {
     expect(addressLines({ name: "A", line1: "1 St", line2: "", country: "JP" })).toEqual(["A", "1 St", "JP"]);
-  });
-});
-
-describe("clashesBefore", () => {
-  it("完売と取り置き中だけを拾う", () => {
-    const got = clashesBefore([
-      { name: "A", kanji: "一", status: "available" },
-      { name: "B", kanji: "二", status: "sold_out" },
-      { name: "C", kanji: "三", status: "reserved" },
-      { name: "D", kanji: "四", status: "coming_soon" },
-    ]);
-    expect(got.map((p) => p.name)).toEqual(["B", "C"]);
   });
 });
 

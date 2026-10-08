@@ -18,7 +18,8 @@ import {
    環境変数（.env.example 参照）が無いときは data/blog.ts の seed に
    落ちる。鍵の無い環境でもビルドと表示が通るようにするため — 「CMS が
    未設定だからサイトが 500」は EC では一番やってはいけない壊れ方。
-   API が落ちたときも同じ経路で seed に落ち、理由は server log に出す。
+   API が落ちたときは、ビルド中だけ seed に落ち、動いている間は投げる
+   （作り直しを失敗させて前の正しいページを残す。getBlogPosts の註）。
    ------------------------------------------------------------------ */
 
 const serviceDomain = process.env.MICROCMS_SERVICE_DOMAIN;
@@ -97,9 +98,33 @@ function cleanTitle(raw: string): string {
   return raw.replace(BRAND_SUFFIX, "").trim() || raw;
 }
 
-function toPost(content: BlogContent & MicroCMSListContent): BlogPost {
+/**
+ * microCMS の画像を microCMS 自身の画像 API で縮めた URL にする（幅 1600・WebP）。
+ * Cloudflare の画像変換を通さない（next.config.ts の註）。記事の見出しの写真は最大でも
+ * 版面の 980px なので、1600 あれば高精細の画面でも足りる。
+ */
+export function blogImage(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  try {
+    const u = new URL(url);
+    u.searchParams.set("w", "1600");
+    u.searchParams.set("fm", "webp");
+    u.searchParams.set("q", "80");
+    return u.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+/** 本文の HTML は描く前に無害化する（lib/blog-html.ts）。読み込みは記事を取るときだけ。 */
+async function sanitizer(): Promise<(html: string) => string> {
+  return (await import("@/lib/blog-html")).sanitizeBlogHtml;
+}
+
+function toPost(content: BlogContent & MicroCMSListContent, sanitize: (html: string) => string): BlogPost {
   const title = cleanTitle(content.title?.trim() || "Untitled");
-  const html = content.content?.trim();
+  const raw = content.content?.trim();
+  const html = raw ? sanitize(raw) : "";
 
   return {
     slug: content.id,
@@ -109,7 +134,7 @@ function toPost(content: BlogContent & MicroCMSListContent): BlogPost {
     date: content.date || content.publishedAt || content.createdAt,
     season: content.season?.trim() ?? "",
     topic: one(content.topic) || "Note",
-    image: content.image?.url,
+    image: blogImage(content.image?.url),
     imageAlt: content.imageAlt?.trim() || title,
     imageRole: pick(content.imageRole, ROLES, "blog"),
     imageRatio: pick(content.imageRatio, RATIOS, "16/10"),
@@ -134,11 +159,19 @@ export async function getBlogPosts(): Promise<BlogPost[]> {
       queries: { limit: LIST_LIMIT, richEditorFormat: "html" },
       customRequestInit: { next: { revalidate: REVALIDATE_SECONDS, tags: [BLOG_TAG] } },
     });
-    const entries = res.contents.map(toPost).sort(byNewest);
+    const sanitize = await sanitizer();
+    const entries = res.contents.map((c) => toPost(c, sanitize)).sort(byNewest);
     return entries.length > 0 ? entries : seed;
   } catch (error) {
-    console.error(`[microcms] failed to load "${BLOG_ENDPOINT}" — falling back to seed posts`, error);
-    return seed;
+    // ビルドの途中だけ予備の記事に落とす（microCMS の不調でデプロイを止めない）。
+    // 動いている間は投げる —— 予備の記事を返すと、それが正しいページとして 10 分キャッシュ
+    // され、本物の記事が消える（監査 17）。投げれば作り直しが失敗し、前の正しいページが残る。
+    // 記事を読むのは作り置きのページだけ（一覧・記事・トップ・作品）なので、500 にはならない。
+    if (process.env.NEXT_PHASE === "phase-production-build") {
+      console.error(`[microcms] failed to load "${BLOG_ENDPOINT}" during build — using seed posts`, error);
+      return seed;
+    }
+    throw error;
   }
 }
 
@@ -174,9 +207,20 @@ export async function blogHref(preferredSlug: string, topic: string): Promise<st
  * /blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY} で来る。
  * 下書きはキャッシュしない。
  */
+/**
+ * コンテンツ ID と draftKey の形。microCMS の SDK は contentId を URL に**そのまま**つなぐので、
+ * `../` や `?` を混ぜると別の API を叩かせられる（監査 15）。英数字と - _ だけ通す。
+ */
+const DRAFT_PARAM = /^[A-Za-z0-9_-]{1,100}$/;
+
+export function isDraftParam(value: string): boolean {
+  return DRAFT_PARAM.test(value);
+}
+
 export async function getBlogDraft(slug: string, draftKey: string): Promise<BlogPost | undefined> {
   const client = microcmsClient();
   if (!client) return undefined;
+  if (!isDraftParam(slug) || !isDraftParam(draftKey)) return undefined;
 
   try {
     const content = await client.getListDetail<BlogContent>({
@@ -185,7 +229,7 @@ export async function getBlogDraft(slug: string, draftKey: string): Promise<Blog
       queries: { draftKey, richEditorFormat: "html" },
       customRequestInit: { cache: "no-store" },
     });
-    return toPost(content);
+    return toPost(content, await sanitizer());
   } catch (error) {
     console.error(`[microcms] draft preview failed for "${slug}"`, error);
     return undefined;

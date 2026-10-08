@@ -70,16 +70,6 @@ export function orderPlacedMail(o: OrderMailInput): Mail {
 
 type Clash = Pick<Product, "name" | "kanji"> & { status: ProductStatus };
 
-/**
- * 決済が通る前に、もう買えない状態になっていた作品。
- *
- * 決済画面を開いたあとで別の人が先に払った（完売）、展示会で売れて手で完売にした、
- * 取り置きにした —— どれも、同じ一点を二人に売った可能性がある。
- */
-export function clashesBefore(before: Clash[]): Clash[] {
-  return before.filter((p) => p.status === "sold_out" || p.status === "reserved");
-}
-
 /** 二重に売れたかもしれない。どちらに渡すかはお店が決めるので、事実と手順だけを書く。 */
 export function doubleSaleMail(o: {
   ref: string;

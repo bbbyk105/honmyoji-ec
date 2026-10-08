@@ -131,6 +131,15 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## 落とし穴
 
+- **監査（2026-10-08）の直し — 戻さないこと**（2026-10-09）:
+  - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413 にする。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。
+  - **外の画像を Next に最適化させない**（`next.config.ts` に `remotePatterns` を置かない）。Cloudflare の画像変換は無料で月 5,000 件で、microCMS のホストを丸ごと許すと誰でも枠を使い切れた。Blog の写真は microCMS 自身の画像 API で縮め（`blogImage`）、`Frame` は外の URL を `unoptimized` で出す。
+  - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。
+  - **Blog の本文 HTML は描く前に無害化する**（`lib/blog-html.ts`、`xss`）。本文は `/studio` と同じオリジンで描かれるので、script が混ざるとログイン中の人の権限で管理画面を操作できた。プレビューの slug と draftKey は英数字と - _ だけ（SDK が URL にそのままつなぐ）。microCMS が落ちたら、ビルド中だけ予備の記事に落ち、動いている間は投げる（予備の記事が 10 分キャッシュされて本物が消えないように）。
+  - 管理画面のセッションはアカウントの指紋入り（v3）。パスワードを変えたりアカウントを消したりすると、その人の既存のセッションはその場で切れる。ログアウトは作ったときと同じ属性（Secure・Path=/）で上書きして消す —— `jar.delete()` だと Secure が付かず、本番の `__Host-` cookie が残っていた。
+  - Webhook は `checkout.session.async_payment_succeeded` も売れたものとして扱う。**二重販売の判定は書き込みで決める**（`lib/mark-sold.ts`。「まだ売れていない行だけ完売にする」update が 0 件になった作品が取り違え）。読んでから書くと、DB の不調や同時に来た Webhook で見逃す。thank-you は形の違う session_id では Stripe を呼ばない。
+  - **公開フォームは一日の上限つき**（`lib/form-quota.ts`。同じ IP から 5 通、サイト全体で 50 通。数えるのは Durable Object `FormQuota`、`worker/index.ts` が export）。Resend の無料枠（一日 100 通）を注文のメールに残すため。上限に達したら info@ へ直接と案内する。数えに行けないときは通す。お問い合わせの本文は 5,000 字まで。
+
 - **Cloudflare Workers（OpenNext）では、モジュールを読み込む時間が 1 アクセスの CPU 時間に乗る**（2026-10-08 に移行を始めた）。外枠（`SiteChrome`）や全ページから重いライブラリを読まないこと。
   - **Stripe の SDK は読むだけで 80ms**。「決済が使えるか」と送料は `lib/stripe-config.ts`、SDK（`lib/stripe.ts`）は決済を作る・確かめる所だけ。`checkout/actions.ts` は `MiniCart` 経由で全ページが参照するので、SDK は関数の中で `await import()` する。
   - **DB は supabase-js ではなく postgrest-js**（`lib/supabase.ts`。読み込み 32ms → 1ms）。使っているのは `.from()` だけ。認証や Storage が要るようになったら戻す。

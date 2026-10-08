@@ -10,9 +10,9 @@
 	"compatibility_date": "2026-10-06",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	// 本番は honmyoujifuji.com（Custom Domain。DNS のレコードと証明書は Cloudflare が作る）。
-	// workers.dev は切り替えを確かめ終えるまで残す。
+	// workers.dev は止める（同じサイトが二つの住所で見え、ゾーンの WAF も効かない。監査 14）。
 	"routes": [{ "pattern": "honmyoujifuji.com", "custom_domain": true }],
-	"workers_dev": true,
+	"workers_dev": false,
 	"preview_urls": false,
 	"assets": {
 		"directory": ".open-next/assets",
@@ -51,6 +51,11 @@
 			{
 				"name": "NEXT_CACHE_DO_QUEUE",
 				"class_name": "DOQueueHandler"
+			},
+			{
+				// 公開フォームの一日の上限（lib/form-quota.ts）。class は worker/index.ts が export する
+				"name": "FORM_QUOTA",
+				"class_name": "FormQuota"
 			}
 		]
 	},
@@ -59,6 +64,10 @@
 			// 無料プランの Durable Objects は SQLite のものだけ
 			"tag": "v1",
 			"new_sqlite_classes": ["DOQueueHandler"]
+		},
+		{
+			"tag": "v2",
+			"new_sqlite_classes": ["FormQuota"]
 		}
 	],
 	// next/image の縮小は Cloudflare Images（無料で月 5,000 回の変換まで）

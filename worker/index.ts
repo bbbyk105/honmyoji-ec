@@ -9,10 +9,14 @@
 
 import openNext from "../.open-next/worker.js";
 
+import { refuse } from "./guard";
 import { pingDatabase, type KeepAliveEnv } from "./keep-alive";
 
 const worker = {
-  fetch: openNext.fetch,
+  fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
+    const refused = refuse(request);
+    return refused ? Promise.resolve(refused) : openNext.fetch(request, env, ctx);
+  },
 
   /** `wrangler.jsonc` の triggers.crons（一日一回）。Supabase を眠らせない。 */
   async scheduled(_controller: unknown, env: KeepAliveEnv): Promise<void> {
@@ -32,3 +36,5 @@ export default worker;
 
 // open-next.config.ts の queue（DOQueueHandler）などの Durable Object。入口を替えても export し続ける
 export { DOQueueHandler, DOShardedTagCache, BucketCachePurge } from "../.open-next/worker.js";
+// 公開フォームの一日の上限（lib/form-quota.ts）
+export { FormQuota } from "./form-quota-object";

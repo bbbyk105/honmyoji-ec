@@ -89,7 +89,7 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   }
 
   await recordSuccess(ip);
-  await createSession();
+  await createSession(who);
   await notifyStudio(`MIROKU Studio — ${who} が ${ip} からログインしました。`);
 
   redirect(safeNext(String(formData.get("next") ?? "/studio")));

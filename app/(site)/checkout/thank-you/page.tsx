@@ -14,6 +14,12 @@ export const metadata: Metadata = {
 };
 
 /**
+ * Stripe の Checkout Session の ID の形。形の違う値では Stripe を呼ばない —— この画面は
+ * 誰でも開けるので、でたらめな値ごとに店の鍵で Stripe の API を叩かせない（監査 16）。
+ */
+const SESSION_ID = /^cs_(test|live)_[A-Za-z0-9]{10,200}$/;
+
+/**
  * 決済のあと。
  *
  * ここで注文を作らない —— 作るのは Webhook。客がこの画面まで戻ってこなくても
@@ -34,7 +40,7 @@ export default async function ThankYouPage({
   let lang: Lang = "en";
 
   const client = stripe();
-  if (client && sessionId) {
+  if (client && sessionId && SESSION_ID.test(sessionId)) {
     try {
       const session = await client.checkout.sessions.retrieve(sessionId);
       name = session.customer_details?.name ?? null;

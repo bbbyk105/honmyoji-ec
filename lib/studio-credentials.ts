@@ -106,6 +106,28 @@ export function matchAccount(inputEmail: string, inputPassword: string): string 
   return matched;
 }
 
+/**
+ * アカウントの指紋。メールアドレスとパスワードのハッシュから作る（パスワードそのものは
+ * 出てこない）。セッションに入れておき、確かめるたびに「今もそのアカウントが同じ
+ * パスワードのままいるか」を見る —— アカウントを消したりパスワードを変えたりしたら、
+ * その人の既存のセッションはその場で切れる（監査 8）。
+ */
+function fingerprintOf(account: Account): string {
+  const secretPart = account.hash || sha256(account.plain).toString("base64url");
+  return createHash("sha256").update(`${account.email}\n${secretPart}`, "utf8").digest("base64url").slice(0, 22);
+}
+
+/** 照合に通ったアカウントの指紋。見つからなければ null。 */
+export function accountFingerprint(email: string): string | null {
+  const account = accounts.find((a) => a.email === email.trim().toLowerCase());
+  return account ? fingerprintOf(account) : null;
+}
+
+/** その指紋のアカウントが今も同じパスワードでいるか。 */
+export function isCurrentAccount(fingerprint: string): boolean {
+  return accounts.some((a) => fingerprintOf(a) === fingerprint);
+}
+
 /** 真偽だけ要るとき。 */
 export function credentialsMatch(inputEmail: string, inputPassword: string): boolean {
   return matchAccount(inputEmail, inputPassword) !== null;

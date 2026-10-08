@@ -2,11 +2,12 @@ import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
-import { priceLabel } from "@/data/products";
+import { getProduct, priceLabel } from "@/data/products";
 import { getPieces } from "@/lib/catalog";
 import { isLang } from "@/lib/lang";
 import { notifyStoreQuietly, sendToCustomerQuietly, siteLink } from "@/lib/mail";
-import { clashesBefore, doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
+import { markSold, type SoldClash } from "@/lib/mark-sold";
+import { doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 import { orderAmount, orderRef } from "@/lib/orders";
 import { stripe, webCrypto } from "@/lib/stripe";
 import { db } from "@/lib/supabase";
@@ -17,9 +18,10 @@ import { db } from "@/lib/supabase";
    ブラウザが戻ってくる success_url では確定しない。カードは通ったのに客が
    タブを閉じた、という一番ありふれた経路で注文が消えるため。
 
-   Stripe 側の設定（docs/stripe.md）:
+   Stripe 側の設定（docs/studio.md）:
      エンドポイント  https://<本番ドメイン>/api/stripe/webhook
      イベント        checkout.session.completed
+                     checkout.session.async_payment_succeeded（後払い型の支払い方法の入金）
    ------------------------------------------------------------------ */
 
 export const runtime = "nodejs";
@@ -41,6 +43,19 @@ function address(session: Stripe.Checkout.Session) {
     country: a.country ?? undefined,
     phone: session.customer_details?.phone ?? undefined,
   };
+}
+
+/**
+ * 売れたと決める決済。二つだけ —— カードは completed の時点で paid。銀行振込のような後払い型の
+ * 支払い方法は completed では unpaid で、入金が済むと async_payment_succeeded が来る（監査 10）。
+ * 後払い型を Stripe のダッシュボードで有効にしたときに、入金済みの注文が消えないように。
+ */
+function soldSession(event: Stripe.Event): Stripe.Checkout.Session | null {
+  if (event.type === "checkout.session.completed") {
+    return event.data.object.payment_status === "paid" ? event.data.object : null;
+  }
+  if (event.type === "checkout.session.async_payment_succeeded") return event.data.object;
+  return null;
 }
 
 export async function POST(request: NextRequest) {
@@ -69,12 +84,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "bad signature" }, { status: 400 });
   }
 
-  if (event.type !== "checkout.session.completed") {
-    return NextResponse.json({ received: true });
-  }
-
-  const session = event.data.object;
-  if (session.payment_status !== "paid") {
+  const session = soldSession(event);
+  if (!session) {
     return NextResponse.json({ received: true });
   }
 
@@ -97,11 +108,11 @@ export async function POST(request: NextRequest) {
     ),
   ];
 
-  // 印を付ける前の状態。決済が通る前にもう売れていた（取り置かれていた）作品が無いかを
-  // 見る —— 一点物で、同じ作品の決済画面が二つ開いていれば二人とも払えてしまう。
+  // メールに載せる名前と値段。取り違えの判定には使わない（lib/mark-sold.ts が書き込みで決める）
   const before = await getPieces(slugs);
 
   let orderId: number | null = null;
+  let clashes: SoldClash[] = [];
 
   try {
     // stripe_session が unique なので、Stripe が同じイベントを再送しても
@@ -129,8 +140,12 @@ export async function POST(request: NextRequest) {
 
     // 一点物なので、売れたら在庫から下ろす。ここを手作業にすると、二人目に
     // 買える状態のまま見えてしまう時間が必ずできる。
-    if (slugs.length > 0) {
-      const now = new Date().toISOString();
+    const now = new Date().toISOString();
+    if (orderId !== null) {
+      // 初めて入った注文: 「まだ売れていないものだけ完売にする」で書き、もう売れていた作品を拾う
+      clashes = await markSold(supabase, slugs, now);
+    } else if (slugs.length > 0) {
+      // 再送: 前の配達で完売にしてあるはず。念のため揃えるだけ（取り違えの判定はしない）
       const { error: soldError } = await supabase.from("piece_overrides").upsert(
         slugs.map((slug) => ({ slug, status: "sold_out", updated_at: now })),
         { onConflict: "slug" },
@@ -171,7 +186,6 @@ export async function POST(request: NextRequest) {
       }),
     );
 
-    const clashes = clashesBefore(before);
     // お客さまへの確認は、取り違えが無いときだけ。二重に売れたかもしれない注文に
     // 「The piece is yours」と送ると、あとで返金するときに言ったことを取り消すことになる。
     // そのときはお店がどちらに渡すかを決めてから、自分で書く（doubleSaleMail に書いてある）。
@@ -182,11 +196,14 @@ export async function POST(request: NextRequest) {
       );
     }
     if (clashes.length > 0) {
-      console.error("[stripe] 決済の前に買えない状態だった作品", ref, clashes.map((p) => p.name));
+      console.error("[stripe] 決済の前に買えない状態だった作品", ref, clashes.map((c) => c.slug));
       await notifyStoreQuietly(
         doubleSaleMail({
           ref,
-          clashes,
+          clashes: clashes.map((c) => {
+            const product = getProduct(c.slug);
+            return { name: product?.name ?? c.slug, kanji: product?.kanji ?? "", status: c.status };
+          }),
           studioUrl,
           stripeUrl: intent ? `https://dashboard.stripe.com/payments/${intent}` : null,
         }),

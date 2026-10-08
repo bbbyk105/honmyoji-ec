@@ -106,6 +106,8 @@ export function Frame({
             priority={priority}
             sizes={sizes}
             className={crop}
+            // 外の画像（Blog の microCMS）は最適化に回さない。縮めるのは microCMS 側（next.config.ts の註）
+            unoptimized={/^https?:\/\//.test(src)}
           />
         ) : (
           <div className="absolute inset-0 flex flex-col items-start justify-end bg-sumi p-6 ring-1 ring-inset ring-line">

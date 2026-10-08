@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 import { STUDIO_COOKIE } from "@/lib/studio-cookie";
-import { credentialsConfigured } from "@/lib/studio-credentials";
+import { accountFingerprint, credentialsConfigured, isCurrentAccount } from "@/lib/studio-credentials";
 
 /* ------------------------------------------------------------------
    /studio の鍵。**サーバ専用**。
@@ -25,8 +25,8 @@ export { STUDIO_COOKIE };
 /** 8 時間。ひと仕事より長く、置き忘れたままにするには短い。 */
 const MAX_AGE_SECONDS = 60 * 60 * 8;
 
-/** cookie の形式。作り方を変えたら上げる（古い cookie が一斉に無効になる）。 */
-const VERSION = "v2";
+/** cookie の形式。作り方を変えたら上げる（古い cookie が一斉に無効になる）。v3 でアカウントの指紋を足した。 */
+const VERSION = "v3";
 
 const secret = process.env.STUDIO_SESSION_SECRET ?? "";
 
@@ -53,28 +53,38 @@ async function browserTag(): Promise<string> {
   return createHash("sha256").update(ua, "utf8").digest("base64url").slice(0, 16);
 }
 
-export async function createSession(): Promise<void> {
+/**
+ * cookie の属性。作るときと消すときで**同じもの**を使う。本番の名前は `__Host-` 付きなので、
+ * Secure と Path=/ が無い Set-Cookie はブラウザに捨てられる —— 以前は `jar.delete()` で
+ * 消していて、Secure の付かない消去が捨てられ、ログアウトしても cookie が残っていた（監査 7）。
+ */
+const COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  // strict ではなく lax。strict は外部サイトのリンクから開いたときにも
+  // cookie を送らないので、Stripe のダッシュボードやメールから /studio を
+  // 開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST
+  // なので、lax でもクロスサイトからの書き込みには cookie が付かない
+  // —— strict で増える安全性は「外部リンクから画面を表示させない」ぶんだけ。
+  sameSite: "lax",
+  path: "/",
+} as const;
+
+/** ログインしたアカウント（matchAccount が返したメールアドレス）のセッションを作る。 */
+export async function createSession(email: string): Promise<void> {
+  const fingerprint = accountFingerprint(email);
+  if (!fingerprint) throw new Error("[studio] アカウントが見つからないのでセッションを作れません");
+
   const expiresAt = Date.now() + MAX_AGE_SECONDS * 1000;
-  const payload = `${VERSION}.${expiresAt}.${await browserTag()}`;
+  const payload = `${VERSION}.${expiresAt}.${await browserTag()}.${fingerprint}`;
   const jar = await cookies();
 
-  jar.set(STUDIO_COOKIE, `${payload}.${sign(payload)}`, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    // strict ではなく lax。strict は外部サイトのリンクから開いたときにも
-    // cookie を送らないので、Stripe のダッシュボードやメールから /studio を
-    // 開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST
-    // なので、lax でもクロスサイトからの書き込みには cookie が付かない
-    // —— strict で増える安全性は「外部リンクから画面を表示させない」ぶんだけ。
-    sameSite: "lax",
-    path: "/",
-    maxAge: MAX_AGE_SECONDS,
-  });
+  jar.set(STUDIO_COOKIE, `${payload}.${sign(payload)}`, { ...COOKIE_OPTIONS, maxAge: MAX_AGE_SECONDS });
 }
 
 export async function destroySession(): Promise<void> {
   const jar = await cookies();
-  jar.delete(STUDIO_COOKIE);
+  jar.set(STUDIO_COOKIE, "", { ...COOKIE_OPTIONS, maxAge: 0, expires: new Date(0) });
 }
 
 /** 一度のレンダリングで cookie を何度も開き直さないよう cache する。 */
@@ -94,11 +104,14 @@ export const verifySession = cache(async (): Promise<boolean> => {
   if (mac.length !== expected.length) return false;
   if (!timingSafeEqual(Buffer.from(mac), Buffer.from(expected))) return false;
 
-  const [version, expiresAt, tag] = payload.split(".");
+  const [version, expiresAt, tag, fingerprint] = payload.split(".");
   if (version !== VERSION) return false;
 
   const expiry = Number(expiresAt);
   if (!Number.isFinite(expiry) || expiry <= Date.now()) return false;
+
+  // 消されたアカウント・パスワードを変えたアカウントのセッションは通さない
+  if (!fingerprint || !isCurrentAccount(fingerprint)) return false;
 
   // 署名が正しくても、別のブラウザに貼られた cookie なら通さない
   return tag === (await browserTag());

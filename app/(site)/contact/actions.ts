@@ -1,6 +1,9 @@
 "use server";
 
+import { site } from "@/data/site";
+import { clientIp } from "@/lib/client-ip";
 import { isEmail } from "@/lib/email";
+import { takeFormQuota } from "@/lib/form-quota-gate";
 import { notifyStore, siteLink } from "@/lib/mail";
 
 import { SUBJECTS } from "./subjects";
@@ -26,6 +29,13 @@ function parsePiece(product: string): { names: string; slugs: string[] } | null 
   return { names: product.slice(0, match.index).trim() || slugs.join(", "), slugs };
 }
 
+/** 名前と本文の上限。本文はお店へのメール一通にそのまま載るので、長すぎるものを断る。 */
+const NAME_MAX = 120;
+const MESSAGE_MAX = 5000;
+
+/** 一日の上限に達したとき。メールは直接なら届く（info@ → お店の Gmail）。 */
+const FORM_LIMIT_MESSAGE = `We have received many messages today. Please email us directly at ${site.email} — a person reads every one.`;
+
 /**
  * お問い合わせ送信。お店にメールで届ける（Resend、`lib/mail.ts`）。返信先はお客さまの
  * アドレスなので、お店は返信を押すだけで答えられる。鍵が無ければサーバーログに出す。
@@ -34,7 +44,7 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const subject = String(formData.get("subject") ?? "other");
-  const product = String(formData.get("product") ?? "").trim();
+  const product = String(formData.get("product") ?? "").trim().slice(0, 300);
   const message = String(formData.get("message") ?? "").trim();
   const honeypot = String(formData.get("website") ?? "");
 
@@ -42,11 +52,17 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
 
   const errors: NonNullable<Extract<ContactState, { status: "error" }>["errors"]> = {};
   if (name.length < 1) errors.name = "Please tell us your name.";
+  else if (name.length > NAME_MAX) errors.name = "Please shorten your name.";
   if (!isEmail(email)) errors.email = "Please enter a valid email address.";
   if (message.length < 10) errors.message = "A few more words would help us answer properly.";
+  else if (message.length > MESSAGE_MAX) errors.message = `Please keep the message under ${MESSAGE_MAX} characters.`;
   if (Object.keys(errors).length) {
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
+
+  // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
+  const quota = await takeFormQuota(await clientIp());
+  if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE };
 
   const topic = SUBJECTS[subject] ?? subject;
   const piece = parsePiece(product);
