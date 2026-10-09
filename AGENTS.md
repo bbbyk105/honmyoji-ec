@@ -167,7 +167,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - `app/sitemap.ts`（固定ページ・作品 26 点と写真・Blog の記事、1 時間ごと）と `app/robots.ts`（止めるのは `/api/` だけ。`/studio` や thank-you は noindex で外してあり、robots で塞ぐと noindex が読まれない）。Cloudflare が robots.txt の前に Content Signals を足して出す。
 - **どのページにも canonical**（`alternates.canonical`、自分自身のクエリ無しの URL）。`/contact?product=…` のような問い合わせの導線がクエリ付きで増えるため。
-- 構造化データは `lib/seo.ts` が組み、`components/seo/JsonLd.tsx` が body に出す（`metadata.other` に入れると `<meta>` になって読まれない）。作品 = Product（値段・在庫・送料・返品不可。在庫は状態から: Coming soon は OutOfStock、完売は SoldOut）＋パンくず、記事 = BlogPosting＋パンくず、トップ = OnlineStore と WebSite。**ページに見えていることだけを書く**（送料や返品の決まりを変えたら `lib/stripe-config.ts` と `data/site.ts` の legal に合わせて自動で変わる）。**電話番号は載せない**（作り手の携帯。特商法のページにだけ出す）。
+- 構造化データは `lib/seo.ts` が組み、`components/seo/JsonLd.tsx` が body に出す（`metadata.other` に入れると `<meta>` になって読まれない）。作品 = Product（値段・在庫・送料・返品不可。在庫は状態から: Coming soon は OutOfStock、完売は SoldOut）＋パンくず、記事 = BlogPosting＋パンくず、トップ = OnlineStore と WebSite。**ページに見えていることだけを書く**（送料や返品の決まりを変えたら `lib/stripe-config.ts` と `data/site.ts` の legal に合わせて自動で変わる）。**電話番号は載せない**（作り手の携帯。特商法のページにだけ出す）。店には Instagram（`sameAs`）と本妙寺の地図（`hasMap`・`geo`、`data/site.ts` の `maps` / `geo`）を載せる。地図は Contact に「Open in Google Maps」のリンクだけ置き、**iframe で埋め込まない**（Google の重いスクリプトと cookie を初回から読む。SEO チェックリスト #56）。
 - 試し買い用（`data/products.ts` の `test`）は noindex・サイトマップに入れない・構造化データを出さない。一覧から外すのは `isListed()`。
 - パンくずは画面には出していない（版面に足すとテンプレートらしく見える）。構造化データだけ。
 
@@ -194,7 +194,6 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 - 日本語版ページ（i18n）。
 - 26 点の正式な名前・文言・寸法（今は仮）。価格は 2026-09-29 に 26 点とも入れたが、状態は Coming soon のまま —— 売り出す日を決めて /studio で Available に（`data/products.ts` の冒頭の註）。
 - 着姿のうち、どの作品か特定できていないカット（`image/` の 0.10.03・0.13.02/14/28）の割り当て。
-- `site.instagram` の実値差し替え（`site.email` は 2026-10-08 に info@honmyoujifuji.com にした。Cloudflare の Email Routing でお店の Gmail へ転送）。
 
 ## コマンド
 

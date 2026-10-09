@@ -130,6 +130,10 @@ export function storeJsonLd(): Json[] {
         addressRegion: "Shizuoka",
         addressCountry: "JP",
       },
+      geo: { "@type": "GeoCoordinates", latitude: site.geo.latitude, longitude: site.geo.longitude },
+      hasMap: site.maps,
+      // 同じ店のアカウント。検索エンジンがサイトと Instagram を同じ店として結びつける
+      sameAs: [site.instagram],
     },
     {
       "@context": "https://schema.org",

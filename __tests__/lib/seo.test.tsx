@@ -71,8 +71,11 @@ describe("そのほか", () => {
     expect(ld.url).toBe("https://honmyoujifuji.com/blog/welcome");
   });
 
-  it("店の情報に電話番号は載せない", () => {
-    expect(JSON.stringify(storeJsonLd())).not.toContain("telephone");
+  it("店の情報に電話番号は載せない。Instagram と地図は載せる", () => {
+    const json = JSON.stringify(storeJsonLd());
+    expect(json).not.toContain("telephone");
+    expect(json).toContain("https://www.instagram.com/fuji_honmyouji");
+    expect(json).toContain('"hasMap":"https://maps.google.com/?cid=11166856979426179977"');
   });
 
   it("JsonLd は < を逃がす（文字列から </script> で抜けられない）", () => {

@@ -13,7 +13,10 @@ export const site = {
   /** 本番の URL。OG 画像の基準とメールのリンクに使う（`NEXT_PUBLIC_SITE_URL` があればそちら）。 */
   url: "https://honmyoujifuji.com",
   email: "info@honmyoujifuji.com", // Cloudflare の Email Routing でお店の Gmail へ転送
-  instagram: "https://www.instagram.com/", // TODO: 実アカウント URL
+  instagram: "https://www.instagram.com/fuji_honmyouji",
+  /** 本妙寺の場所（Google マップ）。Contact に出すのと、構造化データ（lib/seo.ts）の hasMap / geo。 */
+  maps: "https://maps.google.com/?cid=11166856979426179977",
+  geo: { latitude: 35.1640741, longitude: 138.7349672 },
   nav: [
     { href: "/collection", label: "Collection", ja: "作品" },
     { href: "/about", label: "About", ja: "想い" },
