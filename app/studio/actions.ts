@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 
 import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
 import { getProduct } from "@/data/products";
+import { writeStatusIfUnchanged } from "@/lib/piece-status";
 import { db, dbEnabled } from "@/lib/supabase";
 import { LOGIN_LIMITS, clientIp, limitKey, recordSuccess, takeAttempt } from "@/lib/studio-guard";
 import { notifyStudio } from "@/lib/studio-notify";
@@ -116,7 +117,7 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
 
   const client = db();
   if (!client) {
-    return { error: "データベースに繋がっていません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
+    return { error: "データベースに接続できません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
   }
 
   const rawPrice = String(formData.get("price_aud") ?? "").trim();
@@ -158,19 +159,16 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
     if ((current?.status ?? null) !== statusWas) return { error: MOVED_ONE };
     row.status = status;
 
-    // 書き込みにも条件を付ける —— 読んでから書くまでの間に Webhook が完売にしても上書きしない。
-    // 行があれば「開いたときの状態のままなら」の update、無ければ「無いままなら」の insert
-    const write = current
-      ? statusWas === null
-        ? client.from("piece_overrides").update(row).eq("slug", slug).is("status", null)
-        : client.from("piece_overrides").update(row).eq("slug", slug).eq("status", statusWas)
-      : client.from("piece_overrides").upsert(row, { onConflict: "slug", ignoreDuplicates: true });
-    const { data: written, error } = await write.select("slug");
-    if (error) {
+    // 書き込みにも条件を付ける（lib/piece-status.ts）—— 読んでから書くまでの間に Webhook が
+    // 完売にしても上書きしない。手で変えたので、完売にした決済の印は空に戻る
+    try {
+      if (!(await writeStatusIfUnchanged(client, slug, current ? current.status : undefined, row))) {
+        return { error: MOVED_ONE };
+      }
+    } catch (error) {
       console.error("[studio] piece の保存に失敗", error);
-      return { error: saveError(error) };
+      return { error: saveError(error as { code?: string; message: string }) };
     }
-    if ((written ?? []).length === 0) return { error: MOVED_ONE };
   } else {
     const { error } = await client.from("piece_overrides").upsert(row, { onConflict: "slug" });
     if (error) {
@@ -210,7 +208,7 @@ export async function setPiecesStatus(
 
   const client = db();
   if (!client) {
-    return { ok: false, error: "データベースに繋がっていません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
+    return { ok: false, error: "データベースに接続できません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
   }
 
   // 開いたあとで DB の方が変わっていたら書かない。画面を開いたままの間に注文が入ると Webhook が
@@ -240,52 +238,15 @@ export async function setPiecesStatus(
     };
   }
 
-  // 書き込みにも条件を付ける —— 読んでから書くまでの間に Webhook が完売にしても上書きしない。
-  // 列は status と updated_at だけ（既にある行の価格や文言には触れない）。
+  // 書き込みにも条件を付ける（lib/piece-status.ts）—— 読んでから書くまでの間に Webhook が
+  // 完売にしても上書きしない。列は status と updated_at だけ（既にある行の価格や文言には触れない）
   const patch = { status: option.value, updated_at: new Date().toISOString() };
   const written = new Set<string>();
-  const take = (rows: { slug: unknown }[] | null) => (rows ?? []).forEach((r) => written.add(r.slug as string));
-
-  // 行があって status が入っている作品: 開いたときの状態ごとに、その状態のままのものだけ書く
-  const byWas = new Map<string, string[]>();
-  for (const slug of known) {
-    const value = stored.get(slug);
-    if (value === undefined || value === null) continue;
-    byWas.set(was[slug], [...(byWas.get(was[slug]) ?? []), slug]);
-  }
-  // 行はあるが status が空（= コード側の状態）の作品と、行が無い作品
-  const empty = known.filter((slug) => stored.has(slug) && stored.get(slug) === null);
-  const missing = known.filter((slug) => !stored.has(slug));
-
   try {
-    for (const [value, group] of byWas) {
-      const { data, error } = await client
-        .from("piece_overrides")
-        .update(patch)
-        .in("slug", group)
-        .eq("status", value)
-        .select("slug");
-      if (error) throw error;
-      take(data);
-    }
-    if (empty.length > 0) {
-      const { data, error } = await client
-        .from("piece_overrides")
-        .update(patch)
-        .in("slug", empty)
-        .is("status", null)
-        .select("slug");
-      if (error) throw error;
-      take(data);
-    }
-    if (missing.length > 0) {
-      // 同時に行が作られていたら（Webhook の完売）作らない
-      const { data, error } = await client
-        .from("piece_overrides")
-        .upsert(missing.map((slug) => ({ slug, ...patch })), { onConflict: "slug", ignoreDuplicates: true })
-        .select("slug");
-      if (error) throw error;
-      take(data);
+    for (const slug of known) {
+      if (await writeStatusIfUnchanged(client, slug, stored.has(slug) ? (stored.get(slug) ?? null) : undefined, patch)) {
+        written.add(slug);
+      }
     }
   } catch (error) {
     console.error("[studio] ステータスの更新に失敗", error);
@@ -333,9 +294,20 @@ export async function resetPiece(formData: FormData): Promise<void> {
   const client = db();
   if (!client) return;
 
-  const { error } = await client.from("piece_overrides").delete().eq("slug", slug);
-  if (error) {
-    console.error("[studio] 上書きの取り消しに失敗", error);
+  // 完売・取り置きの作品は、ステータスだけ残して他の上書き（価格・文言）を消す。行ごと消すと、
+  // Webhook が付けた完売が消え、コード側の状態（販売中など）に戻って、売れた一点物がまた買える
+  const { error } = await client
+    .from("piece_overrides")
+    .delete()
+    .eq("slug", slug)
+    .or("status.is.null,status.not.in.(sold_out,reserved)");
+  const { error: keepError } = await client
+    .from("piece_overrides")
+    .update({ price_aud: null, note: null, note_ja: null, story: null, story_ja: null, updated_at: new Date().toISOString() })
+    .eq("slug", slug)
+    .in("status", ["sold_out", "reserved"]);
+  if (error || keepError) {
+    console.error("[studio] 上書きの取り消しに失敗", error ?? keepError);
     return;
   }
 
@@ -353,7 +325,7 @@ export async function updateOrder(_prev: FormState, formData: FormData): Promise
   if (!Number.isInteger(id)) return { error: "注文が指定されていません。" };
 
   const client = db();
-  if (!client) return { error: "データベースに繋がっていません。" };
+  if (!client) return { error: "データベースに接続できません。" };
 
   const status = String(formData.get("status") ?? "").trim();
   const tracking = optional(formData, "tracking");
@@ -376,7 +348,7 @@ export async function updateOrder(_prev: FormState, formData: FormData): Promise
   return { saved: new Date().toISOString() };
 }
 
-/** 接続状態。ダッシュボードが「まだ繋がっていない」と言うのに使う。 */
+/** 接続状態。ダッシュボードが「まだ接続されていない」と言うのに使う。 */
 export async function isDbConnected(): Promise<boolean> {
   return dbEnabled;
 }

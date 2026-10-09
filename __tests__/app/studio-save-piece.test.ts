@@ -75,6 +75,15 @@ beforeEach(() => {
       for (const slug of hit) table.set(slug, next ?? table.get(slug) ?? null);
       return json(hit.map((slug) => ({ slug })));
     }
+    if (method === "DELETE") {
+      // 完売・取り置きは消さない条件（or=(status.is.null,status.not.in.(sold_out,reserved))）
+      const protect = (url.searchParams.get("or") ?? "").includes("not.in.(sold_out,reserved)");
+      for (const slug of slugs) {
+        const value = table.get(slug) ?? null;
+        if (table.has(slug) && !(protect && (value === "sold_out" || value === "reserved"))) table.delete(slug);
+      }
+      return json([]);
+    }
     if (method === "POST") {
       const rows = (Array.isArray(body) ? body : [body]) as { slug: string; status?: string }[];
       const ignore = new Headers(init?.headers).get("prefer")?.includes("ignore-duplicates");
@@ -208,5 +217,27 @@ describe("setPiecesStatus", () => {
     const { setPiecesStatus } = load();
     const result = await setPiecesStatus(["tokiwa-evergreen"], "available", {});
     expect(result.ok).toBe(false);
+  });
+});
+
+describe("resetPiece", () => {
+  function resetForm() {
+    const fd = new FormData();
+    fd.set("slug", "tokiwa-evergreen");
+    return fd;
+  }
+
+  it("ふつうの上書きは行ごと消して、コード側の値に戻す", async () => {
+    table.set("tokiwa-evergreen", "available");
+    const { resetPiece } = load();
+    await resetPiece(resetForm());
+    expect(table.has("tokiwa-evergreen")).toBe(false);
+  });
+
+  it("完売の作品は行を消さない（Webhook の完売を消して販売中に戻さない）", async () => {
+    table.set("tokiwa-evergreen", "sold_out");
+    const { resetPiece } = load();
+    await resetPiece(resetForm());
+    expect(table.get("tokiwa-evergreen")).toBe("sold_out");
   });
 });

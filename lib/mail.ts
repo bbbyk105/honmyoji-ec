@@ -86,15 +86,20 @@ async function send(to: string[], mail: Mail): Promise<void> {
  * 失敗しても投げない（Webhook を止めない。注文はもう保存できている）。鍵が無ければログだけ。
  */
 export async function sendToCustomerQuietly(to: string, mail: Mail): Promise<void> {
+  try {
+    await sendToCustomer(to, mail);
+  } catch (error) {
+    console.error("[mail] お客さまに送れませんでした", mail.subject, error);
+  }
+}
+
+/** お客さまに送る。**失敗したら投げる**（Webhook が「送り終えた」を記録してから次へ進むため）。 */
+export async function sendToCustomer(to: string, mail: Mail): Promise<void> {
   if (!apiKey) {
     console.info(`[mail] RESEND_API_KEY が無いのでお客さまに送っていません: ${mail.subject}`);
     return;
   }
-  try {
-    await send([to], { replyTo: site.email, ...mail });
-  } catch (error) {
-    console.error("[mail] お客さまに送れませんでした", mail.subject, error);
-  }
+  await send([to], { replyTo: site.email, ...mail });
 }
 
 /** 知らせるだけで、失敗しても呼び出し元を止めない（Webhook・ログイン通知）。 */

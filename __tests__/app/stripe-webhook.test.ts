@@ -3,10 +3,10 @@
  */
 
 // Stripe の Webhook（app/api/stripe/webhook/route.ts）。再送に強いこと:
-//   - 初めての配達で、完売と知らせ（お店・お客さま）を一度だけ出す
+//   - 初めての配達で、完売と知らせ（お店・お客さま）を一度ずつ出す
 //   - 知らせまで済んだ注文の再送では、何もしない
-//   - 前の配達が完売まで進んでから落ちた再送では、知らせを出す（二重販売とは言わない）
-//   - 同じ配達が同時に届いても、知らせは一回
+//   - 途中で落ちた配達の再送では、完売をやり直し、送っていないメールだけ送る
+//   - 同じ配達が同時に届いても、知らせを出すのは一方だけ（もう一方は 503 であとで送り直してもらう）
 // Stripe とメールは差し替え、DB（PostgREST）は Map で持つ偽物の fetch。
 
 export {};
@@ -15,11 +15,16 @@ jest.mock("server-only", () => ({}));
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 
 const mails: { kind: string; subject: string }[] = [];
+let failCustomerOnce = false;
 jest.mock("@/lib/mail", () => ({
-  notifyStoreQuietly: jest.fn(async (mail: { subject: string }) => {
+  notifyStore: jest.fn(async (mail: { subject: string }) => {
     mails.push({ kind: "store", subject: mail.subject });
   }),
-  sendToCustomerQuietly: jest.fn(async (_to: string, mail: { subject: string }) => {
+  sendToCustomer: jest.fn(async (_to: string, mail: { subject: string }) => {
+    if (failCustomerOnce) {
+      failCustomerOnce = false;
+      throw new Error("Resend 503");
+    }
     mails.push({ kind: "customer", subject: mail.subject });
   }),
 }));
@@ -40,6 +45,9 @@ const session = {
   collected_information: null,
 };
 
+/** 明細の作品（SKU と slug）。空にすると、明細から作品を引けない行になる */
+let lineMeta: Record<string, string> = { slug: piece.slug, sku: piece.sku };
+
 jest.mock("@/lib/stripe", () => ({
   webCrypto: {},
   stripe: () => ({
@@ -54,7 +62,7 @@ jest.mock("@/lib/stripe", () => ({
               amount_total: 14500,
               quantity: 1,
               description: `${piece.name} — ${piece.kanji}`,
-              price: { product: { metadata: { slug: piece.slug, sku: piece.sku }, name: piece.name } },
+              price: { product: { metadata: lineMeta, name: piece.name } },
             },
           ],
         }),
@@ -64,11 +72,16 @@ jest.mock("@/lib/stripe", () => ({
 }));
 
 // ---- 偽物の DB（orders と piece_overrides） ----------------------------------------------
-type Order = { id: number; stripe_session: string; notified_at: string | null };
+type Order = {
+  id: number;
+  stripe_session: string;
+  notified_at: string | null;
+  notifying_at: string | null;
+  mails_sent: string[];
+};
 let orders: Order[];
 let pieces: Map<string, { status: string | null; sold_session: string | null }>;
 let failNextSoldWrite: boolean;
-let claimLost: boolean;
 
 const json = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
@@ -87,7 +100,13 @@ const fakeFetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) =
   if (table === "orders") {
     if (method === "POST") {
       if (!orders.some((o) => o.stripe_session === body.stripe_session)) {
-        orders.push({ id: orders.length + 1, stripe_session: body.stripe_session, notified_at: null });
+        orders.push({
+          id: orders.length + 1,
+          stripe_session: body.stripe_session,
+          notified_at: null,
+          notifying_at: null,
+          mails_sent: [],
+        });
       }
       return json([], 201);
     }
@@ -97,11 +116,19 @@ const fakeFetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) =
       return o ? json({ id: o.id, notified_at: o.notified_at }) : json({ message: "not found" }, 406);
     }
     if (method === "PATCH") {
-      const id = Number(url.searchParams.get("id")?.replace(/^eq\./, ""));
-      const o = orders.find((x) => x.id === id);
-      if (!o || o.notified_at !== null || claimLost) return json([]);
-      o.notified_at = body.notified_at;
-      return json([{ id }]);
+      const o = orders.find((x) => x.id === Number(url.searchParams.get("id")?.replace(/^eq\./, "")));
+      if (!o) return json([]);
+      // 印を借りる: notified_at が空で、印が無いか古いときだけ
+      if (url.searchParams.get("notified_at") === "is.null") {
+        const or = url.searchParams.get("or") ?? "";
+        const staleBefore = /notifying_at\.lt\.([^,)]+)/.exec(or)?.[1] ?? "";
+        const free = o.notifying_at === null || o.notifying_at < staleBefore;
+        if (o.notified_at !== null || !free) return json([]);
+        o.notifying_at = body.notifying_at;
+        return json([{ id: o.id, mails_sent: o.mails_sent }]);
+      }
+      Object.assign(o, body);
+      return json([]);
     }
   }
 
@@ -122,11 +149,17 @@ const fakeFetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) =
               ? s === "reserved"
               : true;
       const hit = slugs.filter((slug) => pieces.has(slug) && match(pieces.get(slug)!.status));
-      for (const slug of hit) pieces.set(slug, { status: "sold_out", sold_session: body.sold_session ?? null });
+      for (const slug of hit) {
+        const prev = pieces.get(slug)!;
+        pieces.set(slug, {
+          status: "sold_out",
+          sold_session: "sold_session" in body ? body.sold_session : prev.sold_session,
+        });
+      }
       return json(hit.map((slug) => ({ slug })));
     }
     if (method === "POST") {
-      const rows = body as { slug: string; sold_session?: string }[];
+      const rows = body as { slug: string; sold_session?: string | null }[];
       const inserted = rows.filter((r) => !pieces.has(r.slug));
       for (const r of inserted) pieces.set(r.slug, { status: "sold_out", sold_session: r.sold_session ?? null });
       return json(inserted.map((r) => ({ slug: r.slug })), 201);
@@ -165,7 +198,8 @@ beforeEach(() => {
   orders = [];
   pieces = new Map([[piece.slug, { status: "available", sold_session: null }]]);
   failNextSoldWrite = false;
-  claimLost = false;
+  failCustomerOnce = false;
+  lineMeta = { slug: piece.slug, sku: piece.sku };
   mails.length = 0;
   global.fetch = fakeFetch as unknown as typeof fetch;
   jest.spyOn(console, "error").mockImplementation(() => {});
@@ -175,11 +209,12 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe("Stripe Webhook", () => {
-  it("初めての配達: 完売にして、お店とお客さまに一通ずつ（値段は明細から）", async () => {
+  it("初めての配達: 完売にして、お店とお客さまに一通ずつ。終わったら印を返す", async () => {
     const res = await deliver(load());
     expect(res.status).toBe(200);
     expect(pieces.get(piece.slug)).toEqual({ status: "sold_out", sold_session: SESSION });
     expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
+    expect(orders[0]).toMatchObject({ notifying_at: null, mails_sent: ["store", "customer"] });
     expect(orders[0].notified_at).not.toBeNull();
   });
 
@@ -192,26 +227,35 @@ describe("Stripe Webhook", () => {
     expect(mails).toEqual([]);
   });
 
-  it("完売の書き込みで落ちたら 500。再送で完売と知らせをやり直す（二重販売とは言わない）", async () => {
+  it("完売の書き込みで落ちたら 500 で印を返し、再送で完売と知らせをやり直す（二重販売とは言わない）", async () => {
     const route = load();
     failNextSoldWrite = true;
     const first = await deliver(route);
     expect(first.status).toBe(500);
     expect(mails).toEqual([]);
-    expect(orders[0].notified_at).toBeNull();
+    expect(orders[0]).toMatchObject({ notified_at: null, notifying_at: null });
 
     const retry = await deliver(route);
     expect(retry.status).toBe(200);
     expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
-    expect(mails.some((m) => m.subject.includes("要確認"))).toBe(false);
+  });
+
+  it("お客さまへのメールで落ちたら 500。再送では、送っていないお客さまへの一通だけ送る", async () => {
+    const route = load();
+    failCustomerOnce = true;
+    const first = await deliver(route);
+    expect(first.status).toBe(500);
+    expect(mails.map((m) => m.kind)).toEqual(["store"]);
+
+    const retry = await deliver(route);
+    expect(retry.status).toBe(200);
+    expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
   });
 
   it("前の配達が完売まで進んでから落ちた再送でも、自分の完売を二重販売と言わない", async () => {
-    const route = load();
-    // 前の配達で、注文の行と完売（この決済）までは済んでいた
-    orders.push({ id: 1, stripe_session: SESSION, notified_at: null });
+    orders.push({ id: 1, stripe_session: SESSION, notified_at: null, notifying_at: null, mails_sent: [] });
     pieces.set(piece.slug, { status: "sold_out", sold_session: SESSION });
-    const res = await deliver(route);
+    const res = await deliver(load());
     expect(res.status).toBe(200);
     expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
   });
@@ -224,10 +268,23 @@ describe("Stripe Webhook", () => {
     expect(mails[1].subject).toContain("要確認");
   });
 
-  it("同じ配達が同時に届き、知らせる権利を取れなかった方は送らない", async () => {
-    claimLost = true;
+  it("別の配達がいま知らせを出していたら、送らずに 503（あとで送り直してもらう）", async () => {
+    orders.push({
+      id: 1,
+      stripe_session: SESSION,
+      notified_at: null,
+      notifying_at: new Date().toISOString(),
+      mails_sent: [],
+    });
+    const res = await deliver(load());
+    expect(res.status).toBe(503);
+    expect(mails).toEqual([]);
+  });
+
+  it("明細から作品を引けなくても、決済に残した作品は完売にする", async () => {
+    lineMeta = {};
     const res = await deliver(load());
     expect(res.status).toBe(200);
-    expect(mails).toEqual([]);
+    expect(pieces.get(piece.slug)?.status).toBe("sold_out");
   });
 });

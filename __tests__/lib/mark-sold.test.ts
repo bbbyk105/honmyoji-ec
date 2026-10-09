@@ -29,7 +29,13 @@ function slugsOf(url: URL): string[] {
   return m ? m[1].split(",").map((v) => v.replace(/^"|"$/g, "")) : [];
 }
 
+/** 何回目かの要求の前に、別の誰か（管理画面）が書く */
+let beforeCall: Map<number, () => void>;
+let callCount: number;
+
 const fakeFetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+  callCount += 1;
+  beforeCall.get(callCount)?.();
   const url = new URL(String(input));
   const method = init?.method ?? "GET";
   const slugs = slugsOf(url);
@@ -78,6 +84,8 @@ function load(): { markSold: Mod["markSold"]; client: NonNullable<ReturnType<Db[
 
 beforeEach(() => {
   table = new Map();
+  beforeCall = new Map();
+  callCount = 0;
   fakeFetch.mockClear();
   global.fetch = fakeFetch as unknown as typeof fetch;
   jest.spyOn(console, "info").mockImplementation(() => {});
@@ -143,6 +151,25 @@ describe("markSold", () => {
     expect(await markSold(client, [a, b], "later", "cs_this")).toEqual([]);
     // 別の決済が同じ作品を払っていたら、それは取り違え
     expect(await markSold(client, [a], "later", "cs_other")).toEqual([{ slug: a, status: "sold_out" }]);
+  });
+
+  it("取り置き中だった作品の取り違えは、再送でも取り違えのまま（自分の印を付けない）", async () => {
+    table.set(c, row("reserved"));
+    const { markSold, client } = load();
+    expect(await markSold(client, [c], "now", "cs_this")).toEqual([{ slug: c, status: "reserved" }]);
+    expect(table.get(c)).toEqual({ status: "sold_out", sold_session: null });
+    // 知らせの前に落ちて Stripe が再送してきた
+    expect(await markSold(client, [c], "later", "cs_this")).toEqual([{ slug: c, status: "sold_out" }]);
+  });
+
+  it("書いてから読むまでの間に管理画面が販売中に戻しても、もう一度試して完売にする", async () => {
+    table.set(a, row("reserved"));
+    // 1 回目の update（0 件）のあと、読む前に管理画面が販売中にした
+    beforeCall.set(3, () => table.set(a, row("available")));
+    const { markSold, client } = load();
+    const clashes = await markSold(client, [a], "now", "cs_this");
+    expect(clashes).toEqual([]);
+    expect(table.get(a)).toEqual({ status: "sold_out", sold_session: "cs_this" });
   });
 
   it("DB に届かなければ投げる（Webhook は 500 で再送させる）", async () => {
