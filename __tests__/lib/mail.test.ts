@@ -2,8 +2,8 @@
  * @jest-environment node
  */
 
-// お客さまへの注文の確認（sendToCustomerQuietly）。返信がお店の公開アドレスに届くこと、
-// 失敗しても投げないこと（Webhook を止めない）。
+// お客さまへの注文の確認（sendToCustomer）。返信がお店の公開アドレスに届くこと、
+// 失敗したら状態コード付きで投げること（Webhook が送れないものと一時的なものを分ける）。
 
 export {};
 
@@ -47,10 +47,10 @@ afterEach(() => {
   jest.restoreAllMocks();
 });
 
-describe("sendToCustomerQuietly", () => {
+describe("sendToCustomer", () => {
   it("お客さま一人に、お店の公開アドレスを返信先にして送る（お店の宛先は混ぜない）", async () => {
-    const { sendToCustomerQuietly } = load(keys);
-    await sendToCustomerQuietly("jane@example.com", { subject: "Thank you", text: "..." });
+    const { sendToCustomer } = load(keys);
+    await sendToCustomer("jane@example.com", { subject: "Thank you", text: "..." });
 
     expect(fetchMock).toHaveBeenCalledTimes(1);
     const body = JSON.parse(String(fetchMock.mock.calls[0][1]?.body));
@@ -59,15 +59,36 @@ describe("sendToCustomerQuietly", () => {
     expect(body.reply_to).toBe("info@honmyoujifuji.com");
   });
 
-  it("Resend が断っても投げない", async () => {
+  it("Resend が断ったら状態コード付きで投げる。4xx（429・409 を除く）はこの一通が断られた", async () => {
+    const { sendToCustomer, isPermanentMailError } = load(keys);
+    fetchMock.mockResolvedValueOnce(new Response("invalid to", { status: 422 }));
+    const permanent = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
+    expect(isPermanentMailError(permanent)).toBe(true);
+
     fetchMock.mockResolvedValueOnce(new Response("rate limited", { status: 429 }));
-    const { sendToCustomerQuietly } = load(keys);
-    await expect(sendToCustomerQuietly("jane@example.com", { subject: "s", text: "t" })).resolves.toBeUndefined();
+    const limited = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
+    expect(isPermanentMailError(limited)).toBe(false);
+
+    fetchMock.mockResolvedValueOnce(new Response("concurrent idempotent requests", { status: 409 }));
+    const overlapped = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
+    expect(isPermanentMailError(overlapped)).toBe(false);
+
+    fetchMock.mockResolvedValueOnce(new Response("oops", { status: 503 }));
+    const down = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
+    expect(isPermanentMailError(down)).toBe(false);
   });
 
-  it("鍵が無ければ送らない", async () => {
-    const { sendToCustomerQuietly } = load({ ...keys, RESEND_API_KEY: undefined });
-    await sendToCustomerQuietly("jane@example.com", { subject: "s", text: "t" });
+  it("鍵（idempotencyKey）を渡すと Idempotency-Key で送る。本文には混ぜない", async () => {
+    const { sendToCustomer } = load(keys);
+    await sendToCustomer("jane@example.com", { subject: "s", text: "t", idempotencyKey: "cs_1:customer" });
+    const init = fetchMock.mock.calls[0][1];
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBe("cs_1:customer");
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty("idempotencyKey");
+  });
+
+  it("鍵が無ければ送らない（投げない）", async () => {
+    const { sendToCustomer } = load({ ...keys, RESEND_API_KEY: undefined });
+    await sendToCustomer("jane@example.com", { subject: "s", text: "t" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 });

@@ -10,7 +10,7 @@
     "studio:secrets": "node scripts/studio-secrets.mjs",
     "preview": "opennextjs-cloudflare build && opennextjs-cloudflare preview",
     "deploy": "node scripts/cf-deploy.mjs",
-    "test": "jest"
+    "test": "jest && node --test supabase/tests/*.test.mjs"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
@@ -26,6 +26,7 @@
     "xss": "1.0.15"
   },
   "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
     "@tailwindcss/postcss": "^4",
     "@testing-library/dom": "^10.4.2",
     "@testing-library/react": "^16.3.3",

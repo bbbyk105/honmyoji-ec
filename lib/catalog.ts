@@ -101,6 +101,20 @@ function toOverride(row: Record<string, unknown>): Override | null {
   };
 }
 
+/** piece_overrides を読んで slug 引きの Map に。失敗したら投げる（縮退するかは呼び出し側が決める）。 */
+async function readOverrides(timeoutMs: number): Promise<Map<string, Override>> {
+  const map = new Map<string, Override>();
+  const client = db();
+  if (!client) return map;
+  const { data, error } = await client.from("piece_overrides").select("*").abortSignal(AbortSignal.timeout(timeoutMs));
+  if (error) throw error;
+  for (const row of data ?? []) {
+    const o = toOverride(row as Record<string, unknown>);
+    if (o) map.set(o.slug, o);
+  }
+  return map;
+}
+
 /**
  * オーバーレイを slug 引きで。管理画面は「コード側の値」と「上書きした値」を
  * 並べて見せたいので、合成前のこれも要る。
@@ -114,16 +128,7 @@ export const getOverrides = cache(async (): Promise<Map<string, Override>> => {
   if (Date.now() < coolUntil) return empty;
 
   try {
-    const { data, error } = await client
-      .from("piece_overrides")
-      .select("*")
-      .abortSignal(AbortSignal.timeout(DB_TIMEOUT_MS));
-    if (error) throw error;
-    const map = new Map<string, Override>();
-    for (const row of data ?? []) {
-      const o = toOverride(row as Record<string, unknown>);
-      if (o) map.set(o.slug, o);
-    }
+    const map = await readOverrides(DB_TIMEOUT_MS);
     coolUntil = 0;
     if (degraded) {
       degraded = false;
@@ -155,6 +160,19 @@ function merge(product: Product, o: Override | undefined): Product {
     story: o.story ?? product.story,
     storyJa: o.story_ja ?? product.storyJa,
   };
+}
+
+/**
+ * 管理画面用のカタログと上書き。**DB を必ず読む**（クールダウンもタイムアウトの縮退もしない）。
+ * 読めなければ投げる —— 呼び出し側は「接続できません」と出して編集を止める。
+ *
+ * 公開ページの getOverrides は、DB が落ちていればコード側の値に縮退する（サイトを止めない）。
+ * 管理画面でそれをすると、比べる元（開いたときの状態）がコード側の値になり、保存が
+ * 「注文が入った」という誤った理由で断られる（2026-10-09 のレビュー）。
+ */
+export async function getStudioCatalog(): Promise<{ catalog: Product[]; overrides: Map<string, Override> }> {
+  const overrides = await readOverrides(8000);
+  return { catalog: products.map((p) => merge(p, overrides.get(p.slug))), overrides };
 }
 
 /** 公開ページが読むカタログ。順序は products.ts のまま（展示の並び）。 */

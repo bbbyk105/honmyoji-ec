@@ -2,17 +2,17 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { resetPiece } from "@/app/studio/actions";
-import { DbNotice } from "@/components/studio/DbNotice";
-import { BTN_QUIET, LINK_QUIET, STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
+import { DbDownNotice, DbNotice } from "@/components/studio/DbNotice";
+import { LINK_QUIET, STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
 import { PieceBadge } from "@/components/studio/StatusBadge";
 import { StudioHead } from "@/components/studio/StudioHead";
 import { cm, getProduct, leadSrc, LINE_LABEL, priceLabel } from "@/data/products";
 import { PIECE_STATUS_NAME } from "@/app/studio/options";
-import { getOverrides, getPiece } from "@/lib/catalog";
+import { getStudioCatalog } from "@/lib/catalog";
 import { requireSession } from "@/lib/studio-session";
 import { dbEnabled } from "@/lib/supabase";
 import { PieceForm } from "./PieceForm";
+import { ResetPieceForm } from "./ResetPieceForm";
 
 export const dynamic = "force-dynamic";
 
@@ -27,9 +27,14 @@ export default async function StudioPiecePage({
   const base = getProduct(slug);
   if (!base) notFound();
 
-  const [overrides, current] = await Promise.all([getOverrides(), getPiece(base.slug)]);
-  const override = overrides.get(base.slug);
-  const live = current ?? base;
+  // DB を必ず読む（縮退した値で編集させない）。読めなければ帯を出して編集を止める
+  const studio = await getStudioCatalog().catch((error: unknown) => {
+    console.error("[studio] piece_overrides を読めませんでした", error);
+    return null;
+  });
+  const dbDown = studio === null;
+  const override = studio?.overrides.get(base.slug);
+  const live = studio?.catalog.find((p) => p.slug === base.slug) ?? base;
 
   return (
     <div className={`${STUDIO_SHELL} pb-24`}>
@@ -64,11 +69,11 @@ export default async function StudioPiecePage({
         }
       />
 
-      {!dbEnabled ? <DbNotice /> : null}
+      {!dbEnabled ? <DbNotice /> : dbDown ? <DbDownNotice /> : null}
 
       <div className="grid gap-x-10 gap-y-10 lg:grid-cols-[1fr_300px]">
         <div className={`${STUDIO_CARD} px-5 py-6 md:px-8 md:py-8`}>
-          <PieceForm base={base} override={override} disabled={!dbEnabled} />
+          <PieceForm base={base} override={override} disabled={!dbEnabled || dbDown} />
         </div>
 
         <aside>
@@ -105,23 +110,11 @@ export default async function StudioPiecePage({
           </div>
 
           {override ? (
-            <form action={resetPiece} className="mt-6 px-1">
-              <input type="hidden" name="slug" value={base.slug} />
-              <p className="font-sans text-[13px] leading-[1.8] text-mist">
-                この画面で上書き中 — 最終更新{" "}
-                <time dateTime={override.updated_at} className="tabular-nums">
-                  {new Date(override.updated_at).toLocaleString("ja-JP", {
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </time>
-              </p>
-              <button type="submit" className={`mt-2 ${BTN_QUIET} text-clay`}>
-                上書きをすべて取り消してコード側に戻す
-              </button>
-            </form>
+            <ResetPieceForm slug={base.slug} updatedAt={override.updated_at} soldOut={override.status === "sold_out"} />
+          ) : dbDown ? (
+            <p className="mt-6 px-1 font-sans text-[13px] leading-[1.8] text-mist">
+              データベースに接続できないため、この画面での上書きがあるかを確認できません。
+            </p>
           ) : (
             <p className="mt-6 px-1 font-sans text-[13px] leading-[1.8] text-mist">
               まだ何も上書きしていません。表示されているのは

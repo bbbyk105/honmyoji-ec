@@ -14,6 +14,22 @@ export type Mail = { subject: string; text: string };
 
 type PieceLine = Pick<Product, "name" | "kanji"> & { price: string | null };
 
+/**
+ * お客さまへの確認メールがどうなったか（お店へのメールに書く）。
+ *   sent     送った
+ *   failed   宛先が受け付けられなかった（お店から直接連絡してもらう）
+ *   held     二重販売の疑いがあるので送っていない（要確認のメールが別に届く）
+ *   no_email お客さまのメールアドレスが届いていない
+ */
+export type CustomerMailState = "sent" | "failed" | "held" | "no_email";
+
+const CUSTOMER_MAIL_NOTE: Record<CustomerMailState, string> = {
+  sent: "送りました",
+  failed: "送れませんでした（宛先が受け付けられませんでした）。お客さまに直接ご連絡ください",
+  held: "送っていません（同じ作品が二度売れた可能性があります。別のメールをご確認ください）",
+  no_email: "送っていません（お客さまのメールアドレスが届いていません。Stripe で確認してください）",
+};
+
 export type OrderMailInput = {
   /** MI-0001 */
   ref: string;
@@ -24,7 +40,10 @@ export type OrderMailInput = {
   /** お客さまの言語（決済を始めたときのブラウザの設定）。返信をどちらで書くかの目安 */
   customerLang?: Lang;
   shipping: ShippingAddress | null;
-  pieces: PieceLine[];
+  /** soldOut が false の作品は、カタログから引けず完売にできていない（お店に手で直してもらう） */
+  pieces: (PieceLine & { soldOut?: boolean })[];
+  /** お客さまへの確認メールがどうなったか。無ければ書かない */
+  customerMail?: CustomerMailState;
   /** 管理画面の注文ページ（絶対 URL） */
   studioUrl: string;
 };
@@ -45,20 +64,27 @@ export function addressLines(a: ShippingAddress | null): string[] {
 /** 注文が入った。お店が発送の支度を始められるだけのことを一通に。 */
 export function orderPlacedMail(o: OrderMailInput): Mail {
   const address = addressLines(o.shipping);
+  const unsold = o.pieces.some((p) => p.soldOut === false);
   return {
     subject: `【MIROKU】注文が入りました — ${o.ref}（${o.amount}）`,
     text: [
       "注文が入りました。発送の支度をお願いします。",
-      "作品は自動で「完売」にしてあります。",
+      unsold
+        ? "作品は自動で「完売」にしてあります（「完売にできていません」と書いたものを除く。管理画面で完売にしてください）。"
+        : "作品は自動で「完売」にしてあります。",
       "",
       `注文番号: ${o.ref}`,
       `合計: ${o.amount}（送料込み）`,
       "",
       "作品:",
-      ...o.pieces.map((p) => `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}`),
+      ...o.pieces.map(
+        (p) =>
+          `  ${p.name} ${p.kanji}${p.price ? ` — ${p.price}` : ""}${p.soldOut === false ? "（完売にできていません）" : ""}`,
+      ),
       "",
       `お客さま: ${o.customerName ?? "—"}${o.customerEmail ? ` <${o.customerEmail}>` : ""}`,
-      ...(o.customerLang ? [`お客さまの言語: ${o.customerLang === "ja" ? "日本語" : "英語"}（確認メールもこの言語で送っています）`] : []),
+      ...(o.customerLang ? [`お客さまの言語: ${o.customerLang === "ja" ? "日本語" : "英語"}`] : []),
+      ...(o.customerMail ? [`確認メール: ${CUSTOMER_MAIL_NOTE[o.customerMail]}`] : []),
       "",
       "送り先:",
       ...(address.length ? address.map((line) => `  ${line}`) : ["  （住所が届いていません。Stripe で確認してください）"]),
@@ -102,7 +128,7 @@ export function doubleSaleMail(o: {
  * あとでメールで読み返すことが食い違わないように。
  *
  * 電話番号は載せない（お客さま自身の情報で、確認に要らない）。返信はお店の公開アドレスに
- * 届く（`lib/mail.ts` の `sendToCustomerQuietly`）。
+ * 届く（`lib/mail.ts` の `sendToCustomer`）。
  */
 export function orderConfirmationMail(o: {
   ref: string;
