@@ -12,7 +12,7 @@ import { HomeHero } from "@/components/home/HomeHero";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { LINE_BLURB, LINE_LABEL, LINE_ORDER, productImage } from "@/data/products";
-import { getCatalog } from "@/lib/catalog";
+import { getListedCatalog } from "@/lib/catalog";
 import { storeJsonLd } from "@/lib/seo";
 import { blogMeta } from "@/data/blog";
 import { blogHref, getBlogPosts } from "@/lib/microcms";
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
 
 export default async function HomePage() {
   /* カタログ経由で引くので、管理画面で直した価格とステータスがそのまま出る。 */
-  const catalog = await getCatalog();
+  const catalog = await getListedCatalog();
   const featured = FEATURED.map((f) => catalog.find((p) => p.folder === f)).filter((p) => p !== undefined);
 
   const recentNotes = (await getBlogPosts()).slice(0, 3);
@@ -83,7 +83,6 @@ export default async function HomePage() {
 
   return (
     <>
-      <JsonLd data={storeJsonLd()} />
       <ChapterRail chapters={CHAPTERS} />
       <HomeHero />
 
@@ -411,6 +410,8 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
+      {/* 構造化データは版の後ろに（main の先頭の子を変えない。globals.css の :first-child） */}
+      <JsonLd data={storeJsonLd()} />
     </>
   );
 }

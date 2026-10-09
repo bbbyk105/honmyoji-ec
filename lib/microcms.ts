@@ -132,6 +132,7 @@ function toPost(content: BlogContent & MicroCMSListContent, sanitize: (html: str
     titleJa: content.titleJa?.trim() ?? "",
     dek: content.dek?.trim() ?? "",
     date: content.date || content.publishedAt || content.createdAt,
+    updated: content.revisedAt || content.updatedAt || undefined,
     season: content.season?.trim() ?? "",
     topic: one(content.topic) || "Note",
     image: blogImage(content.image?.url),

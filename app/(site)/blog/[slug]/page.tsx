@@ -3,10 +3,7 @@ import { notFound } from "next/navigation";
 import { BlogArticle } from "@/components/blog/BlogArticle";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { getBlogPosts, getBlogPost, nextPost } from "@/lib/microcms";
-import { blogPostingJsonLd, breadcrumbJsonLd } from "@/lib/seo";
-
-/** 写真の無い記事を共有したときの絵（layout の既定と同じ） */
-const FALLBACK_IMAGE = "/images/scenes/altar-standing.webp";
+import { blogPostingJsonLd, breadcrumbJsonLd, OPEN_GRAPH_BASE, OPEN_GRAPH_IMAGE } from "@/lib/seo";
 
 type Params = { slug: string };
 
@@ -25,12 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     description: entry.dek,
     alternates: { canonical: `/blog/${entry.slug}` },
     openGraph: {
+      ...OPEN_GRAPH_BASE,
       type: "article",
-      siteName: "MIROKU",
       title: entry.title,
       description: entry.dek,
       ...(entry.date ? { publishedTime: entry.date } : {}),
-      images: [{ url: entry.image ?? FALLBACK_IMAGE }],
+      images: [{ url: entry.image ?? OPEN_GRAPH_IMAGE }],
     },
   };
 }
@@ -43,6 +40,8 @@ export default async function BlogArticlePage({ params }: { params: Promise<Para
 
   return (
     <>
+      <BlogArticle entry={entry} next={nextPost(entries, slug)} />
+      {/* 構造化データは版の後ろに（main の先頭の子を変えない。globals.css の :first-child） */}
       <JsonLd
         data={[
           blogPostingJsonLd(entry),
@@ -53,7 +52,6 @@ export default async function BlogArticlePage({ params }: { params: Promise<Para
           ]),
         ]}
       />
-      <BlogArticle entry={entry} next={nextPost(entries, slug)} />
     </>
   );
 }

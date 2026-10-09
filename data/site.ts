@@ -310,9 +310,18 @@ export const founder = {
   },
 };
 
+/** 特商法の住所の部品。表記（legal.address）と構造化データ（lib/seo.ts）が同じものを読む。 */
+const ADDRESS = {
+  streetAddress: "1254-2 Nakazato",
+  addressLocality: "Fuji",
+  addressRegion: "Shizuoka",
+  addressCountry: "JP",
+} as const;
+
 export const legal = {
   seller: "MIROKU",
-  address: "1254-2 Nakazato, Fuji City, Shizuoka, Japan",
+  addressParts: ADDRESS,
+  address: `${ADDRESS.streetAddress}, ${ADDRESS.addressLocality} City, ${ADDRESS.addressRegion}, Japan`,
   addressJa: "静岡県富士市中里1254-2",
   phone: "+81 80-3470-1863",
   responsible: "Emi Kashiwazake（柏酒 英美）",

@@ -2,8 +2,9 @@ import type { Metadata } from "next";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
-import { isListed, LINE_BLURB, LINE_LABEL, LINE_ORDER, LINE_RATIO } from "@/data/products";
-import { getCatalog } from "@/lib/catalog";
+import { aud, LINE_BLURB, LINE_LABEL, LINE_ORDER, LINE_RATIO } from "@/data/products";
+import { SHIPPING_AUD } from "@/lib/stripe-config";
+import { getListedCatalog } from "@/lib/catalog";
 import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
@@ -24,7 +25,7 @@ const GRID: Record<"4/5" | "3/2", string> = {
 };
 
 export default async function CollectionPage() {
-  const pieces = (await getCatalog()).filter(isListed);
+  const pieces = await getListedCatalog();
   const groups = LINE_ORDER.map((line) => ({
     line,
     items: pieces.filter((p) => p.line === line),
@@ -43,8 +44,8 @@ export default async function CollectionPage() {
             Collection
           </h1>
           <p className="max-w-[40ch] font-sans text-body text-bone md:col-span-5 md:col-start-8 md:pb-3">
-            {pieces.length} pieces, each made once. Prices are in Australian dollars with shipping
-            included, and are added as each piece is released.
+            {pieces.length} pieces, each made once. Prices are in Australian dollars;
+            shipping is {aud.format(SHIPPING_AUD)} per order, added at checkout.
           </p>
         </header>
 

@@ -15,13 +15,14 @@ import { SHELL } from "@/components/site/Shell";
 import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
-import { getCatalog, getPiece } from "@/lib/catalog";
-import { breadcrumbJsonLd, productJsonLd } from "@/lib/seo";
+import { getListedCatalog, getPiece } from "@/lib/catalog";
+import { breadcrumbJsonLd, OPEN_GRAPH_BASE, productJsonLd } from "@/lib/seo";
+import { SHIPPING_AUD } from "@/lib/stripe-config";
 import {
   LINE_LABEL,
   LINE_RATIO,
+  aud,
   cm,
-  isListed,
   isPurchasable,
   priceLabel,
   productImage,
@@ -52,7 +53,7 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
     title: `${product.name} ${product.kanji}${price ? ` — ${price}` : ""}`,
     description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
     alternates: { canonical: productPath(product) },
-    openGraph: { type: "website", siteName: "MIROKU", images: [{ url: productImage(product.slug, 1) }] },
+    openGraph: { ...OPEN_GRAPH_BASE, images: [{ url: productImage(product.slug, 1) }] },
     // 試し買い用は検索エンジンに載せない
     ...(product.test ? { robots: { index: false, follow: false } } : {}),
   };
@@ -111,7 +112,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   if (slug !== product.slug) redirect(productPath(product));
 
   // 前後と関連作品は一覧に出る作品だけ（試し買い用は混ぜない）
-  const catalog = (await getCatalog()).filter(isListed);
+  const catalog = await getListedCatalog();
   const index = Math.max(0, catalog.findIndex((p) => p.slug === product.slug));
   const prev = catalog[(index - 1 + catalog.length) % catalog.length];
   const next = catalog[(index + 1) % catalog.length];
@@ -120,6 +121,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const careHref = await blogHref("holding-the-weave", "Care");
   const action = cta(product);
   const price = priceLabel(product);
+  /* 値段が未定なら null（商品の構造化データは offers が無いと無効になる） */
+  const productLd = productJsonLd(product);
 
   /* 拡大表示の通し番号は一本。0 番がヒーロー（1.webp）、1 番から下のギャラリー。 */
   const photos = Array.from({ length: product.galleryCount }, (_, i) => {
@@ -137,19 +140,6 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   */
   return (
     <LightboxProvider shots={photos}>
-      {/* 試し買い用は検索エンジンに載せない（noindex）ので、構造化データも出さない */}
-      {product.test ? null : (
-        <JsonLd
-          data={[
-            productJsonLd(product),
-            breadcrumbJsonLd([
-              { name: "Home", path: "/" },
-              { name: "Collection", path: "/collection" },
-              { name: `${product.name} ${product.kanji}`, path: productPath(product) },
-            ]),
-          ]}
-        />
-      )}
       <div className="surface-paper pb-beat">
       <section className="pt-16 sm:pt-[72px] md:pt-[80px]">
         <div className={`${SHELL} grid gap-10 pt-6 md:grid-cols-12 md:gap-10 md:pt-10`}>
@@ -205,7 +195,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               {price ? (
                 <>
                   <span className="font-display text-[32px] font-light leading-none tabular-nums text-ivory">{price}</span>
-                  <span className="font-sans text-meta text-mist">Shipping included</span>
+                  <span className="font-sans text-meta text-mist">+ {aud.format(SHIPPING_AUD)} shipping</span>
                 </>
               ) : null}
               <StatusPill status={product.status} className={price ? "ml-auto" : ""} />
@@ -388,6 +378,20 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         </div>
       </nav>
       </div>
+      {/* 構造化データは版の後ろに（main の先頭の子を .surface-paper のままにする。globals.css の
+          :first-child がヘッダーの字の色を決めている）。試し買い用は noindex なので出さない */}
+      {product.test ? null : (
+        <JsonLd
+          data={[
+            ...(productLd ? [productLd] : []),
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "Collection", path: "/collection" },
+              { name: `${product.name} ${product.kanji}`, path: productPath(product) },
+            ]),
+          ]}
+        />
+      )}
     </LightboxProvider>
   );
 }

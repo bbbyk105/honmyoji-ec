@@ -1,26 +1,25 @@
 import type { MetadataRoute } from "next";
 
-import { isListed, productImage, productPath, products } from "@/data/products";
+import { productPath } from "@/data/products";
+import { getListedCatalog } from "@/lib/catalog";
 import { getBlogPosts } from "@/lib/microcms";
-import { absoluteUrl } from "@/lib/seo";
+import { absoluteUrl, productSitemapImages } from "@/lib/seo";
 
-/* 検索エンジン向けの一覧（/sitemap.xml）。作品は data/products.ts で決まり、記事は microCMS から。
-   試し買い用（test）は入れない。完売の作品もページは残るので入れる。1 時間ごとに作り直す。 */
+/* 検索エンジン向けの一覧（/sitemap.xml）。作品は一覧に出るもの（lib/catalog.ts）、記事は microCMS から。
+   試し買い用は入らない。完売の作品もページは残るので入れる。1 時間ごとに作り直す。 */
 export const revalidate = 3600;
 
 const PAGES = ["/", "/collection", "/about", "/blog", "/faq", "/contact", "/legal"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const posts = await getBlogPosts();
+  const [pieces, posts] = await Promise.all([getListedCatalog(), getBlogPosts()]);
   return [
     ...PAGES.map((path) => ({ url: absoluteUrl(path) })),
-    ...products.filter(isListed).map((p) => ({
-      url: absoluteUrl(productPath(p)),
-      images: Array.from({ length: p.galleryCount }, (_, i) => absoluteUrl(productImage(p.slug, i + 1))),
-    })),
-    ...posts.map((post) => ({
-      url: absoluteUrl(`/blog/${post.slug}`),
-      ...(post.date ? { lastModified: post.date } : {}),
-    })),
+    ...pieces.map((p) => ({ url: absoluteUrl(productPath(p)), images: productSitemapImages(p) })),
+    // lastmod は書き直した日（無ければ掲載日）。掲載日のままだと、書き直しても取りに来る合図にならない
+    ...posts.map((post) => {
+      const lastModified = post.updated ?? post.date;
+      return { url: absoluteUrl(`/blog/${post.slug}`), ...(lastModified ? { lastModified } : {}) };
+    }),
   ];
 }

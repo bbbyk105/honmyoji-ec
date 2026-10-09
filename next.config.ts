@@ -20,10 +20,11 @@ const nextConfig: NextConfig = {
       },
       // 書き出し番号（folder、`bottle-07`）の URL → 作品の URL。作品のページは dynamicParams = false
       // なので、ページの中で送り直すことができない（一覧に無い URL は作らずに 404 になる）。
-      // folder は名前が変わっても変えない約束なので、恒久の転送にする（検索エンジンが作品の URL に付け替える）。
+      // 一時（307）にしておく。転送元の folder は変わらないが、転送先の slug は仮の名前から作っていて、
+      // 正式な名前が届くと変わる。恒久にするとブラウザが古い slug を覚え、変えたあと 404 に飛ぶ。
       ...products
         .filter((p) => p.folder !== p.slug)
-        .map((p) => ({ source: `/collection/${p.folder}`, destination: `/collection/${p.slug}`, permanent: true })),
+        .map((p) => ({ source: `/collection/${p.folder}`, destination: `/collection/${p.slug}`, permanent: false })),
       // Journal → Blog（2026-08-31）。既に配ったリンクと検索結果を切らさない。
       { source: "/journal", destination: "/blog", permanent: true },
       { source: "/journal/:slug", destination: "/blog/:slug", permanent: true },
