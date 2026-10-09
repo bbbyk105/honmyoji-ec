@@ -3,6 +3,7 @@
  * 英語を主、日本語を従（ページ内の副題・小見出し）— 日本語版ページは後日フェーズ。
  */
 
+import { aud } from "./products";
 import { SHIPPING_AUD } from "./shipping";
 
 export const site = {
@@ -330,7 +331,7 @@ export const legal = {
   price: "Shown on each piece. All prices are in Australian dollars (AUD) and include Japanese consumption tax.",
   shipping:
     SHIPPING_AUD > 0
-      ? `A$${SHIPPING_AUD} per order for tracked international shipping, added at checkout. If you need express delivery, contact us before ordering; the difference will be invoiced separately.`
+      ? `${aud.format(SHIPPING_AUD)} per order for tracked international shipping, added at checkout. If you need express delivery, contact us before ordering; the difference will be invoiced separately.`
       : "Tracked international shipping is included in the price. If you need express delivery, contact us before ordering; the difference will be invoiced separately.",
   payment: "Credit card via Stripe. Payment is taken in full at checkout.",
   delivery:

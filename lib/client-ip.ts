@@ -16,14 +16,15 @@ import { headers } from "next/headers";
  *   逆に `cf-connecting-ip` は客が自由に送れるので見ない。
  */
 export function pickClientIp(h: Pick<Headers, "get">, onWorkers: boolean): string {
-  if (onWorkers) return limitKey(h.get("cf-connecting-ip")?.trim() || "unknown");
+  if (onWorkers) return h.get("cf-connecting-ip")?.trim() || "unknown";
   const forwarded = h.get("x-forwarded-for");
-  if (forwarded) return limitKey(forwarded.split(",")[0].trim());
-  return limitKey(h.get("x-real-ip")?.trim() || "unknown");
+  if (forwarded) return forwarded.split(",")[0].trim();
+  return h.get("x-real-ip")?.trim() || "unknown";
 }
 
 /**
- * 回数制限の鍵。IPv6 は /64 に丸める —— 一つの回線は /64 の中で送信元を自由に変えられるので、
+ * 回数制限の鍵（ログインの回数制限・公開フォームの上限が数えるときだけ使う。通知などに出す IP は
+ * 丸めない —— 不審なログインを調べる手がかりが消える）。IPv6 は /64 に丸める —— 一つの回線は /64 の中で送信元を自由に変えられるので、
  * アドレスそのままを鍵にすると、送るたびに変えて制限をすり抜けられる。IPv4（と IPv4 を包んだ
  * `::ffff:1.2.3.4`）はそのまま。
  */

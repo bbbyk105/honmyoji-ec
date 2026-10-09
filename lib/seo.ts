@@ -4,7 +4,7 @@ import type { BlogPost } from "@/data/blog";
 import { LINE_LABEL, leadSrc, productPath, type Product, type ProductStatus } from "@/data/products";
 import { legal, site } from "@/data/site";
 import { siteUrl } from "@/lib/site-url";
-import { SHIPPING_AUD, SHIPPING_COUNTRIES } from "@/lib/stripe-config";
+import { SHIPPING_COUNTRIES, shippingFor } from "@/data/shipping";
 
 /* ------------------------------------------------------------------
    検索エンジン向けの構造化データ（JSON-LD）と、共有したときの表示（OG）の基本形。
@@ -74,7 +74,7 @@ export function productJsonLd(p: Product): Json | null {
       seller: organizationRef,
       shippingDetails: {
         "@type": "OfferShippingDetails",
-        shippingRate: { "@type": "MonetaryAmount", value: SHIPPING_AUD, currency: "AUD" },
+        shippingRate: { "@type": "MonetaryAmount", value: shippingFor([p]), currency: "AUD" },
         shippingDestination: SHIPPING_COUNTRIES.map((country) => ({
           "@type": "DefinedRegion",
           addressCountry: country,

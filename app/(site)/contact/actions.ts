@@ -1,7 +1,7 @@
 "use server";
 
 import { site } from "@/data/site";
-import { clientIp } from "@/lib/client-ip";
+import { clientIp, limitKey } from "@/lib/client-ip";
 import { isEmail } from "@/lib/email";
 import { takeFormQuota } from "@/lib/form-quota-gate";
 import { notifyStore } from "@/lib/mail";
@@ -62,7 +62,7 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
   }
 
   // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
-  const quota = await takeFormQuota(await clientIp());
+  const quota = await takeFormQuota(limitKey(await clientIp()));
   if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE };
 
   const topic = SUBJECTS[subject] ?? subject;

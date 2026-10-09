@@ -21,5 +21,4 @@ import "server-only";
  */
 export const stripeEnabled = Boolean(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_CHECKOUT_AT_BUILD);
 
-// 送料と発送先の正本は data/shipping.ts（サーバ専用ではない場所に置き、特商法の表記からも読む）
-export { SHIPPING_AUD, SHIPPING_COUNTRIES, shippingFor } from "@/data/shipping";
+// 送料と発送先は data/shipping.ts（ここには置かない。特商法の表記からも読めるように）

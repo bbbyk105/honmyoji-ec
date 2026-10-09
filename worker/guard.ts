@@ -9,18 +9,6 @@ const CANONICAL_HOST = "honmyoujifuji.com";
 const MAX_BODY_BYTES = 1024 * 1024;
 
 /**
- * OpenNext に渡す前に返すもの。
- *
- * - `www.` と `http://`: 本体の `https://honmyoujifuji.com` へ恒久の転送。同じページが四つの
- *   住所で見えると、検索エンジンが別のページとして数え、ブラウザのカートも住所ごとに分かれる。
- *   POST などは 308（本文ごと送り直してもらう）、それ以外は 301。
- * - `/cdn-cgi/`: OpenNext の worker.js には開発用の `/cdn-cgi/image/` があり、本番にも入っている。
- *   任意の URL の画像を取りに行き、画像変換の枠を使う（監査 13）。Cloudflare が手前で
- *   止めるはずの道だが、ここでも閉じる。
- * - 大きすぎる本文: OpenNext は POST の本文を上限なしで丸ごと読み、もう一度読み直す（監査 19）。
- *   Content-Length が上限を超えていたら読む前に断る。
- */
-/**
  * お客さまが http で来たか。Cloudflare の手前が付ける `cf-visitor`（{"scheme":"http"}）で見る ——
  * request.url の http: は使わない。手元の wrangler dev は URL のホスト名を本番のドメインに書き換えて
  * http で渡すので、それで判定すると https への転送が手元でぐるぐる回る（2026-10-09 に踏んだ）。
@@ -34,6 +22,19 @@ function cameOverHttp(request: Request): boolean {
   }
 }
 
+/**
+ * OpenNext に渡す前に返すもの。
+ *
+ * - `www.` と `http://`: 本体の `https://honmyoujifuji.com` へ恒久の転送。同じページが四つの
+ *   住所で見えると、検索エンジンが別のページとして数え、ブラウザのカートも住所ごとに分かれる。
+ *   POST などは 308（本文ごと送り直してもらう）、それ以外は 301。
+ * - `/cdn-cgi/`: OpenNext の worker.js には開発用の `/cdn-cgi/image/` があり、本番にも入っている。
+ *   任意の URL の画像を取りに行き、画像変換の枠を使う（監査 13）。Cloudflare が手前で
+ *   止めるはずの道だが、ここでも閉じる。
+ * - 大きすぎる本文: OpenNext は POST の本文を上限なしで丸ごと読み、もう一度読み直す（監査 19）。
+ *   Content-Length が上限を超えていたら読む前に 413、数でなければ 400。Content-Length の無い
+ *   本文は limitBody が読みながら数えて止める。
+ */
 export function intercept(request: Request): Response | null {
   const url = new URL(request.url);
   const www = url.hostname === `www.${CANONICAL_HOST}`;

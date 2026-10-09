@@ -7,6 +7,8 @@
 	// 一日一回 Supabase を読む（無料プランは 7 日アクセスが無いと止まる）。UTC 18:00 = 日本時間 3:00
 	"triggers": { "crons": ["0 18 * * *"] },
 	"name": "honmyoji-ec",
+	// デプロイ先のアカウントを固定する（複数のアカウントでログインしていても取り違えない）
+	"account_id": "634419a5498789709cb1818a34017da8",
 	"compatibility_date": "2026-10-06",
 	"compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
 	// 本番は honmyoujifuji.com（Custom Domain。DNS のレコードと証明書は Cloudflare が作る）。

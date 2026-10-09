@@ -146,3 +146,14 @@ describe("setPiecesStatus", () => {
     expect(result).toEqual({ ok: true, count: 1 });
   });
 });
+
+describe("setPiecesStatus の開いたときの状態", () => {
+  it("開いたときの状態が無い作品は書かない（確かめようがない）", async () => {
+    global.fetch = jest.fn(async () =>
+      new Response(JSON.stringify([]), { status: 200, headers: { "content-type": "application/json" } }),
+    ) as unknown as typeof fetch;
+    const { setPiecesStatus } = load();
+    const result = await setPiecesStatus(["tokiwa-evergreen"], "available", {});
+    expect(result.ok).toBe(false);
+  });
+});
