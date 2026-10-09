@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
 import { getProduct } from "@/data/products";
 import { writeStatusIfUnchanged, writeStatusesIfUnchanged, type StoredStatus } from "@/lib/piece-status";
+import { revalidateCatalogPages } from "@/lib/revalidate-catalog";
 import { db, dbEnabled } from "@/lib/supabase";
 import { LOGIN_LIMITS, clientIp, limitKey, recordSuccess, takeAttempt } from "@/lib/studio-guard";
 import { notifyStudio } from "@/lib/studio-notify";
@@ -35,14 +36,6 @@ const MOVED_ONE =
 function optional(formData: FormData, key: string): string | null {
   const value = String(formData.get(key) ?? "").trim();
   return value === "" ? null : value;
-}
-
-/** 保存後に作り直す公開ページ。商品が出るのはこの四つ。 */
-function revalidateCatalog(): void {
-  revalidatePath("/");
-  revalidatePath("/collection");
-  revalidatePath("/collection/[slug]", "page");
-  revalidatePath("/contact");
 }
 
 // ---------------------------------------------------------------- 入退室
@@ -177,7 +170,7 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
     }
   }
 
-  revalidateCatalog();
+  revalidateCatalogPages();
   revalidatePath("/studio/pieces");
   revalidatePath(`/studio/pieces/${slug}`);
   return { saved: new Date().toISOString() };
@@ -247,7 +240,7 @@ export async function setPiecesStatus(
   const { written: done, error } = await writeStatusesIfUnchanged(client, expected, patch);
   const written = new Set(done);
   if (written.size > 0) {
-    revalidateCatalog();
+    revalidateCatalogPages();
     revalidatePath("/studio", "layout");
   }
   const also = written.size > 0 ? `ほかの ${written.size} 点は変えました。` : "";
@@ -279,37 +272,45 @@ function saveError(error: { code?: string; message: string }): string {
 }
 
 /** 上書きを消してコード側（data/products.ts）の値に戻す。 */
-export async function resetPiece(formData: FormData): Promise<void> {
+export async function resetPiece(_prev: FormState, formData: FormData): Promise<FormState> {
   await requireSession();
 
   const slug = String(formData.get("slug") ?? "").trim();
-  if (!slug) return;
+  if (!slug) return { error: "作品が指定されていません。" };
 
   const client = db();
-  if (!client) return;
+  if (!client) {
+    return { error: "データベースに接続できません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
+  }
 
   // 完売の作品は、ステータスだけ残して他の上書き（価格・文言）を消す。行ごと消すと、Webhook が
   // 付けた完売が消え、コード側の状態（販売中など）に戻って、売れた一点物がまた買える。
   // 取り置きは人が手で付けるものなので、ふつうの上書きと同じく消してよい。
-  // 条件は書き込みに付ける（取り消しを押す直前に売れても、その完売は消さない）
+  // 条件は書き込みに付ける（取り消しを押す直前に売れても、その完売は消さない）。一つの行に効くのは
+  // どちらか一方だけなので、二つに分けても途中の状態は残らない
   const { error } = await client
     .from("piece_overrides")
     .delete()
     .eq("slug", slug)
     .or("status.is.null,status.neq.sold_out");
+  if (error) {
+    console.error("[studio] 上書きの取り消しに失敗", error);
+    return { error: saveError(error) };
+  }
   const { error: keepError } = await client
     .from("piece_overrides")
     .update({ price_aud: null, note: null, note_ja: null, story: null, story_ja: null, updated_at: new Date().toISOString() })
     .eq("slug", slug)
     .eq("status", "sold_out");
-  if (error || keepError) {
-    console.error("[studio] 上書きの取り消しに失敗", error ?? keepError);
-    return;
+  if (keepError) {
+    console.error("[studio] 上書きの取り消しに失敗", keepError);
+    return { error: saveError(keepError) };
   }
 
-  revalidateCatalog();
+  revalidateCatalogPages();
   revalidatePath("/studio/pieces");
   revalidatePath(`/studio/pieces/${slug}`);
+  return { saved: new Date().toISOString() };
 }
 
 // ---------------------------------------------------------------- 注文

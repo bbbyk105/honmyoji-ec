@@ -130,9 +130,10 @@ export async function startCheckout(
       // その間に別の人も同じ作品の決済画面を開けて、二人とも払えてしまう。Stripe の
       // 下限は 30 分（作成時刻から数えるので、ぎりぎりにすると弾かれる）。
       expires_at: Math.floor(Date.now() / 1000) + CHECKOUT_HOLD_MINUTES * 60,
-      // Webhook が注文を組み立てるときに読む。line_items から引き直すより確実。
+      // Webhook が売れた作品を完売にするときに読む（Stripe の明細を待たずに決めるため）。SKU は
+      // 変わらない。slug は仮の名前から作っていて、決済画面を開いている間に変わりうる。
       // lang は確認メールと thank-you の言語（決めるのはここだけ）。
-      metadata: { slugs: pieces.map((p) => p.slug).join(","), lang },
+      metadata: { skus: pieces.map((p) => p.sku).join(","), slugs: pieces.map((p) => p.slug).join(","), lang },
       success_url: `${base}/checkout/thank-you?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${base}/collection`,
     });

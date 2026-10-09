@@ -59,7 +59,7 @@ describe("sendToCustomer", () => {
     expect(body.reply_to).toBe("info@honmyoujifuji.com");
   });
 
-  it("Resend が断ったら状態コード付きで投げる。4xx（429 を除く）は送り直しても届かない", async () => {
+  it("Resend が断ったら状態コード付きで投げる。4xx（429・409 を除く）はこの一通が断られた", async () => {
     const { sendToCustomer, isPermanentMailError } = load(keys);
     fetchMock.mockResolvedValueOnce(new Response("invalid to", { status: 422 }));
     const permanent = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
@@ -69,9 +69,21 @@ describe("sendToCustomer", () => {
     const limited = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
     expect(isPermanentMailError(limited)).toBe(false);
 
+    fetchMock.mockResolvedValueOnce(new Response("concurrent idempotent requests", { status: 409 }));
+    const overlapped = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
+    expect(isPermanentMailError(overlapped)).toBe(false);
+
     fetchMock.mockResolvedValueOnce(new Response("oops", { status: 503 }));
     const down = await sendToCustomer("x", { subject: "s", text: "t" }).catch((e: unknown) => e);
     expect(isPermanentMailError(down)).toBe(false);
+  });
+
+  it("鍵（idempotencyKey）を渡すと Idempotency-Key で送る。本文には混ぜない", async () => {
+    const { sendToCustomer } = load(keys);
+    await sendToCustomer("jane@example.com", { subject: "s", text: "t", idempotencyKey: "cs_1:customer" });
+    const init = fetchMock.mock.calls[0][1];
+    expect(new Headers(init?.headers).get("Idempotency-Key")).toBe("cs_1:customer");
+    expect(JSON.parse(String(init?.body))).not.toHaveProperty("idempotencyKey");
   });
 
   it("鍵が無ければ送らない（投げない）", async () => {

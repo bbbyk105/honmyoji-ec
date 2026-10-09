@@ -6,8 +6,9 @@
 --
 -- 売れたことの記録（注文の行・完売・二重販売の判定）は、関数 record_sale の一つのトランザクション
 -- で決める。行を押さえて（for update）決めるので、同じ作品を同時に払った二つの決済も、同じ決済の
--- 再送も、管理画面の書き込みも、間に割り込めない。決めた結果は注文の行に残し、再送ではそれを返す
--- （作品の状態をあとから読み直して判定し直さない）。知らせ（メール）は記録のあとで、一通ずつ送る。
+-- 再送も、管理画面の書き込みも、間に割り込めない。作品は slug の順に押さえる（二つの決済が逆の順で
+-- 押さえ合って止まらないように）。決めた結果は注文の行に残し、再送ではそれを返す（作品の状態を
+-- あとから読み直して判定し直さない）。知らせ（メール）は記録のあとで、一通ずつ送る。
 --
 -- orders
 --   sale_recorded_at  売れたことを記録した時刻（record_sale が入れる）
@@ -32,6 +33,7 @@ alter table piece_overrides add column if not exists sold_session text;
 
 -- この SQL より前に（古いコードで）入った注文は、記録も知らせも済んだものとして扱う。
 -- 新しいコードの注文は record_sale が sale_recorded_at を入れるので、あとでもう一度流しても触らない。
+-- この SQL を流してからデプロイするまでの間に古いコードが入れた注文は、record_sale が同じように扱う。
 update orders
    set sale_recorded_at = created_at,
        notified_at = coalesce(notified_at, created_at)
@@ -49,29 +51,42 @@ create or replace function record_sale(
   p_shipping       jsonb,
   p_code_status    jsonb    -- {slug: status}。行が無い・status が空の作品は、この状態（data/products.ts）とみなす
 )
-returns table (sale_order_id bigint, sale_notified_at timestamptz, sale_mails_sent text[], sale_clashes jsonb)
+returns table (sale_order_id bigint, sale_notified_at timestamptz, sale_clashes jsonb)
 language plpgsql
 set search_path = public
 as $$
 declare
   o orders%rowtype;
+  new_id bigint;
   s text;
   cur_status text;
   cur_session text;
   effective text;
-  found jsonb := '[]'::jsonb;
+  clash_list jsonb := '[]'::jsonb;
 begin
-  insert into orders (stripe_session, stripe_intent, slugs, amount_cents, currency, status,
-                      customer_name, customer_email, shipping)
-  values (p_session, p_intent, coalesce(p_order_slugs, '{}'), p_amount_cents, coalesce(p_currency, 'aud'),
-          'paid', p_customer_name, p_customer_email, p_shipping)
-  on conflict (stripe_session) do nothing;
-
   -- 同じ決済の配達が同時に届いたら、ここで一つずつに並ぶ
   select * into o from orders where stripe_session = p_session for update;
+  if not found then
+    -- 行が無いときだけ入れる（再送のたびに insert すると、衝突しても連番が進み、注文番号が飛ぶ）
+    insert into orders (stripe_session, stripe_intent, slugs, amount_cents, currency, status,
+                        customer_name, customer_email, shipping)
+    values (p_session, p_intent, coalesce(p_order_slugs, '{}'), p_amount_cents, coalesce(p_currency, 'aud'),
+            'paid', p_customer_name, p_customer_email, p_shipping)
+    on conflict (stripe_session) do nothing
+    returning id into new_id;
+    select * into o from orders where stripe_session = p_session for update;
+  end if;
+
+  if new_id is null and o.sale_recorded_at is null then
+    -- 行が前からあるのに記録の印が無い = 古いコードが入れた注文（完売も知らせも古いコードが済ませた）。
+    -- 判定し直すと、自分で付けた完売を二重販売と取り違える
+    update orders set sale_recorded_at = created_at, notified_at = coalesce(notified_at, created_at),
+                      clashes = '[]'::jsonb
+     where id = o.id returning * into o;
+  end if;
 
   if o.sale_recorded_at is null then
-    foreach s in array coalesce(p_slugs, '{}') loop
+    foreach s in array (select coalesce(array_agg(distinct v order by v), '{}') from unnest(p_slugs) v) loop
       insert into piece_overrides (slug) values (s) on conflict (slug) do nothing;
       -- 別の決済が同じ作品を同時に払っていたら、ここで一つずつに並ぶ
       select po.status, po.sold_session into cur_status, cur_session
@@ -79,17 +94,17 @@ begin
       effective := coalesce(cur_status, p_code_status ->> s);
       if effective in ('sold_out', 'reserved') and cur_session is distinct from p_session then
         -- 決済の前にもう買えなかった。お金は入ったので完売にするが、この決済の印は付けない
-        found := found || jsonb_build_array(jsonb_build_object('slug', s, 'status', effective));
+        clash_list := clash_list || jsonb_build_array(jsonb_build_object('slug', s, 'status', effective));
         update piece_overrides set status = 'sold_out', updated_at = now() where slug = s;
       else
         update piece_overrides set status = 'sold_out', sold_session = p_session, updated_at = now()
          where slug = s;
       end if;
     end loop;
-    update orders set clashes = found, sale_recorded_at = now() where id = o.id returning * into o;
+    update orders set clashes = clash_list, sale_recorded_at = now() where id = o.id returning * into o;
   end if;
 
-  return query select o.id, o.notified_at, o.mails_sent, coalesce(o.clashes, '[]'::jsonb);
+  return query select o.id, o.notified_at, coalesce(o.clashes, '[]'::jsonb);
 end;
 $$;
 

@@ -242,21 +242,31 @@ describe("resetPiece", () => {
   it("ふつうの上書きは行ごと消して、コード側の値に戻す", async () => {
     table.set("tokiwa-evergreen", "available");
     const { resetPiece } = load();
-    await resetPiece(resetForm());
+    await resetPiece({}, resetForm());
     expect(table.has("tokiwa-evergreen")).toBe(false);
   });
 
   it("完売の作品は行を消さない（Webhook の完売を消して販売中に戻さない）", async () => {
     table.set("tokiwa-evergreen", "sold_out");
     const { resetPiece } = load();
-    await resetPiece(resetForm());
+    await resetPiece({}, resetForm());
     expect(table.get("tokiwa-evergreen")).toBe("sold_out");
+  });
+
+  it("DB が断ったら、画面に理由を返す（黙って何も変わらない、にしない）", async () => {
+    table.set("tokiwa-evergreen", "available");
+    const original = global.fetch;
+    global.fetch = jest.fn(async () => json({ message: "down", code: "XX000" }, 503)) as unknown as typeof fetch;
+    const { resetPiece } = load();
+    const result = await resetPiece({}, resetForm());
+    global.fetch = original;
+    expect(result.error).toMatch(/保存できませんでした/);
   });
 
   it("取り置きは人が手で付けたものなので、ふつうに取り消せる", async () => {
     table.set("tokiwa-evergreen", "reserved");
     const { resetPiece } = load();
-    await resetPiece(resetForm());
+    await resetPiece({}, resetForm());
     expect(table.has("tokiwa-evergreen")).toBe(false);
   });
 });

@@ -104,3 +104,29 @@ test("この SQL より前の注文は記録・知らせ済みに。あとでも
   const fresh = (await db.query("select notified_at from orders where stripe_session = 'cs_new'")).rows[0];
   assert.equal(fresh.notified_at, null);
 });
+
+test("SQL を流してからデプロイまでの間に古いコードが入れた注文: 判定し直さず、記録・知らせ済みにする", async () => {
+  // 古いコードは注文の行を入れて、自分で完売にした（sold_session は付けない）
+  await db.query("insert into piece_overrides (slug, status) values ('a', 'sold_out')");
+  await db.query("insert into orders (stripe_session, amount_cents) values ('cs_old', 100)");
+  const sale = await recordSale({ session: "cs_old", slugs: ["a"] });
+  assert.deepEqual(sale.sale_clashes, []);
+  assert.ok(sale.sale_notified_at);
+  assert.deepEqual(await piece("a"), { status: "sold_out", sold_session: null });
+});
+
+test("同じ slug が二度来ても一度だけ見る（自分の完売を二重販売と取り違えない）", async () => {
+  await db.query("insert into piece_overrides (slug, status) values ('a', 'available'), ('b', 'available')");
+  const sale = await recordSale({ session: "cs_1", slugs: ["b", "a", "b"] });
+  assert.deepEqual(sale.sale_clashes, []);
+  assert.deepEqual(await piece("a"), { status: "sold_out", sold_session: "cs_1" });
+  assert.deepEqual(await piece("b"), { status: "sold_out", sold_session: "cs_1" });
+});
+
+test("再送で注文番号を進めない（次の注文が一つ飛ばない）", async () => {
+  const first = await recordSale({ session: "cs_1", slugs: [] });
+  await recordSale({ session: "cs_1", slugs: [] });
+  await recordSale({ session: "cs_1", slugs: [] });
+  const next = await recordSale({ session: "cs_2", slugs: [] });
+  assert.equal(Number(next.sale_order_id), Number(first.sale_order_id) + 1);
+});

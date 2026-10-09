@@ -38,6 +38,27 @@ describe("orderPlacedMail", () => {
     expect(orderPlacedMail(base).text).not.toContain("お客さまの言語");
   });
 
+  it("お客さまへの確認メールがどうなったかを書く（送っていないのに「送った」と言わない）", () => {
+    expect(orderPlacedMail({ ...base, customerMail: "sent" }).text).toContain("確認メール: 送りました");
+    expect(orderPlacedMail({ ...base, customerMail: "failed" }).text).toContain("直接ご連絡ください");
+    expect(orderPlacedMail({ ...base, customerMail: "held" }).text).toContain("確認メール: 送っていません");
+    expect(orderPlacedMail({ ...base, customerMail: "no_email" }).text).toContain("メールアドレスが届いていません");
+    expect(orderPlacedMail(base).text).not.toContain("確認メール");
+  });
+
+  it("完売にできなかった作品は、そうと書く", () => {
+    const { text } = orderPlacedMail({
+      ...base,
+      pieces: [
+        { name: "Hishi", kanji: "菱", price: "A$148", soldOut: true },
+        { name: "Old name", kanji: "", price: "A$90", soldOut: false },
+      ],
+    });
+    expect(text).toContain("  Hishi 菱 — A$148\n");
+    expect(text).toContain("  Old name  — A$90（完売にできていません）");
+    expect(text).toContain("管理画面で完売にしてください");
+  });
+
   it("住所が無ければ、無いと書く（空欄で黙らない）", () => {
     expect(orderPlacedMail({ ...base, shipping: null }).text).toContain("住所が届いていません");
   });

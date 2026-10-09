@@ -3,12 +3,12 @@
  */
 
 // Stripe の Webhook（app/api/stripe/webhook/route.ts）の流れ。売れたことの記録（record_sale）の中身は
-// supabase/tests/record-sale.test.mjs が本物の Postgres（PGlite）で確かめる。ここでは記録のあとの
-// 知らせが再送に強いことを見る:
-//   - 初めての配達で、お店とお客さまに一通ずつ
-//   - 知らせまで済んだ注文の再送では何もしない
+// supabase/tests/record-sale.test.mjs が本物の Postgres（PGlite）で確かめる。ここでは:
+//   - 完売にするのは Stripe の明細を待たずに（決済に残した SKU と slug から）
+//   - 初めての配達で、お客さまとお店に一通ずつ（お店へのメールに、確認メールがどうなったかを書く）
+//   - 知らせまで済んだ注文の再送では何もしない（Stripe の API も呼ばない）
 //   - 途中で落ちたら 500。再送では送っていないメールだけ送る
-//   - 送り直しても届かないメールは「送れない」と記録して先へ進む（3 日再送させない）
+//   - お客さまの宛先が断られたら「送れない」と記録して先へ進む。設定の誤り（お店にも届かない）なら 500
 //   - 別の配達が知らせを出していたら 503
 // Stripe とメールは差し替え、DB（PostgREST）は偽物の fetch。
 
@@ -17,22 +17,31 @@ export {};
 jest.mock("server-only", () => ({}));
 jest.mock("next/cache", () => ({ revalidatePath: jest.fn() }));
 
-const mails: { kind: string; subject: string }[] = [];
-/** お客さまへのメールを一度だけ失敗させる。permanent なら送り直しても届かない種類 */
-let failCustomerOnce: null | { permanent: boolean } = null;
+type SentMail = { kind: string; subject: string; text: string; key?: string };
+const mails: SentMail[] = [];
+/** 次の一通を、この状態コードで断らせる（0 はタイムアウト = 一時的） */
+const refuse: { customer: number[]; store: number[] } = { customer: [], store: [] };
+class FakeMailError extends Error {
+  constructor(readonly status: number) {
+    super(`Resend ${status}`);
+  }
+}
+function maybeRefuse(kind: "customer" | "store") {
+  const status = refuse[kind].shift();
+  if (status === undefined) return;
+  throw status === 0 ? new Error("TimeoutError") : new FakeMailError(status);
+}
 jest.mock("@/lib/mail", () => ({
-  notifyStore: jest.fn(async (mail: { subject: string }) => {
-    mails.push({ kind: "store", subject: mail.subject });
+  notifyStore: jest.fn(async (mail: { subject: string; text: string; idempotencyKey?: string }) => {
+    maybeRefuse("store");
+    mails.push({ kind: "store", subject: mail.subject, text: mail.text, key: mail.idempotencyKey });
   }),
-  sendToCustomer: jest.fn(async (_to: string, mail: { subject: string }) => {
-    if (failCustomerOnce) {
-      const { permanent } = failCustomerOnce;
-      failCustomerOnce = null;
-      throw Object.assign(new Error(permanent ? "Resend 422" : "Resend 503"), { permanent });
-    }
-    mails.push({ kind: "customer", subject: mail.subject });
+  sendToCustomer: jest.fn(async (_to: string, mail: { subject: string; text: string; idempotencyKey?: string }) => {
+    maybeRefuse("customer");
+    mails.push({ kind: "customer", subject: mail.subject, text: mail.text, key: mail.idempotencyKey });
   }),
-  isPermanentMailError: (error: unknown) => (error as { permanent?: boolean })?.permanent === true,
+  isPermanentMailError: (error: unknown) =>
+    error instanceof FakeMailError && error.status >= 400 && error.status < 500 && error.status !== 429,
 }));
 
 import { products } from "@/data/products";
@@ -46,7 +55,7 @@ const session = {
   payment_intent: "pi_1",
   amount_total: 18500,
   currency: "aud",
-  metadata: { slugs: piece.slug, lang: "en" },
+  metadata: { skus: piece.sku, slugs: piece.slug, lang: "en" } as Record<string, string>,
   customer_details: { name: "Jane", email: "jane@example.com", phone: null },
   collected_information: null,
 };
@@ -54,6 +63,7 @@ const session = {
 /** 明細の作品（SKU と slug）。空にすると、明細から作品を引けない行になる */
 let lineMeta: Record<string, string> = { slug: piece.slug, sku: piece.sku };
 let lineItemsDown = false;
+let lineItemCalls = 0;
 
 jest.mock("@/lib/stripe", () => ({
   webCrypto: {},
@@ -64,6 +74,7 @@ jest.mock("@/lib/stripe", () => ({
     checkout: {
       sessions: {
         listLineItems: async () => {
+          lineItemCalls += 1;
           if (lineItemsDown) throw new Error("Stripe 503");
           return {
             data: [
@@ -124,7 +135,7 @@ function recordSale(p: {
     }
     o.recorded = true;
   }
-  return { sale_order_id: o.id, sale_notified_at: o.notified_at, sale_mails_sent: o.mails_sent, sale_clashes: o.clashes };
+  return { sale_order_id: o.id, sale_notified_at: o.notified_at, sale_clashes: o.clashes };
 }
 
 const fakeFetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
@@ -189,9 +200,12 @@ beforeEach(() => {
   orders = [];
   pieces = new Map([[piece.slug, { status: "available", sold_session: null }]]);
   failNextSale = false;
-  failCustomerOnce = null;
+  refuse.customer = [];
+  refuse.store = [];
+  session.metadata = { skus: piece.sku, slugs: piece.slug, lang: "en" };
   lineMeta = { slug: piece.slug, sku: piece.sku };
   lineItemsDown = false;
+  lineItemCalls = 0;
   saleCalls = [];
   mails.length = 0;
   global.fetch = fakeFetch as unknown as typeof fetch;
@@ -202,22 +216,31 @@ beforeEach(() => {
 afterEach(() => jest.restoreAllMocks());
 
 describe("Stripe Webhook", () => {
-  it("初めての配達: 売れたことを記録し、お店とお客さまに一通ずつ。終わったら印を返す", async () => {
+  it("初めての配達: 完売にし、お客さま、お店の順に一通ずつ。終わったら印を返す", async () => {
     const res = await deliver(load());
     expect(res.status).toBe(200);
     expect(pieces.get(piece.slug)).toEqual({ status: "sold_out", sold_session: SESSION });
-    expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
-    expect(orders[0]).toMatchObject({ notifying_at: null, mails_sent: ["store", "customer"] });
+    expect(mails.map((m) => m.kind)).toEqual(["customer", "store"]);
+    expect(mails[1].text).toContain("確認メール: 送りました");
+    expect(orders[0]).toMatchObject({ notifying_at: null });
+    expect([...orders[0].mails_sent].sort()).toEqual(["customer", "store"]);
     expect(orders[0].notified_at).not.toBeNull();
   });
 
-  it("知らせまで済んだ注文の再送: メールを二度送らない", async () => {
+  it("メールには一通ごとの Idempotency-Key を付ける（送れたのに失敗に見えても二通目にならない）", async () => {
+    await deliver(load());
+    expect(mails.map((m) => m.key)).toEqual([`${SESSION}:customer`, `${SESSION}:store`]);
+  });
+
+  it("知らせまで済んだ注文の再送: メールを二度送らず、Stripe の明細も読まない", async () => {
     const route = load();
     await deliver(route);
     mails.length = 0;
+    lineItemCalls = 0;
     const res = await deliver(route);
     expect(res.status).toBe(200);
     expect(mails).toEqual([]);
+    expect(lineItemCalls).toBe(0);
   });
 
   it("記録で落ちたら 500。再送で記録と知らせをやり直す", async () => {
@@ -226,34 +249,88 @@ describe("Stripe Webhook", () => {
     expect((await deliver(route)).status).toBe(500);
     expect(mails).toEqual([]);
     expect((await deliver(route)).status).toBe(200);
-    expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
+    expect(mails.map((m) => m.kind)).toEqual(["customer", "store"]);
   });
 
-  it("お客さまへのメールが一時的に落ちたら 500 で印を返す。再送では、お客さまへの一通だけ送る", async () => {
+  it("Stripe の明細が読めなくても、先に完売にしてから 500（再送でメールを送る）", async () => {
     const route = load();
-    failCustomerOnce = { permanent: false };
+    lineItemsDown = true;
     expect((await deliver(route)).status).toBe(500);
-    expect(mails.map((m) => m.kind)).toEqual(["store"]);
+    expect(pieces.get(piece.slug)).toEqual({ status: "sold_out", sold_session: SESSION });
+    expect(mails).toEqual([]);
+
+    lineItemsDown = false;
+    expect((await deliver(route)).status).toBe(200);
+    expect(mails.map((m) => m.kind)).toEqual(["customer", "store"]);
+  });
+
+  it("決済の間に slug が変わっていても、SKU で引いて完売にする", async () => {
+    session.metadata = { skus: piece.sku, slugs: "old-temporary-name", lang: "en" };
+    expect((await deliver(load())).status).toBe(200);
+    expect(saleCalls[0].p_slugs).toEqual([piece.slug]);
+    expect(saleCalls[0].p_order_slugs).toEqual([piece.slug, "old-temporary-name"]);
+    expect(pieces.get(piece.slug)?.status).toBe("sold_out");
+  });
+
+  it("お客さまへのメールが一時的に落ちたら 500 で印を返す。再送で、お客さまとお店に送る", async () => {
+    const route = load();
+    refuse.customer = [0];
+    expect((await deliver(route)).status).toBe(500);
+    expect(mails).toEqual([]);
     expect(orders[0].notifying_at).toBeNull();
 
     expect((await deliver(route)).status).toBe(200);
-    expect(mails.map((m) => m.kind)).toEqual(["store", "customer"]);
+    expect(mails.map((m) => m.kind)).toEqual(["customer", "store"]);
   });
 
-  it("送り直しても届かないメールは「送れない」と記録して先へ進み、200 を返す（3 日再送させない）", async () => {
-    failCustomerOnce = { permanent: true };
+  it("お店へのメールが落ちたら 500。再送では、お客さまに二通目を送らない", async () => {
+    const route = load();
+    refuse.store = [503];
+    expect((await deliver(route)).status).toBe(500);
+    expect(mails.map((m) => m.kind)).toEqual(["customer"]);
+
+    expect((await deliver(route)).status).toBe(200);
+    expect(mails.map((m) => m.kind)).toEqual(["customer", "store"]);
+  });
+
+  it("お客さまの宛先が断られた（お店には届く）: 「送れない」と記録して 200。お店へのメールにそう書く", async () => {
+    refuse.customer = [422];
     const res = await deliver(load());
     expect(res.status).toBe(200);
-    expect(orders[0].mails_sent).toEqual(["store", "customer:failed"]);
+    expect(mails.map((m) => m.kind)).toEqual(["store"]);
+    expect(mails[0].text).toContain("確認メール: 送れませんでした");
+    expect([...orders[0].mails_sent].sort()).toEqual(["customer:failed", "store"]);
     expect(orders[0].notified_at).not.toBeNull();
   });
 
-  it("二重販売なら、お客さまには送らず、お店に要確認を送る", async () => {
+  it("鍵や送り元の設定の誤り（お店にも届かない）なら、お客さまの分も「送れない」にせず 500", async () => {
+    const route = load();
+    refuse.customer = [403];
+    refuse.store = [403];
+    expect((await deliver(route)).status).toBe(500);
+    expect(orders[0].mails_sent).toEqual([]);
+
+    // 設定を直したあとの再送で、両方届く
+    expect((await deliver(route)).status).toBe(200);
+    expect(mails.map((m) => m.kind)).toEqual(["customer", "store"]);
+  });
+
+  it("二重販売なら、お客さまには送らず、お店に注文と要確認を送る", async () => {
     pieces.set(piece.slug, { status: "sold_out", sold_session: "cs_live_other" });
     const res = await deliver(load());
     expect(res.status).toBe(200);
     expect(mails.map((m) => m.kind)).toEqual(["store", "store"]);
+    expect(mails[0].text).toContain("確認メール: 送っていません");
     expect(mails[1].subject).toContain("要確認");
+  });
+
+  it("明細の作品をカタログから引けなかったら、お店へのメールに「完売にできていません」と書く", async () => {
+    lineMeta = {};
+    session.metadata = { slugs: "old-temporary-name", lang: "en" };
+    const res = await deliver(load());
+    expect(res.status).toBe(200);
+    expect(saleCalls[0].p_slugs).toEqual([]);
+    expect(mails.find((m) => m.kind === "store")?.text).toContain("完売にできていません");
   });
 
   it("別の配達がいま知らせを出していたら、送らずに 503（あとで送り直してもらう）", async () => {
@@ -264,22 +341,6 @@ describe("Stripe Webhook", () => {
     orders[0].notifying_at = new Date().toISOString();
     mails.length = 0;
     expect((await deliver(route)).status).toBe(503);
-    expect(mails).toEqual([]);
-  });
-
-  it("明細から作品を引けなくても、決済に残した作品を完売にする", async () => {
-    lineMeta = {};
-    const res = await deliver(load());
-    expect(res.status).toBe(200);
-    expect(saleCalls[0].p_slugs).toEqual([piece.slug]);
-    expect(pieces.get(piece.slug)?.status).toBe("sold_out");
-  });
-
-  it("Stripe の明細が読めなければ 500（黙って metadata に切り替えない）", async () => {
-    lineItemsDown = true;
-    const res = await deliver(load());
-    expect(res.status).toBe(500);
-    expect(saleCalls).toEqual([]);
     expect(mails).toEqual([]);
   });
 });

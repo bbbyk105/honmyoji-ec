@@ -2,9 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { resetPiece } from "@/app/studio/actions";
 import { DbDownNotice, DbNotice } from "@/components/studio/DbNotice";
-import { BTN_QUIET, LINK_QUIET, STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
+import { LINK_QUIET, STUDIO_CARD, STUDIO_SHELL } from "@/components/studio/shell";
 import { PieceBadge } from "@/components/studio/StatusBadge";
 import { StudioHead } from "@/components/studio/StudioHead";
 import { cm, getProduct, leadSrc, LINE_LABEL, priceLabel } from "@/data/products";
@@ -13,6 +12,7 @@ import { getStudioCatalog } from "@/lib/catalog";
 import { requireSession } from "@/lib/studio-session";
 import { dbEnabled } from "@/lib/supabase";
 import { PieceForm } from "./PieceForm";
+import { ResetPieceForm } from "./ResetPieceForm";
 
 export const dynamic = "force-dynamic";
 
@@ -110,28 +110,7 @@ export default async function StudioPiecePage({
           </div>
 
           {override ? (
-            <form action={resetPiece} className="mt-6 px-1">
-              <input type="hidden" name="slug" value={base.slug} />
-              <p className="font-sans text-[13px] leading-[1.8] text-mist">
-                この画面で上書き中 — 最終更新{" "}
-                <time dateTime={override.updated_at} className="tabular-nums">
-                  {new Date(override.updated_at).toLocaleString("ja-JP", {
-                    month: "numeric",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </time>
-              </p>
-              <button type="submit" className={`mt-2 ${BTN_QUIET} text-clay`}>
-                上書きをすべて取り消してコード側に戻す
-              </button>
-              {override.status === "sold_out" ? (
-                <p className="mt-2 font-sans text-[12.5px] leading-[1.8] text-mist">
-                  完売のステータスは残ります（売れた一点物がまた買えるようにならないため）。販売に戻すときは、ステータスを選び直して保存してください。
-                </p>
-              ) : null}
-            </form>
+            <ResetPieceForm slug={base.slug} updatedAt={override.updated_at} soldOut={override.status === "sold_out"} />
           ) : dbDown ? (
             <p className="mt-6 px-1 font-sans text-[13px] leading-[1.8] text-mist">
               データベースに接続できないため、この画面での上書きがあるかを確認できません。

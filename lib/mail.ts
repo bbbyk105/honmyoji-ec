@@ -39,6 +39,11 @@ export type Mail = {
    * 「返信」を押すだけでお客さまに届く。
    */
   replyTo?: string;
+  /**
+   * 同じ一通を二度送らないための鍵（Resend の Idempotency-Key。24 時間有効）。Webhook が注文と
+   * メールの種類から作る —— 送れたのに応答が遅れて失敗に見えたとき、再送が二通目にならない。
+   */
+  idempotencyKey?: string;
 };
 
 /**
@@ -62,7 +67,11 @@ export async function notifyStore(mail: Mail): Promise<void> {
 async function send(to: string[], mail: Mail): Promise<void> {
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
-    headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+      ...(mail.idempotencyKey ? { "Idempotency-Key": mail.idempotencyKey } : {}),
+    },
     body: JSON.stringify({
       from,
       to,
@@ -91,21 +100,27 @@ export class MailError extends Error {
 }
 
 /**
- * 送り直しても届かない失敗か（宛先の誤り・送り元の認証切れ・試験用アドレスなど、4xx。429 の
- * 枠切れは除く）。Webhook はこれを「送れない」と記録して先へ進む —— 再送させても毎回落ち、
- * Stripe が 3 日再送し続けるだけになる。タイムアウトや 5xx は一時的なので送り直す。
+ * Resend がこの一通を断ったか（4xx。429 の枠切れと 409 の同じ鍵の重なりは除く）。宛先の誤りの
+ * ほか、鍵の無効・送り元の認証切れのような**設定の誤り**もここに入る —— どちらかは、この一通だけ
+ * では分からない。Webhook はお店へのメールが通ったときだけ、お客さまへの一通を「送れない」と
+ * 記録して先へ進む（お店に届くなら設定は生きていて、断られたのは宛先の方）。タイムアウトや
+ * 5xx は一時的なので送り直す。
  */
 export function isPermanentMailError(error: unknown): boolean {
-  return error instanceof MailError && error.status >= 400 && error.status < 500 && error.status !== 429;
+  return (
+    error instanceof MailError &&
+    error.status >= 400 &&
+    error.status < 500 &&
+    error.status !== 429 &&
+    error.status !== 409
+  );
 }
 
 /**
- * お客さまに送る（注文の確認）。返信はお店の公開アドレス（`site.email`。Cloudflare の
- * Email Routing でお店の Gmail へ転送される）に届く —— 送り元の notify@ には受信箱が無い。
- *
- * 失敗しても投げない（Webhook を止めない。注文はもう保存できている）。鍵が無ければログだけ。
+ * お客さまに送る（注文の確認）。**失敗したら投げる**（Webhook が「送り終えた」を記録してから
+ * 次へ進むため）。返信はお店の公開アドレス（`site.email`。Cloudflare の Email Routing でお店の
+ * Gmail へ転送される）に届く —— 送り元の notify@ には受信箱が無い。鍵が無ければログだけ。
  */
-/** お客さまに送る。**失敗したら投げる**（Webhook が「送り終えた」を記録してから次へ進むため）。 */
 export async function sendToCustomer(to: string, mail: Mail): Promise<void> {
   if (!apiKey) {
     console.info(`[mail] RESEND_API_KEY が無いのでお客さまに送っていません: ${mail.subject}`);
