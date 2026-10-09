@@ -106,5 +106,3 @@ export async function notifyStoreQuietly(mail: Mail): Promise<void> {
   }
 }
 
-/** 本文の下に付ける絶対 URL（lib/site-url.ts と同じ決め方）。 */
-export { siteUrl as siteLink } from "@/lib/site-url";

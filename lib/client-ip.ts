@@ -16,10 +16,31 @@ import { headers } from "next/headers";
  *   逆に `cf-connecting-ip` は客が自由に送れるので見ない。
  */
 export function pickClientIp(h: Pick<Headers, "get">, onWorkers: boolean): string {
-  if (onWorkers) return h.get("cf-connecting-ip")?.trim() || "unknown";
+  if (onWorkers) return limitKey(h.get("cf-connecting-ip")?.trim() || "unknown");
   const forwarded = h.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0].trim();
-  return h.get("x-real-ip")?.trim() || "unknown";
+  if (forwarded) return limitKey(forwarded.split(",")[0].trim());
+  return limitKey(h.get("x-real-ip")?.trim() || "unknown");
+}
+
+/**
+ * 回数制限の鍵。IPv6 は /64 に丸める —— 一つの回線は /64 の中で送信元を自由に変えられるので、
+ * アドレスそのままを鍵にすると、送るたびに変えて制限をすり抜けられる。IPv4（と IPv4 を包んだ
+ * `::ffff:1.2.3.4`）はそのまま。
+ */
+export function limitKey(ip: string): string {
+  if (!ip.includes(":")) return ip;
+  const [head, tail = ""] = ip.toLowerCase().split("::");
+  const front = head ? head.split(":") : [];
+  const back = tail ? tail.split(":") : [];
+  const last = (back.length > 0 ? back : front).at(-1) ?? "";
+  if (last.includes(".")) return last;
+  const groups = ip.includes("::")
+    ? [...front, ...Array<string>(Math.max(0, 8 - front.length - back.length)).fill("0"), ...back]
+    : front;
+  return `${groups
+    .slice(0, 4)
+    .map((g) => g.replace(/^0+(?=.)/, "") || "0")
+    .join(":")}::/64`;
 }
 
 /** Cloudflare Workers の上か。workerd は navigator.userAgent をこの名前で返す。 */

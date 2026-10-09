@@ -3,7 +3,7 @@ import { PieceTile } from "@/components/collection/PieceTile";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { aud, LINE_BLURB, LINE_LABEL, LINE_ORDER, LINE_RATIO } from "@/data/products";
-import { SHIPPING_AUD } from "@/lib/stripe-config";
+import { SHIPPING_AUD } from "@/data/shipping";
 import { getListedCatalog } from "@/lib/catalog";
 import { twoDigits } from "@/lib/format";
 
@@ -44,8 +44,8 @@ export default async function CollectionPage() {
             Collection
           </h1>
           <p className="max-w-[40ch] font-sans text-body text-bone md:col-span-5 md:col-start-8 md:pb-3">
-            {pieces.length} pieces, each made once. Prices are in Australian dollars;
-            shipping is {aud.format(SHIPPING_AUD)} per order, added at checkout.
+            {pieces.length} pieces, each made once. Prices are in Australian dollars
+            {SHIPPING_AUD > 0 ? `; shipping is ${aud.format(SHIPPING_AUD)} per order, added at checkout.` : ", with shipping included."}
           </p>
         </header>
 

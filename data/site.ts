@@ -3,6 +3,8 @@
  * 英語を主、日本語を従（ページ内の副題・小見出し）— 日本語版ページは後日フェーズ。
  */
 
+import { SHIPPING_AUD } from "./shipping";
+
 export const site = {
   name: "MIROKU",
   tagline: "Tatami-beri Bags from Honmyoji Temple",
@@ -327,7 +329,9 @@ export const legal = {
   responsible: "Emi Kashiwazake（柏酒 英美）",
   price: "Shown on each piece. All prices are in Australian dollars (AUD) and include Japanese consumption tax.",
   shipping:
-    "A$40 per order for tracked international shipping, added at checkout. If you need express delivery, contact us before ordering; the difference will be invoiced separately.",
+    SHIPPING_AUD > 0
+      ? `A$${SHIPPING_AUD} per order for tracked international shipping, added at checkout. If you need express delivery, contact us before ordering; the difference will be invoiced separately.`
+      : "Tracked international shipping is included in the price. If you need express delivery, contact us before ordering; the difference will be invoiced separately.",
   payment: "Credit card via Stripe. Payment is taken in full at checkout.",
   delivery:
     "Pieces in stock ship within one month of your order. Custom-made pieces take longer; we will give you a date when the order is agreed.",

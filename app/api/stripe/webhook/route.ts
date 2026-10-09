@@ -2,13 +2,14 @@ import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
-import { getProduct, priceLabel } from "@/data/products";
+import { aud, getProduct, priceLabel } from "@/data/products";
 import { getPieces } from "@/lib/catalog";
 import { isLang } from "@/lib/lang";
-import { notifyStoreQuietly, sendToCustomerQuietly, siteLink } from "@/lib/mail";
+import { notifyStoreQuietly, sendToCustomerQuietly } from "@/lib/mail";
 import { markSold, type SoldClash } from "@/lib/mark-sold";
 import { doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 import { orderAmount, orderRef } from "@/lib/orders";
+import { siteUrl } from "@/lib/site-url";
 import { stripe, webCrypto } from "@/lib/stripe";
 import { db } from "@/lib/supabase";
 
@@ -43,6 +44,30 @@ function address(session: Stripe.Checkout.Session) {
     country: a.country ?? undefined,
     phone: session.customer_details?.phone ?? undefined,
   };
+}
+
+/**
+ * 払った額（Stripe の明細）を作品ごとに。メールに載せる値段はここから —— カタログの値段は、
+ * 決済画面を開いてから払うまでの間に管理画面で直されうるので、行の値段と合計が食い違う。
+ * 読めなければ空（呼び出し側がカタログの値段に落とす）。
+ */
+async function paidPrices(client: Stripe, sessionId: string): Promise<Map<string, string>> {
+  const prices = new Map<string, string>();
+  try {
+    const items = await client.checkout.sessions.listLineItems(sessionId, {
+      limit: 100,
+      expand: ["data.price.product"],
+    });
+    for (const item of items.data) {
+      const product = item.price?.product;
+      if (typeof product !== "object" || product === null || ("deleted" in product && product.deleted)) continue;
+      const slug = product.metadata?.slug;
+      if (slug) prices.set(slug, aud.format(item.amount_total / 100 / (item.quantity || 1)));
+    }
+  } catch (error) {
+    console.error("[stripe] 明細を読めませんでした（メールはカタログの値段で出す）", error);
+  }
+  return prices;
 }
 
 /**
@@ -162,14 +187,15 @@ export async function POST(request: NextRequest) {
   // 送れなくても 200 を返す —— 注文は保存できているので、Stripe に再送させる理由が無い。
   if (orderId !== null) {
     const ref = orderRef(orderId);
-    const studioUrl = siteLink(`/studio/orders/${orderId}`);
+    const studioUrl = siteUrl(`/studio/orders/${orderId}`);
     const intent =
       typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
 
     const amount = orderAmount({ amount_cents: session.amount_total ?? 0, currency: session.currency ?? "aud" });
     const customerName = session.customer_details?.name ?? null;
     const customerEmail = session.customer_details?.email ?? null;
-    const pieces = before.map((p) => ({ name: p.name, kanji: p.kanji, price: priceLabel(p) }));
+    const paid = await paidPrices(client, session.id);
+    const pieces = before.map((p) => ({ name: p.name, kanji: p.kanji, price: paid.get(p.slug) ?? priceLabel(p) }));
     // 決済を始めたときに決めた言語（lib/lang.ts）。それより前に作られた決済は英語
     const lang = isLang(session.metadata?.lang) ? session.metadata.lang : "en";
 

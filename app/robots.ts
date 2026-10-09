@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-import { absoluteUrl } from "@/lib/seo";
+import { siteUrl } from "@/lib/site-url";
 
 /* /robots.txt。止めるのは API だけ —— 管理画面（/studio）や thank-you は noindex で外してあり、
    ここで塞ぐと検索エンジンがその noindex を読めなくなる。Cloudflare がこの前に
@@ -8,6 +8,6 @@ import { absoluteUrl } from "@/lib/seo";
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [{ userAgent: "*", allow: "/", disallow: ["/api/"] }],
-    sitemap: absoluteUrl("/sitemap.xml"),
+    sitemap: siteUrl("/sitemap.xml"),
   };
 }

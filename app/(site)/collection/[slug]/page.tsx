@@ -17,7 +17,8 @@ import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
 import { getListedCatalog, getPiece } from "@/lib/catalog";
 import { breadcrumbJsonLd, OPEN_GRAPH_BASE, productJsonLd } from "@/lib/seo";
-import { SHIPPING_AUD } from "@/lib/stripe-config";
+import { shippingFor } from "@/data/shipping";
+import { stripeEnabled } from "@/lib/stripe-config";
 import {
   LINE_LABEL,
   LINE_RATIO,
@@ -59,8 +60,15 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   };
 }
 
+/** 送料の一言。0（送料込み・試し買い用）なら「Shipping included」。 */
+function shippingNote(product: Product): string {
+  const shipping = shippingFor([product]);
+  return shipping > 0 ? `+ ${aud.format(shipping)} shipping` : "Shipping included";
+}
+
 function cta(product: Product) {
   const q = `?product=${product.slug}`;
+  const shipping = shippingFor([product]);
   switch (product.status) {
     case "available":
       /* 管理画面で Available にしても、値段が入っていなければカートには入らない（`isPurchasable`）。 */
@@ -68,7 +76,10 @@ function cta(product: Product) {
         ? {
             primary: { href: `/contact${q}&subject=reserve`, label: "Reserve this piece" },
             secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
-            note: "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
+            // 決済が使えればカートからそのまま Stripe へ。使えなければ（鍵が無い）カートを送ってもらい、決済リンクを返す
+            note: stripeEnabled
+              ? `Add it to your cart and check out — you pay by card through Stripe${shipping > 0 ? `, and ${aud.format(shipping)} shipping is added at checkout` : ""}.`
+              : "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
           }
         : {
             primary: { href: `/contact${q}&subject=question`, label: "Ask about this piece" },
@@ -195,7 +206,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               {price ? (
                 <>
                   <span className="font-display text-[32px] font-light leading-none tabular-nums text-ivory">{price}</span>
-                  <span className="font-sans text-meta text-mist">+ {aud.format(SHIPPING_AUD)} shipping</span>
+                  <span className="font-sans text-meta text-mist">{shippingNote(product)}</span>
                 </>
               ) : null}
               <StatusPill status={product.status} className={price ? "ml-auto" : ""} />

@@ -11,7 +11,8 @@ const nextConfig: NextConfig = {
     return [
       // 旧カタログ（2026-09-25 にカメラマン撮影分へ入れ替え）。Ai だけは同じ一本なので URL が残っている。
       // 残りの八点は今の一覧に無いので一覧へ返す。戻ってくる可能性があるので恒久にはしない。
-      { source: "/collection/ai", destination: "/collection/ai-indigo", permanent: true },
+      // 一時（307）。転送先の slug は仮の名前から作っていて、正式な名前で変わる（下の folder の転送と同じ）
+      { source: "/collection/ai", destination: "/collection/ai-indigo", permanent: false },
       {
         source:
           "/collection/:old(sakura|sakura-cherry|matsu|matsu-pine|wakaba|wakaba-celadon|kasane|kasane-silk|musubi|musubi-obi|hisui|hisui-jade|ichimatsu|ichimatsu-check|tsugi|tsugi-autumn)",

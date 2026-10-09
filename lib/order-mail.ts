@@ -1,5 +1,6 @@
 import { STATUS_LABEL, type Product, type ProductStatus } from "@/data/products";
 import { site } from "@/data/site";
+import { SITE_ORIGIN } from "@/lib/site-url";
 import type { Lang } from "@/lib/lang";
 import type { ShippingAddress } from "@/lib/orders";
 
@@ -136,7 +137,7 @@ export function orderConfirmationMail(o: {
         "",
         site.name,
         site.locationJa,
-        site.url,
+        SITE_ORIGIN,
       ].join("\n"),
     };
   }
@@ -160,7 +161,7 @@ export function orderConfirmationMail(o: {
       "",
       site.name,
       site.location,
-      site.url,
+      SITE_ORIGIN,
     ].join("\n"),
   };
 }

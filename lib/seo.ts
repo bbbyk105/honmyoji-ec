@@ -16,9 +16,6 @@ import { SHIPPING_AUD, SHIPPING_COUNTRIES } from "@/lib/stripe-config";
 
 type Json = Record<string, unknown>;
 
-/** 本番の絶対 URL（lib/site-url.ts）。 */
-export const absoluteUrl = siteUrl;
-
 /**
  * OG の基本形。Next の metadata は openGraph を**丸ごと差し替える**（浅いマージ）ので、
  * ページで openGraph を書くときは必ずこれを広げる —— 書かないと siteName や locale が落ちる。
@@ -40,13 +37,13 @@ const AVAILABILITY: Record<ProductStatus, string> = {
   coming_soon: "https://schema.org/OutOfStock",
 };
 
-const organizationRef = { "@type": "Organization", name: site.name, url: absoluteUrl("/") };
+const organizationRef = { "@type": "Organization", name: site.name, url: siteUrl("/") };
 
 const postalAddress = { "@type": "PostalAddress", ...legal.addressParts };
 
-/** 作品の写真（絶対 URL）。folder から組む（slug から引き直さない）。 */
-function productImages(p: Pick<Product, "folder" | "galleryCount">): string[] {
-  return Array.from({ length: p.galleryCount }, (_, i) => absoluteUrl(leadSrc(p.folder, i + 1)));
+/** 作品の写真（絶対 URL）。folder から組む（slug から引き直さない）。サイトマップも使う。 */
+export function productImages(p: Pick<Product, "folder" | "galleryCount">): string[] {
+  return Array.from({ length: p.galleryCount }, (_, i) => siteUrl(leadSrc(p.folder, i + 1)));
 }
 
 /**
@@ -55,7 +52,7 @@ function productImages(p: Pick<Product, "folder" | "galleryCount">): string[] {
  */
 export function productJsonLd(p: Product): Json | null {
   if (p.priceAud == null) return null;
-  const url = absoluteUrl(productPath(p));
+  const url = siteUrl(productPath(p));
   return {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -93,11 +90,6 @@ export function productJsonLd(p: Product): Json | null {
   };
 }
 
-/** サイトマップに載せる作品の写真。 */
-export function productSitemapImages(p: Pick<Product, "folder" | "galleryCount">): string[] {
-  return productImages(p);
-}
-
 /** パンくず（画面には出さず、検索結果の表示にだけ使う）。 */
 export function breadcrumbJsonLd(items: { name: string; path: string }[]): Json {
   return {
@@ -107,14 +99,14 @@ export function breadcrumbJsonLd(items: { name: string; path: string }[]): Json 
       "@type": "ListItem",
       position: i + 1,
       name: item.name,
-      item: absoluteUrl(item.path),
+      item: siteUrl(item.path),
     })),
   };
 }
 
 /** Blog の記事。 */
 export function blogPostingJsonLd(post: BlogPost): Json {
-  const url = absoluteUrl(`/blog/${post.slug}`);
+  const url = siteUrl(`/blog/${post.slug}`);
   return {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -122,7 +114,7 @@ export function blogPostingJsonLd(post: BlogPost): Json {
     ...(post.dek ? { description: post.dek } : {}),
     ...(post.date ? { datePublished: post.date } : {}),
     ...(post.updated ? { dateModified: post.updated } : {}),
-    ...(post.image ? { image: [post.image.startsWith("http") ? post.image : absoluteUrl(post.image)] } : {}),
+    ...(post.image ? { image: [post.image.startsWith("http") ? post.image : siteUrl(post.image)] } : {}),
     inLanguage: "en",
     url,
     mainEntityOfPage: url,
@@ -145,7 +137,7 @@ export function storeJsonLd(): Json[] {
       "@context": "https://schema.org",
       "@type": "OnlineStore",
       name: site.name,
-      url: absoluteUrl("/"),
+      url: siteUrl("/"),
       description: site.description,
       email: site.email,
       address: postalAddress,
@@ -163,7 +155,7 @@ export function storeJsonLd(): Json[] {
       "@context": "https://schema.org",
       "@type": "WebSite",
       name: site.name,
-      url: absoluteUrl("/"),
+      url: siteUrl("/"),
       inLanguage: "en",
     },
   ];

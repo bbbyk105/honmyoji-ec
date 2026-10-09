@@ -52,6 +52,15 @@ describe("pickClientIp", () => {
     expect(pickIp(headers, false)).toBe("203.0.113.7");
   });
 
+  it("IPv6 は /64 に丸める（/64 の中で送信元を変えてもすり抜けられない）", () => {
+    const a = pickIp(h({ "cf-connecting-ip": "2001:db8:1234:5678:aaaa::1" }), true);
+    const b = pickIp(h({ "cf-connecting-ip": "2001:0db8:1234:5678:ffff:eeee:dddd:cccc" }), true);
+    expect(a).toBe("2001:db8:1234:5678::/64");
+    expect(b).toBe(a);
+    expect(pickIp(h({ "cf-connecting-ip": "::ffff:203.0.113.7" }), true)).toBe("203.0.113.7");
+    expect(pickIp(h({ "cf-connecting-ip": "2001:db8::1" }), true)).toBe("2001:db8:0:0::/64");
+  });
+
   it("x-forwarded-for が無ければ x-real-ip、それも無ければ unknown", () => {
     expect(pickIp(h({ "x-real-ip": "203.0.113.7" }), false)).toBe("203.0.113.7");
     expect(pickIp(h({}), false)).toBe("unknown");

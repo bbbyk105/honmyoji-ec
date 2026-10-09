@@ -67,10 +67,10 @@ export const metadata: Metadata = {
     template: `%s — ${site.name}`,
   },
   description: site.description,
+  // title と description は書かない。書くと openGraph を持たないページ（About・FAQ など）の
+  // og:title / og:description が全部トップのものになる（Next はここに無いときだけページの値で埋める）
   openGraph: {
     ...OPEN_GRAPH_BASE,
-    title: `${site.name} — Tatami-beri bags, made once`,
-    description: site.description,
     images: [{ url: OPEN_GRAPH_IMAGE }],
   },
   // X（Twitter）で共有したときは大きい写真のカード
