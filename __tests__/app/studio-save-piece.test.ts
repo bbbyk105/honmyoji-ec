@@ -76,11 +76,11 @@ beforeEach(() => {
       return json(hit.map((slug) => ({ slug })));
     }
     if (method === "DELETE") {
-      // 完売・取り置きは消さない条件（or=(status.is.null,status.not.in.(sold_out,reserved))）
-      const protect = (url.searchParams.get("or") ?? "").includes("not.in.(sold_out,reserved)");
+      // 完売は消さない条件（or=(status.is.null,status.neq.sold_out)）
+      const protect = (url.searchParams.get("or") ?? "").includes("status.neq.sold_out");
       for (const slug of slugs) {
         const value = table.get(slug) ?? null;
-        if (table.has(slug) && !(protect && (value === "sold_out" || value === "reserved"))) table.delete(slug);
+        if (table.has(slug) && !(protect && value === "sold_out")) table.delete(slug);
       }
       return json([]);
     }
@@ -213,6 +213,18 @@ describe("setPiecesStatus", () => {
     expect(table.get("tokiwa-evergreen")).toBe("available");
   });
 
+  it("書き込みは、開いたときの状態ごとに一本にまとめる（作品の数だけ往復しない）", async () => {
+    const slugs = ["tokiwa-evergreen", "akane-madder", "ai-indigo"];
+    for (const slug of slugs) table.set(slug, "coming_soon");
+    const { setPiecesStatus } = load();
+
+    const result = await setPiecesStatus(slugs, "available", Object.fromEntries(slugs.map((s) => [s, "coming_soon"])));
+
+    expect(result).toEqual({ ok: true, count: 3 });
+    expect(calls.map((c) => c.method)).toEqual(["GET", "PATCH"]);
+    for (const slug of slugs) expect(table.get(slug)).toBe("available");
+  });
+
   it("開いたときの状態が無い作品は書かない（確かめようがない）", async () => {
     const { setPiecesStatus } = load();
     const result = await setPiecesStatus(["tokiwa-evergreen"], "available", {});
@@ -239,5 +251,12 @@ describe("resetPiece", () => {
     const { resetPiece } = load();
     await resetPiece(resetForm());
     expect(table.get("tokiwa-evergreen")).toBe("sold_out");
+  });
+
+  it("取り置きは人が手で付けたものなので、ふつうに取り消せる", async () => {
+    table.set("tokiwa-evergreen", "reserved");
+    const { resetPiece } = load();
+    await resetPiece(resetForm());
+    expect(table.has("tokiwa-evergreen")).toBe(false);
   });
 });

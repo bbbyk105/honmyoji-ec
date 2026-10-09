@@ -102,7 +102,7 @@ export function doubleSaleMail(o: {
  * あとでメールで読み返すことが食い違わないように。
  *
  * 電話番号は載せない（お客さま自身の情報で、確認に要らない）。返信はお店の公開アドレスに
- * 届く（`lib/mail.ts` の `sendToCustomerQuietly`）。
+ * 届く（`lib/mail.ts` の `sendToCustomer`）。
  */
 export function orderConfirmationMail(o: {
   ref: string;

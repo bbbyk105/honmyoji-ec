@@ -75,8 +75,28 @@ async function send(to: string[], mail: Mail): Promise<void> {
   });
 
   if (!res.ok) {
-    throw new Error(`Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
+    throw new MailError(res.status, `Resend ${res.status}: ${(await res.text()).slice(0, 300)}`);
   }
+}
+
+/** Resend が断った。status は HTTP の状態コード。 */
+export class MailError extends Error {
+  constructor(
+    readonly status: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = "MailError";
+  }
+}
+
+/**
+ * 送り直しても届かない失敗か（宛先の誤り・送り元の認証切れ・試験用アドレスなど、4xx。429 の
+ * 枠切れは除く）。Webhook はこれを「送れない」と記録して先へ進む —— 再送させても毎回落ち、
+ * Stripe が 3 日再送し続けるだけになる。タイムアウトや 5xx は一時的なので送り直す。
+ */
+export function isPermanentMailError(error: unknown): boolean {
+  return error instanceof MailError && error.status >= 400 && error.status < 500 && error.status !== 429;
 }
 
 /**
@@ -85,14 +105,6 @@ async function send(to: string[], mail: Mail): Promise<void> {
  *
  * 失敗しても投げない（Webhook を止めない。注文はもう保存できている）。鍵が無ければログだけ。
  */
-export async function sendToCustomerQuietly(to: string, mail: Mail): Promise<void> {
-  try {
-    await sendToCustomer(to, mail);
-  } catch (error) {
-    console.error("[mail] お客さまに送れませんでした", mail.subject, error);
-  }
-}
-
 /** お客さまに送る。**失敗したら投げる**（Webhook が「送り終えた」を記録してから次へ進むため）。 */
 export async function sendToCustomer(to: string, mail: Mail): Promise<void> {
   if (!apiKey) {

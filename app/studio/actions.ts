@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 
 import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
 import { getProduct } from "@/data/products";
-import { writeStatusIfUnchanged } from "@/lib/piece-status";
+import { writeStatusIfUnchanged, writeStatusesIfUnchanged, type StoredStatus } from "@/lib/piece-status";
 import { db, dbEnabled } from "@/lib/supabase";
 import { LOGIN_LIMITS, clientIp, limitKey, recordSuccess, takeAttempt } from "@/lib/studio-guard";
 import { notifyStudio } from "@/lib/studio-notify";
@@ -241,33 +241,27 @@ export async function setPiecesStatus(
   // 書き込みにも条件を付ける（lib/piece-status.ts）—— 読んでから書くまでの間に Webhook が
   // 完売にしても上書きしない。列は status と updated_at だけ（既にある行の価格や文言には触れない）
   const patch = { status: option.value, updated_at: new Date().toISOString() };
-  const written = new Set<string>();
-  try {
-    for (const slug of known) {
-      if (await writeStatusIfUnchanged(client, slug, stored.has(slug) ? (stored.get(slug) ?? null) : undefined, patch)) {
-        written.add(slug);
-      }
-    }
-  } catch (error) {
-    console.error("[studio] ステータスの更新に失敗", error);
-    if (written.size > 0) {
-      revalidateCatalog();
-      revalidatePath("/studio", "layout");
-    }
-    return { ok: false, error: saveError(error as { code?: string; message: string }) };
-  }
-
+  const expected = new Map<string, StoredStatus>(
+    known.map((slug) => [slug, stored.has(slug) ? (stored.get(slug) ?? null) : undefined]),
+  );
+  const { written: done, error } = await writeStatusesIfUnchanged(client, expected, patch);
+  const written = new Set(done);
   if (written.size > 0) {
     revalidateCatalog();
     revalidatePath("/studio", "layout");
   }
+  const also = written.size > 0 ? `ほかの ${written.size} 点は変えました。` : "";
+  if (error) {
+    console.error("[studio] ステータスの更新に失敗", error);
+    return { ok: false, error: `${saveError(error)}${also ? ` ${also}再読み込みしてください。` : ""}` };
+  }
+
   const missed = known.filter((slug) => !written.has(slug));
   if (missed.length > 0) {
     const names = missed.map((slug) => getProduct(slug)?.name ?? slug).join("・");
-    const done = written.size > 0 ? `ほかの ${written.size} 点は変えました。` : "";
     return {
       ok: false,
-      error: `${names} は、保存の直前にステータスが変わったので変えていません（注文が入ったなど）。${done}再読み込みしてください。`,
+      error: `${names} は、保存の直前にステータスが変わったので変えていません（注文が入ったなど）。${also}再読み込みしてください。`,
     };
   }
   return { ok: true, count: written.size };
@@ -294,18 +288,20 @@ export async function resetPiece(formData: FormData): Promise<void> {
   const client = db();
   if (!client) return;
 
-  // 完売・取り置きの作品は、ステータスだけ残して他の上書き（価格・文言）を消す。行ごと消すと、
-  // Webhook が付けた完売が消え、コード側の状態（販売中など）に戻って、売れた一点物がまた買える
+  // 完売の作品は、ステータスだけ残して他の上書き（価格・文言）を消す。行ごと消すと、Webhook が
+  // 付けた完売が消え、コード側の状態（販売中など）に戻って、売れた一点物がまた買える。
+  // 取り置きは人が手で付けるものなので、ふつうの上書きと同じく消してよい。
+  // 条件は書き込みに付ける（取り消しを押す直前に売れても、その完売は消さない）
   const { error } = await client
     .from("piece_overrides")
     .delete()
     .eq("slug", slug)
-    .or("status.is.null,status.not.in.(sold_out,reserved)");
+    .or("status.is.null,status.neq.sold_out");
   const { error: keepError } = await client
     .from("piece_overrides")
     .update({ price_aud: null, note: null, note_ja: null, story: null, story_ja: null, updated_at: new Date().toISOString() })
     .eq("slug", slug)
-    .in("status", ["sold_out", "reserved"]);
+    .eq("status", "sold_out");
   if (error || keepError) {
     console.error("[studio] 上書きの取り消しに失敗", error ?? keepError);
     return;

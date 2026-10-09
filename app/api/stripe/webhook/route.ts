@@ -2,11 +2,9 @@ import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
-import { aud, findByKey, getProduct, priceLabel, products } from "@/data/products";
-import { getPieces } from "@/lib/catalog";
+import { aud, findByKey, getProduct, products } from "@/data/products";
 import { isLang } from "@/lib/lang";
-import { notifyStore, sendToCustomer } from "@/lib/mail";
-import { markSold, type SoldClash } from "@/lib/mark-sold";
+import { isPermanentMailError, notifyStore, sendToCustomer } from "@/lib/mail";
 import { doubleSaleMail, orderConfirmationMail, orderPlacedMail } from "@/lib/order-mail";
 import { orderAmount, orderRef } from "@/lib/orders";
 import { siteUrl } from "@/lib/site-url";
@@ -52,7 +50,7 @@ type SoldLine = { slug: string | null; name: string; kanji: string; price: strin
 /** 知らせを出している配達が、落ちたまま印を残していたとき、次の再送が借り直せるまでの時間。 */
 const LEASE_MS = 5 * 60_000;
 
-/** 決済を作ったときに残した slug（重ねても getPieces / findByKey が一つにする）。 */
+/** 決済を作ったときに残した slug（重なっていても、呼び出し側が Set で一つにする）。 */
 function metadataSlugs(session: Stripe.Checkout.Session): string[] {
   return String(session.metadata?.slugs ?? "")
     .split(",")
@@ -64,41 +62,34 @@ function metadataSlugs(session: Stripe.Checkout.Session): string[] {
  * 何が売れたか。Stripe の明細（払った額）から組み、作品は **SKU で** カタログ（data/products.ts）から
  * 引く —— slug は仮の名前から作っていて、決済画面を開いている間に変わりうる。名前と SKU はコード側の
  * 値なので DB は読まない。値段は明細から（カタログの値段は払うまでの間に直されうる）。カタログから
- * 消えた作品も、メールには明細の名前で行を残す（slug は null）。明細が読めなければ metadata の slug で。
+ * 消えた作品も、メールには明細の名前で行を残す（slug は null）。
+ *
+ * 明細が読めなければ**投げる**（500 で Stripe に再送してもらう）。metadata に黙って切り替えると、
+ * slug が変わっていたときに作品を完売にできないまま「完売にしてあります」と知らせてしまう。
  */
 async function soldLines(client: Stripe, session: Stripe.Checkout.Session): Promise<SoldLine[]> {
-  try {
-    const items = await client.checkout.sessions.listLineItems(session.id, {
-      limit: 100,
-      expand: ["data.price.product"],
-    });
-    const lines: SoldLine[] = [];
-    for (const item of items.data) {
-      const product = item.price?.product;
-      const live = typeof product === "object" && product !== null && !("deleted" in product && product.deleted);
-      const meta = live ? (product as Stripe.Product).metadata : {};
-      const piece =
-        (meta.sku ? products.find((p) => p.sku === meta.sku) : undefined) ??
-        (meta.slug ? findByKey(products, meta.slug) : undefined);
-      const price = aud.format(item.amount_total / 100 / (item.quantity || 1));
-      if (piece) {
-        if (!lines.some((l) => l.slug === piece.slug)) {
-          lines.push({ slug: piece.slug, name: piece.name, kanji: piece.kanji, price });
-        }
-      } else {
-        lines.push({ slug: null, name: item.description ?? (live ? (product as Stripe.Product).name : "—"), kanji: "", price });
+  const items = await client.checkout.sessions.listLineItems(session.id, {
+    limit: 100,
+    expand: ["data.price.product"],
+  });
+  const lines: SoldLine[] = [];
+  for (const item of items.data) {
+    const product = item.price?.product;
+    const live = typeof product === "object" && product !== null && !("deleted" in product && product.deleted);
+    const meta = live ? (product as Stripe.Product).metadata : {};
+    const piece =
+      (meta.sku ? products.find((p) => p.sku === meta.sku) : undefined) ??
+      (meta.slug ? findByKey(products, meta.slug) : undefined);
+    const price = aud.format(item.amount_total / 100 / (item.quantity || 1));
+    if (piece) {
+      if (!lines.some((l) => l.slug === piece.slug)) {
+        lines.push({ slug: piece.slug, name: piece.name, kanji: piece.kanji, price });
       }
+    } else {
+      lines.push({ slug: null, name: item.description ?? (live ? (product as Stripe.Product).name : "—"), kanji: "", price });
     }
-    if (lines.length > 0) return lines;
-  } catch (error) {
-    console.error("[stripe] 明細を読めませんでした（metadata の slug で組む）", error);
   }
-  return (await getPieces(metadataSlugs(session))).map((p) => ({
-    slug: p.slug,
-    name: p.name,
-    kanji: p.kanji,
-    price: priceLabel(p) ?? "",
-  }));
+  return lines;
 }
 
 /**
@@ -148,76 +139,75 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "no database" }, { status: 500 });
   }
 
-  // 決済を作ったときの slug を、コード側のカタログで今の slug に揃える（DB は読まない）
-  const recorded = [...new Set(metadataSlugs(session).flatMap((key) => findByKey(products, key)?.slug ?? []))];
+  const intent =
+    typeof session.payment_intent === "string" ? session.payment_intent : (session.payment_intent?.id ?? null);
+  const shipping = address(session);
 
-  /** 知らせを出す印を借りている注文。落ちたらすぐ返して、次の再送が待たずに続きをやれるように */
-  let leased: number | null = null;
+  /** 知らせを出す印（借りた時刻）。自分の印のときだけ書く —— 遅れた配達が、借り直した配達の印を消さない */
+  let lease: { orderId: number; token: string } | null = null;
 
   try {
-    // 1. 注文の行。stripe_session が unique なので、再送でも二重に立たない
-    const { error } = await supabase.from("orders").upsert(
-      {
-        stripe_session: session.id,
-        stripe_intent:
-          typeof session.payment_intent === "string"
-            ? session.payment_intent
-            : (session.payment_intent?.id ?? null),
-        slugs: recorded,
-        amount_cents: session.amount_total ?? 0,
-        currency: session.currency ?? "aud",
-        status: "paid",
-        customer_name: session.customer_details?.name ?? null,
-        customer_email: session.customer_details?.email ?? null,
-        shipping: address(session),
-      },
-      { onConflict: "stripe_session", ignoreDuplicates: true },
-    );
-    if (error) throw error;
+    // 1. 何が売れたか（明細から）。完売にするのは、明細から引けた作品と、決済に残した作品の両方 ——
+    //    明細から引けない行があっても、払われた一点物を販売中のまま残さない
+    const lines = await soldLines(client, session);
+    const raw = metadataSlugs(session);
+    const recorded = raw.flatMap((key) => findByKey(products, key)?.slug ?? []);
+    const slugs = [...new Set([...lines.flatMap((l) => (l.slug ? [l.slug] : [])), ...recorded])];
+    // 注文の行には、引けなかった slug も残す（あとで何が売れたかを追えるように）
+    const orderSlugs = [...new Set([...slugs, ...raw])];
 
-    // 2. 初めての配達か、途中で落ちた配達の続きか、知らせまで済んだ再送かは、行を読んで決める
-    //    （「行が新しく入ったか」で決めると、途中で落ちた配達の続きを二度とやらない）
-    const { data: row, error: readError } = await supabase
-      .from("orders")
-      .select("id,notified_at")
-      .eq("stripe_session", session.id)
+    // 2. 売れたことを記録する（注文の行・完売・二重販売の判定）。一つのトランザクションで、行を押さえて
+    //    決める（supabase/migrations/0004_webhook_retry.sql の record_sale）。再送では最初に決めた結果を返す
+    const { data: sale, error: saleError } = await supabase
+      .rpc("record_sale", {
+        p_session: session.id,
+        p_intent: intent,
+        p_slugs: slugs,
+        p_order_slugs: orderSlugs,
+        p_amount_cents: session.amount_total ?? 0,
+        p_currency: session.currency ?? "aud",
+        p_customer_name: session.customer_details?.name ?? null,
+        p_customer_email: session.customer_details?.email ?? null,
+        p_shipping: shipping,
+        p_code_status: Object.fromEntries(slugs.map((slug) => [slug, getProduct(slug)?.status ?? null])),
+      })
       .single();
-    if (readError) throw readError;
-    const orderId = row.id as number;
-    // 知らせまで済んだ注文の再送は何もしない（あとで管理画面で販売中に戻した作品を、古い再送で
-    // また完売にしない）
-    if (row.notified_at) return NextResponse.json({ received: true });
+    if (saleError) throw saleError;
+    const result = sale as {
+      sale_order_id: number;
+      sale_notified_at: string | null;
+      sale_mails_sent: string[] | null;
+      sale_clashes: { slug: string; status: "sold_out" | "reserved" }[] | null;
+    };
+    const orderId = result.sale_order_id;
+    const clashes = result.sale_clashes ?? [];
+
+    // 売れたことは記録できた。メールより先に公開ページを作り直す（売れた一点物を出し続けない）
+    revalidateCatalog();
+
+    // 知らせまで済んだ注文の再送は何もしない
+    if (result.sale_notified_at) return NextResponse.json({ received: true });
 
     // 3. 知らせを出す印を借りる。同じ配達が同時に届いたら一方だけが進み、もう一方は 503 で
     //    Stripe にあとで送り直してもらう。落ちて印が残っても、LEASE_MS たてば次の再送が借り直せる
-    const now = new Date().toISOString();
+    const token = new Date().toISOString();
     const staleBefore = new Date(Date.now() - LEASE_MS).toISOString();
-    const { data: lease, error: leaseError } = await supabase
+    const { data: leased, error: leaseError } = await supabase
       .from("orders")
-      .update({ notifying_at: now })
+      .update({ notifying_at: token })
       .eq("id", orderId)
       .is("notified_at", null)
       .or(`notifying_at.is.null,notifying_at.lt.${staleBefore}`)
       .select("id,mails_sent");
     if (leaseError) throw leaseError;
-    if ((lease ?? []).length === 0) return NextResponse.json({ error: "in progress" }, { status: 503 });
-    leased = orderId;
-    const sent = new Set<string>((lease?.[0]?.mails_sent as string[] | null) ?? []);
+    if ((leased ?? []).length === 0) return NextResponse.json({ error: "in progress" }, { status: 503 });
+    lease = { orderId, token };
+    const sent = new Set<string>((leased?.[0]?.mails_sent as string[] | null) ?? []);
 
-    // 4. 何が売れたか（明細から）。完売にするのは、明細から引けた作品と決済に残した作品の両方 ——
-    //    明細から引けない行があっても、払われた一点物を販売中のまま残さない
-    const lines = await soldLines(client, session);
-    const slugs = [...new Set([...lines.flatMap((l) => (l.slug ? [l.slug] : [])), ...recorded])];
-
-    // 5. 完売に。何度呼んでも同じ結果になる（lib/mark-sold.ts）
-    const clashes: SoldClash[] = await markSold(supabase, slugs, now, session.id);
-
-    // 6. 知らせる。一通送るごとに「送り終えた」を残す —— 途中で落ちたら 500 で再送してもらい、
-    //    送っていないものだけ送る
+    // 4. 知らせる。一通ごとに記録する。一時的な失敗は 500 で再送してもらい、送っていないものだけ
+    //    送る。送り直しても届かない失敗（宛先の誤りなど）は「送れない」と記録して先へ進む
     const ref = orderRef(orderId);
     const studioUrl = siteUrl(`/studio/orders/${orderId}`);
-    const intent =
-      typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
     const amount = orderAmount({ amount_cents: session.amount_total ?? 0, currency: session.currency ?? "aud" });
     const customerName = session.customer_details?.name ?? null;
     const customerEmail = session.customer_details?.email ?? null;
@@ -226,26 +216,27 @@ export async function POST(request: NextRequest) {
     const lang = isLang(session.metadata?.lang) ? session.metadata.lang : "en";
 
     const deliver = async (kind: MailKind, send: () => Promise<void>) => {
-      if (sent.has(kind)) return;
-      await send();
-      sent.add(kind);
-      const { error: markError } = await supabase.from("orders").update({ mails_sent: [...sent] }).eq("id", orderId);
+      if (sent.has(kind) || sent.has(`${kind}:failed`)) return;
+      try {
+        await send();
+        sent.add(kind);
+      } catch (error) {
+        if (!isPermanentMailError(error)) throw error;
+        console.error(`[stripe] ${ref} の ${kind} のメールは送れません（送り直しても届かない）`, error);
+        sent.add(`${kind}:failed`);
+      }
+      const { data: marked, error: markError } = await supabase
+        .from("orders")
+        .update({ mails_sent: [...sent] })
+        .eq("id", orderId)
+        .eq("notifying_at", token)
+        .select("id");
       if (markError) throw markError;
+      if ((marked ?? []).length === 0) throw new Error("知らせの印が別の配達に移った");
     };
 
     await deliver("store", () =>
-      notifyStore(
-        orderPlacedMail({
-          ref,
-          amount,
-          customerName,
-          customerEmail,
-          customerLang: lang,
-          shipping: address(session),
-          pieces,
-          studioUrl,
-        }),
-      ),
+      notifyStore(orderPlacedMail({ ref, amount, customerName, customerEmail, customerLang: lang, shipping, pieces, studioUrl })),
     );
 
     // お客さまへの確認は、取り違えが無いときだけ。二重に売れたかもしれない注文に
@@ -253,10 +244,7 @@ export async function POST(request: NextRequest) {
     // そのときはお店がどちらに渡すかを決めてから、自分で書く（doubleSaleMail に書いてある）。
     if (clashes.length === 0 && customerEmail) {
       await deliver("customer", () =>
-        sendToCustomer(
-          customerEmail,
-          orderConfirmationMail({ ref, amount, customerName, shipping: address(session), pieces, lang }),
-        ),
+        sendToCustomer(customerEmail, orderConfirmationMail({ ref, amount, customerName, shipping, pieces, lang })),
       );
     }
     if (clashes.length > 0) {
@@ -276,27 +264,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 7. 終わった印。印を返す
+    // 5. 終わった印。自分の印のときだけ
     const { error: doneError } = await supabase
       .from("orders")
       .update({ notified_at: new Date().toISOString(), notifying_at: null })
-      .eq("id", orderId);
+      .eq("id", orderId)
+      .eq("notifying_at", token);
     if (doneError) throw doneError;
   } catch (error) {
     console.error("[stripe] 注文の処理に失敗", error);
-    if (leased !== null) {
-      // 印を返す（postgrest-js は失敗しても投げない。返せなくても LEASE_MS たてば次の再送が借り直せる）
-      await supabase.from("orders").update({ notifying_at: null }).eq("id", leased);
+    if (lease) {
+      // 自分の印なら返す（postgrest-js は失敗しても投げない。返せなくても LEASE_MS で借り直せる）
+      await supabase.from("orders").update({ notifying_at: null }).eq("id", lease.orderId).eq("notifying_at", lease.token);
     }
     // 500 を返して Stripe に再送させる（決済は通っているので落としてはいけない）。再送では、
-    // 完売をやり直し、送っていないメールだけ送る
+    // 記録は最初の結果のまま、送っていないメールだけ送る
     return NextResponse.json({ error: "save failed" }, { status: 500 });
   }
 
+  return NextResponse.json({ received: true });
+}
+
+/** 売れた作品が出るページを作り直す。 */
+function revalidateCatalog(): void {
   revalidatePath("/");
   revalidatePath("/collection");
   revalidatePath("/collection/[slug]", "page");
   revalidatePath("/studio", "layout");
-
-  return NextResponse.json({ received: true });
 }

@@ -126,7 +126,16 @@ export default async function StudioPiecePage({
               <button type="submit" className={`mt-2 ${BTN_QUIET} text-clay`}>
                 上書きをすべて取り消してコード側に戻す
               </button>
+              {override.status === "sold_out" ? (
+                <p className="mt-2 font-sans text-[12.5px] leading-[1.8] text-mist">
+                  完売のステータスは残ります（売れた一点物がまた買えるようにならないため）。販売に戻すときは、ステータスを選び直して保存してください。
+                </p>
+              ) : null}
             </form>
+          ) : dbDown ? (
+            <p className="mt-6 px-1 font-sans text-[13px] leading-[1.8] text-mist">
+              データベースに接続できないため、この画面での上書きがあるかを確認できません。
+            </p>
           ) : (
             <p className="mt-6 px-1 font-sans text-[13px] leading-[1.8] text-mist">
               まだ何も上書きしていません。表示されているのは

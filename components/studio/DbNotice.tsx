@@ -15,10 +15,10 @@ export function MailNotice() {
         メールの設定がありません。お客さまの画面には「送れました」と出ますが、中身はサーバーの記録に残るだけです。
       </p>
       <p className="mt-2 max-w-[46em] font-sans text-[13px] leading-[1.9] text-mist">
-        Vercel の環境変数に <code className="font-mono text-[12.5px]">RESEND_API_KEY</code>・
+        Cloudflare の Worker のシークレット（<code className="font-mono text-[12.5px]">npx wrangler secret put</code>）に{" "}
+        <code className="font-mono text-[12.5px]">RESEND_API_KEY</code>・
         <code className="font-mono text-[12.5px]">RESEND_FROM</code>・
-        <code className="font-mono text-[12.5px]">NOTIFY_EMAILS</code>（受け取るアドレス。カンマ区切りで複数可）を入れて、
-        デプロイし直してください。
+        <code className="font-mono text-[12.5px]">NOTIFY_EMAILS</code>（受け取るアドレス。カンマ区切りで複数可）を入れてください。
       </p>
     </div>
   );
@@ -58,8 +58,10 @@ export function DbDownNotice() {
     <div className="mb-8 border border-clay/40 bg-clay/10 px-6 py-5">
       <p className="font-sans text-[15px] font-semibold text-clay">データベースに一時的に接続できません</p>
       <p className="mt-2 max-w-[46em] font-sans text-[13.5px] leading-[1.9] text-bone">
-        いまは変更できません。少し待ってから再読み込みしてください。続くときは、Supabase のダッシュボードで
-        プロジェクトが止まっていないか（Paused）を確認してください。
+        いまは変更できません。表示している価格とステータスは
+        <code className="mx-1 font-mono text-[12.5px]">data/products.ts</code>
+        の値で、この画面で変えた値は反映されていません。少し待ってから再読み込みしてください。続くときは、Supabase
+        のダッシュボードでプロジェクトが止まっていないか（Paused）を確認してください。
       </p>
     </div>
   );
