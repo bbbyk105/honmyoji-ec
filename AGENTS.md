@@ -168,7 +168,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `app/sitemap.ts`（固定ページ・作品 26 点と写真・Blog の記事、1 時間ごと）と `app/robots.ts`（止めるのは `/api/` だけ。`/studio` や thank-you は noindex で外してあり、robots で塞ぐと noindex が読まれない）。Cloudflare が robots.txt の前に Content Signals を足して出す。
 - **どのページにも canonical**（`alternates.canonical`、自分自身のクエリ無しの URL）。`/contact?product=…` のような問い合わせの導線がクエリ付きで増えるため。
 - 構造化データは `lib/seo.ts` が組み、`components/seo/JsonLd.tsx` が body に出す（`metadata.other` に入れると `<meta>` になって読まれない）。作品 = Product（値段・在庫・送料・返品不可。在庫は状態から: Coming soon は OutOfStock、完売は SoldOut）＋パンくず、記事 = BlogPosting＋パンくず、トップ = OnlineStore と WebSite。**ページに見えていることだけを書く**（送料や返品の決まりを変えたら `lib/stripe-config.ts` と `data/site.ts` の legal に合わせて自動で変わる）。**電話番号は載せない**（作り手の携帯。特商法のページにだけ出す）。店には Instagram（`sameAs`）と本妙寺の地図（`hasMap`・`geo`、`data/site.ts` の `maps` / `geo`）を載せる。地図は Contact に「Open in Google Maps」のリンクだけ置き、**iframe で埋め込まない**（Google の重いスクリプトと cookie を初回から読む。SEO チェックリスト #56）。
-- 試し買い用（`data/products.ts` の `test`）は noindex・サイトマップに入れない・構造化データを出さない。一覧から外すのは `isListed()`。
+- 試し買い用（`data/products.ts` の `test`）は noindex・サイトマップに入れない・構造化データを出さない・送料なし。一覧から外すのは `isListed()`。2026-10-09 に A$1 の一点で本番の決済を確かめて消した（印の仕組みだけ残してある）。
 - パンくずは画面には出していない（版面に足すとテンプレートらしく見える）。構造化データだけ。
 
 ## デザイン

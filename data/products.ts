@@ -53,8 +53,10 @@ export type Product = {
   /** public/images/products/<folder>/1.webp … n.webp。1 が主役（比率は `LINE_RATIO`） */
   galleryCount: number;
   /**
-   * 試し買い用（本番の決済を本物のカードで確かめるため）。一覧・関連作品に出さず、
-   * 検索エンジンにも載せず（noindex）、送料を付けない。URL を知っている人だけが買える。
+   * 試し買い用（本番の決済を本物のカードで確かめるため）。一覧・関連作品・サイトマップに出さず、
+   * 検索エンジンにも載せず（noindex・構造化データなし）、送料を付けない。URL を知っている人だけが
+   * 買える。2026-10-09 に A$1 の一点（test-purchase）で本番の決済 → Webhook → 注文・完売・メールを
+   * 確かめて消した。また試すときは、この印を付けた一点を足し、写真を test-01/ に置く。
    */
   test?: boolean;
 };
@@ -685,33 +687,6 @@ export const products: Product[] = [
     size: null,
     weightG: null,
     galleryCount: 1,
-  },
-
-  /* ---- 試し買い用（2026-10-09）-------------------------------------------------------
-     本番の Stripe で、決済 → Webhook → 注文の記録・完売・メールまでを本物のカードで通すため。
-     A$1（≒100 円）・送料なし・一覧に出さない。/collection/test-purchase から買える。
-     買うと完売になるので、もう一度試すときは /studio で Available に戻す。
-     写真は bottle-13 の主役を写しただけ（prepare-photos.py を回すと寸法表から落ちる）。
-     確かめ終えたら、この一点と public/images/products/test-01/ を消す。 */
-  {
-    slug: "test-purchase",
-    folder: "test-01",
-    sku: "MI-TEST-001",
-    name: "Test purchase",
-    kanji: "試",
-    reading: "ためし",
-    line: "tatami-beri",
-    priceAud: 1,
-    status: "available",
-    note: "For checking payments only. Not a real piece.",
-    noteJa: "決済の確認用です。作品ではありません。",
-    story: "This page exists only to test the checkout. Nothing will be shipped.",
-    storyJa: "決済を確かめるためだけのページです。発送はしません。",
-    materials: BOTTLE_MATERIALS,
-    size: null,
-    weightG: null,
-    galleryCount: 1,
-    test: true,
   },
 ];
 
