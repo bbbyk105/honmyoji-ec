@@ -48,3 +48,19 @@ export function DbNotice() {
     </div>
   );
 }
+
+/**
+ * DB に一時的に繋がらないとき（鍵はあるが読めない。Supabase の不調・自動停止など）。
+ * 管理画面は縮退した値で編集させない —— 比べる元がずれ、保存が誤って断られるか、古い値で上書きする。
+ */
+export function DbDownNotice() {
+  return (
+    <div className="mb-8 border border-clay/40 bg-clay/10 px-6 py-5">
+      <p className="font-sans text-[15px] font-semibold text-clay">データベースに一時的に繋がりません</p>
+      <p className="mt-2 max-w-[46em] font-sans text-[13.5px] leading-[1.9] text-bone">
+        いまは変更できません。少し待ってから再読み込みしてください。続くときは、Supabase のダッシュボードで
+        プロジェクトが止まっていないか（Paused）を確認してください。
+      </p>
+    </div>
+  );
+}

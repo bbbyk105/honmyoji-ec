@@ -2,8 +2,8 @@ import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import type Stripe from "stripe";
 
-import { aud, getProduct, priceLabel } from "@/data/products";
-import { getPieces } from "@/lib/catalog";
+import { aud, findByKey, getProduct, priceLabel } from "@/data/products";
+import { getCatalog, getPieces } from "@/lib/catalog";
 import { isLang } from "@/lib/lang";
 import { notifyStoreQuietly, sendToCustomerQuietly } from "@/lib/mail";
 import { markSold, type SoldClash } from "@/lib/mark-sold";
@@ -46,28 +46,54 @@ function address(session: Stripe.Checkout.Session) {
   };
 }
 
+/** メールに載せる一行と、完売にする作品。 */
+type SoldLine = { slug: string | null; name: string; kanji: string; price: string };
+
 /**
- * 払った額（Stripe の明細）を作品ごとに。メールに載せる値段はここから —— カタログの値段は、
- * 決済画面を開いてから払うまでの間に管理画面で直されうるので、行の値段と合計が食い違う。
- * 読めなければ空（呼び出し側がカタログの値段に落とす）。
+ * 何が売れたか。Stripe の明細（払った額）から組み、作品は **SKU で** 今のカタログから引く ——
+ * slug は仮の名前から作っていて、決済画面を開いている間に変わりうる（名前が届いたとき）。
+ * 値段も明細から（カタログの値段は払うまでの間に直されうる）。カタログから消えた作品も、
+ * メールには明細の名前で行を残す（slug は null で、完売にはしない）。
+ * 明細が読めなければ、決済の metadata の slug を今のカタログで引く。
  */
-async function paidPrices(client: Stripe, sessionId: string): Promise<Map<string, string>> {
-  const prices = new Map<string, string>();
+async function soldLines(client: Stripe, session: Stripe.Checkout.Session): Promise<SoldLine[]> {
+  const catalog = await getCatalog();
   try {
-    const items = await client.checkout.sessions.listLineItems(sessionId, {
+    const items = await client.checkout.sessions.listLineItems(session.id, {
       limit: 100,
       expand: ["data.price.product"],
     });
+    const lines: SoldLine[] = [];
     for (const item of items.data) {
       const product = item.price?.product;
-      if (typeof product !== "object" || product === null || ("deleted" in product && product.deleted)) continue;
-      const slug = product.metadata?.slug;
-      if (slug) prices.set(slug, aud.format(item.amount_total / 100 / (item.quantity || 1)));
+      const live = typeof product === "object" && product !== null && !("deleted" in product && product.deleted);
+      const meta = live ? (product as Stripe.Product).metadata : {};
+      const piece =
+        (meta.sku ? catalog.find((p) => p.sku === meta.sku) : undefined) ??
+        (meta.slug ? findByKey(catalog, meta.slug) : undefined);
+      const price = aud.format(item.amount_total / 100 / (item.quantity || 1));
+      if (piece) {
+        if (!lines.some((l) => l.slug === piece.slug)) {
+          lines.push({ slug: piece.slug, name: piece.name, kanji: piece.kanji, price });
+        }
+      } else {
+        lines.push({ slug: null, name: item.description ?? (live ? (product as Stripe.Product).name : "—"), kanji: "", price });
+      }
     }
+    if (lines.length > 0) return lines;
   } catch (error) {
-    console.error("[stripe] 明細を読めませんでした（メールはカタログの値段で出す）", error);
+    console.error("[stripe] 明細を読めませんでした（metadata の slug で組む）", error);
   }
-  return prices;
+  // 重ねない（同じ slug が二つあると完売の書き込みが同じ主キーを二行出して弾かれる）
+  const slugs = [
+    ...new Set(
+      String(session.metadata?.slugs ?? "")
+        .split(",")
+        .map((v) => v.trim())
+        .filter(Boolean),
+    ),
+  ];
+  return (await getPieces(slugs)).map((p) => ({ slug: p.slug, name: p.name, kanji: p.kanji, price: priceLabel(p) ?? "" }));
 }
 
 /**
@@ -121,28 +147,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "no database" }, { status: 500 });
   }
 
-  // 重ねない。同じ slug が二つあると、下の piece_overrides の upsert が同じ主キーを
-  // 二行出して DB に弾かれ、再送のたびに 500 になる（作品は販売中のまま残る）。
-  // 決済を作る側でも一つにしているが、それ以前に作られた決済画面のぶんもここで受ける。
-  const slugs = [
-    ...new Set(
-      String(session.metadata?.slugs ?? "")
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean),
-    ),
-  ];
+  const lines = await soldLines(client, session);
+  const slugs = lines.flatMap((l) => (l.slug ? [l.slug] : []));
 
-  // メールに載せる名前と値段。取り違えの判定には使わない（lib/mark-sold.ts が書き込みで決める）
-  const before = await getPieces(slugs);
-
-  let orderId: number | null = null;
+  let order: { id: number; notified_at: string | null };
   let clashes: SoldClash[] = [];
 
   try {
-    // stripe_session が unique なので、Stripe が同じイベントを再送しても
-    // 二重に注文が立たない。返ってくるのは新しく入った行だけ（再送なら空）。
-    const { data: inserted, error } = await supabase.from("orders").upsert(
+    // stripe_session が unique なので、Stripe が同じイベントを再送しても二重に注文が立たない
+    const { error } = await supabase.from("orders").upsert(
       {
         stripe_session: session.id,
         stripe_intent:
@@ -158,44 +171,54 @@ export async function POST(request: NextRequest) {
         shipping: address(session),
       },
       { onConflict: "stripe_session", ignoreDuplicates: true },
-    ).select("id");
+    );
     if (error) throw error;
-    const id = inserted?.[0]?.id;
-    if (typeof id === "number") orderId = id;
 
-    // 一点物なので、売れたら在庫から下ろす。ここを手作業にすると、二人目に
-    // 買える状態のまま見えてしまう時間が必ずできる。
-    const now = new Date().toISOString();
-    if (orderId !== null) {
-      // 初めて入った注文: 「まだ売れていないものだけ完売にする」で書き、もう売れていた作品を拾う
-      clashes = await markSold(supabase, slugs, now);
-    } else if (slugs.length > 0) {
-      // 再送: 前の配達で完売にしてあるはず。念のため揃えるだけ（取り違えの判定はしない）
-      const { error: soldError } = await supabase.from("piece_overrides").upsert(
-        slugs.map((slug) => ({ slug, status: "sold_out", updated_at: now })),
-        { onConflict: "slug" },
-      );
-      if (soldError) throw soldError;
-    }
+    // 初めての配達か、前の配達が途中で落ちた再送か、知らせまで済んだ再送かは、行を読んで決める
+    // （「行が新しく入ったか」で決めると、途中で落ちた配達の続きを二度とやらない）
+    const { data: row, error: readError } = await supabase
+      .from("orders")
+      .select("id,notified_at")
+      .eq("stripe_session", session.id)
+      .single();
+    if (readError) throw readError;
+    order = { id: row.id as number, notified_at: (row.notified_at as string | null) ?? null };
+
+    // 知らせまで済んだ注文の再送は何もしない（あとで管理画面で販売中に戻した作品を、古い再送で
+    // また完売にしない）
+    if (order.notified_at !== null) return NextResponse.json({ received: true });
+
+    // 一点物なので、売れたら在庫から下ろす。何度呼んでも同じ結果になる（lib/mark-sold.ts）
+    clashes = await markSold(supabase, slugs, new Date().toISOString(), session.id);
+
+    // 知らせる権利を先に取る。同じ配達が同時に二つ届いても、送るのはここを取った方だけ
+    const { data: claimed, error: claimError } = await supabase
+      .from("orders")
+      .update({ notified_at: new Date().toISOString() })
+      .eq("id", order.id)
+      .is("notified_at", null)
+      .select("id");
+    if (claimError) throw claimError;
+    if ((claimed ?? []).length === 0) return NextResponse.json({ received: true });
   } catch (error) {
     console.error("[stripe] 注文の保存に失敗", error);
-    // 500 を返して Stripe に再送させる（決済は通っているので落としてはいけない）
+    // 500 を返して Stripe に再送させる（決済は通っているので落としてはいけない）。再送では、
+    // 知らせ済みでない限り、完売と知らせをもう一度やる
     return NextResponse.json({ error: "save failed" }, { status: 500 });
   }
 
-  // お店に知らせるのは初めて入った注文のときだけ（再送のたびに届かないように）。
-  // 送れなくても 200 を返す —— 注文は保存できているので、Stripe に再送させる理由が無い。
-  if (orderId !== null) {
-    const ref = orderRef(orderId);
-    const studioUrl = siteUrl(`/studio/orders/${orderId}`);
+  // 知らせる。送れなくても 200 を返す —— 注文は保存できていて、知らせる権利も取ってあるので、
+  // 再送させると二通目が出る
+  {
+    const ref = orderRef(order.id);
+    const studioUrl = siteUrl(`/studio/orders/${order.id}`);
     const intent =
       typeof session.payment_intent === "string" ? session.payment_intent : session.payment_intent?.id;
 
     const amount = orderAmount({ amount_cents: session.amount_total ?? 0, currency: session.currency ?? "aud" });
     const customerName = session.customer_details?.name ?? null;
     const customerEmail = session.customer_details?.email ?? null;
-    const paid = await paidPrices(client, session.id);
-    const pieces = before.map((p) => ({ name: p.name, kanji: p.kanji, price: paid.get(p.slug) ?? priceLabel(p) }));
+    const pieces = lines.map((l) => ({ name: l.name, kanji: l.kanji, price: l.price }));
     // 決済を始めたときに決めた言語（lib/lang.ts）。それより前に作られた決済は英語
     const lang = isLang(session.metadata?.lang) ? session.metadata.lang : "en";
 

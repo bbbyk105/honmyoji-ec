@@ -157,6 +157,31 @@ function merge(product: Product, o: Override | undefined): Product {
   };
 }
 
+/**
+ * 管理画面用のカタログと上書き。**DB を必ず読む**（クールダウンもタイムアウトの縮退もしない）。
+ * 読めなければ投げる —— 呼び出し側は「繋がらない」と出して編集を止める。
+ *
+ * 公開ページの getOverrides は、DB が落ちていればコード側の値に縮退する（サイトを止めない）。
+ * 管理画面でそれをすると、比べる元（開いたときの状態）がコード側の値になり、保存が
+ * 「注文が入った」という誤った理由で断られる（2026-10-09 のレビュー）。
+ */
+export async function getStudioCatalog(): Promise<{ catalog: Product[]; overrides: Map<string, Override> }> {
+  const overrides = new Map<string, Override>();
+  const client = db();
+  if (client) {
+    const { data, error } = await client
+      .from("piece_overrides")
+      .select("*")
+      .abortSignal(AbortSignal.timeout(8000));
+    if (error) throw error;
+    for (const row of data ?? []) {
+      const o = toOverride(row as Record<string, unknown>);
+      if (o) overrides.set(o.slug, o);
+    }
+  }
+  return { catalog: products.map((p) => merge(p, overrides.get(p.slug))), overrides };
+}
+
 /** 公開ページが読むカタログ。順序は products.ts のまま（展示の並び）。 */
 export const getCatalog = cache(async (): Promise<Product[]> => {
   const overrides = await getOverrides();

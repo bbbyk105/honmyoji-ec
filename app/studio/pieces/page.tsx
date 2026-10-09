@@ -1,9 +1,9 @@
-import { DbNotice } from "@/components/studio/DbNotice";
+import { DbDownNotice, DbNotice } from "@/components/studio/DbNotice";
 import { PieceTable, type PieceGroup } from "@/components/studio/PieceTable";
 import { STUDIO_SHELL } from "@/components/studio/shell";
 import { Kpi, StudioHead } from "@/components/studio/StudioHead";
-import { LINE_LABEL, LINE_ORDER, leadSrc, priceLabel, type Product } from "@/data/products";
-import { getCatalog, getOverrides } from "@/lib/catalog";
+import { LINE_LABEL, LINE_ORDER, leadSrc, priceLabel, products, type Product } from "@/data/products";
+import { getStudioCatalog, type Override } from "@/lib/catalog";
 import { requireSession } from "@/lib/studio-session";
 import { dbEnabled } from "@/lib/supabase";
 
@@ -26,7 +26,13 @@ function kind(piece: Product): string {
 export default async function StudioPiecesPage() {
   await requireSession();
 
-  const [catalog, overrides] = await Promise.all([getCatalog(), getOverrides()]);
+  // DB を必ず読む（縮退した値で編集させない）。読めなければ帯を出して編集を止める
+  const studio = await getStudioCatalog().catch((error: unknown) => {
+    console.error("[studio] piece_overrides を読めませんでした", error);
+    return null;
+  });
+  const dbDown = studio === null;
+  const { catalog, overrides } = studio ?? { catalog: products, overrides: new Map<string, Override>() };
 
   const groups: PieceGroup[] = LINE_ORDER.map((line) => ({
     key: line,
@@ -69,9 +75,9 @@ export default async function StudioPiecesPage() {
         }
       />
 
-      {!dbEnabled ? <DbNotice /> : null}
+      {!dbEnabled ? <DbNotice /> : dbDown ? <DbDownNotice /> : null}
 
-      <PieceTable groups={groups} disabled={!dbEnabled} />
+      <PieceTable groups={groups} disabled={!dbEnabled || dbDown} />
 
       <p className="mt-10 max-w-[46em] font-sans text-[13px] leading-[1.9] text-mist">
         写真の枚数・寸法・SKU は

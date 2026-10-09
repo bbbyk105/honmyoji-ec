@@ -12,6 +12,10 @@ import { getProduct, type ProductStatus } from "@/data/products";
    売れても警告が出ない（監査 11）。ここでは書き込みそのものに条件を付ける。「まだ売れて
    いない行だけ完売にする」update は行の鍵で順番になるので、後から来た方は 0 件になる。
    その 0 件になった作品が、取り違えた作品。DB に届かなければ投げる（Webhook は 500 で再送）。
+
+   **何度呼んでも同じ結果になる**（Webhook の再送でもう一度呼ばれる）。完売にした決済を
+   `sold_session` に残し、「もう完売」の作品のうち自分の決済で完売にしたものは取り違えに
+   数えない —— 前の配達が途中まで進んでから落ちても、再送で誤って二重販売と言わない。
    ------------------------------------------------------------------ */
 
 type Blocking = Extract<ProductStatus, "sold_out" | "reserved">;
@@ -23,10 +27,16 @@ const isBlocking = (status: unknown): status is Blocking => status === "sold_out
 /** 行が無い・status が空 = コード側（data/products.ts）の状態。 */
 const codeStatus = (slug: string): ProductStatus | undefined => getProduct(slug)?.status;
 
-export async function markSold(client: PostgrestClient, slugs: string[], now: string): Promise<SoldClash[]> {
+export async function markSold(
+  client: PostgrestClient,
+  slugs: string[],
+  now: string,
+  /** この決済（Stripe の Checkout Session の ID）。完売にした決済として残す */
+  sessionId: string,
+): Promise<SoldClash[]> {
   if (slugs.length === 0) return [];
   const clashes: SoldClash[] = [];
-  const sold = { status: "sold_out", updated_at: now };
+  const sold = { status: "sold_out", updated_at: now, sold_session: sessionId };
 
   // 1. 行があり、売れていない（完売でも取り置きでもない）ものを完売に。status が空の行は 3 へ
   const first = await client
@@ -75,12 +85,14 @@ export async function markSold(client: PostgrestClient, slugs: string[], now: st
       if (isBlocking(code)) clashes.push({ slug, status: code });
     }
 
-    // 3b. 決済の前にもう完売・取り置きだった。取り置きはお金が入ったので完売に
+    // 3b. もう完売・取り置きだった。この決済が前の配達で完売にしたもの（sold_session が同じ）は
+    //     取り違えではない。それ以外は決済の前にもう買えなかった作品。取り置きはお金が入ったので完売に
     const taken = rest.filter((slug) => !done.has(slug));
     if (taken.length > 0) {
-      const current = await client.from("piece_overrides").select("slug,status").in("slug", taken);
+      const current = await client.from("piece_overrides").select("slug,status,sold_session").in("slug", taken);
       if (current.error) throw current.error;
       for (const row of current.data ?? []) {
+        if (row.sold_session === sessionId) continue;
         clashes.push({ slug: row.slug as string, status: isBlocking(row.status) ? row.status : "sold_out" });
       }
       const settle = await client.from("piece_overrides").update(sold).in("slug", taken).eq("status", "reserved");

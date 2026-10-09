@@ -26,6 +26,10 @@ import {
 
 export type FormState = { error?: string; saved?: string };
 
+/** 開いたあとでステータスが変わっていたとき（作品の編集）。 */
+const MOVED_ONE =
+  "画面を開いたあとで、この作品のステータスが変わっています（注文が入ったなど）。再読み込みしてから保存してください。";
+
 /** 空欄は「コード側の値を使う」= null。空文字を入れると note が消える。 */
 function optional(formData: FormData, key: string): string | null {
   const value = String(formData.get(key) ?? "").trim();
@@ -151,19 +155,28 @@ export async function savePiece(_prev: FormState, formData: FormData): Promise<F
       console.error("[studio] piece の状態を読めませんでした", readError);
       return { error: saveError(readError) };
     }
-    if ((current?.status ?? null) !== statusWas) {
-      return {
-        error: "画面を開いたあとで、この作品のステータスが変わっています（注文が入ったなど）。再読み込みしてから保存してください。",
-      };
-    }
+    if ((current?.status ?? null) !== statusWas) return { error: MOVED_ONE };
     row.status = status;
-  }
 
-  const { error } = await client.from("piece_overrides").upsert(row, { onConflict: "slug" });
-
-  if (error) {
-    console.error("[studio] piece の保存に失敗", error);
-    return { error: saveError(error) };
+    // 書き込みにも条件を付ける —— 読んでから書くまでの間に Webhook が完売にしても上書きしない。
+    // 行があれば「開いたときの状態のままなら」の update、無ければ「無いままなら」の insert
+    const write = current
+      ? statusWas === null
+        ? client.from("piece_overrides").update(row).eq("slug", slug).is("status", null)
+        : client.from("piece_overrides").update(row).eq("slug", slug).eq("status", statusWas)
+      : client.from("piece_overrides").upsert(row, { onConflict: "slug", ignoreDuplicates: true });
+    const { data: written, error } = await write.select("slug");
+    if (error) {
+      console.error("[studio] piece の保存に失敗", error);
+      return { error: saveError(error) };
+    }
+    if ((written ?? []).length === 0) return { error: MOVED_ONE };
+  } else {
+    const { error } = await client.from("piece_overrides").upsert(row, { onConflict: "slug" });
+    if (error) {
+      console.error("[studio] piece の保存に失敗", error);
+      return { error: saveError(error) };
+    }
   }
 
   revalidateCatalog();
@@ -227,23 +240,76 @@ export async function setPiecesStatus(
     };
   }
 
-  // 列を status と updated_at だけにして upsert する。既にある行の価格や文言には触れない。
-  const now = new Date().toISOString();
-  const { error } = await client
-    .from("piece_overrides")
-    .upsert(
-      known.map((slug) => ({ slug, status: option.value, updated_at: now })),
-      { onConflict: "slug" },
-    );
+  // 書き込みにも条件を付ける —— 読んでから書くまでの間に Webhook が完売にしても上書きしない。
+  // 列は status と updated_at だけ（既にある行の価格や文言には触れない）。
+  const patch = { status: option.value, updated_at: new Date().toISOString() };
+  const written = new Set<string>();
+  const take = (rows: { slug: unknown }[] | null) => (rows ?? []).forEach((r) => written.add(r.slug as string));
 
-  if (error) {
+  // 行があって status が入っている作品: 開いたときの状態ごとに、その状態のままのものだけ書く
+  const byWas = new Map<string, string[]>();
+  for (const slug of known) {
+    const value = stored.get(slug);
+    if (value === undefined || value === null) continue;
+    byWas.set(was[slug], [...(byWas.get(was[slug]) ?? []), slug]);
+  }
+  // 行はあるが status が空（= コード側の状態）の作品と、行が無い作品
+  const empty = known.filter((slug) => stored.has(slug) && stored.get(slug) === null);
+  const missing = known.filter((slug) => !stored.has(slug));
+
+  try {
+    for (const [value, group] of byWas) {
+      const { data, error } = await client
+        .from("piece_overrides")
+        .update(patch)
+        .in("slug", group)
+        .eq("status", value)
+        .select("slug");
+      if (error) throw error;
+      take(data);
+    }
+    if (empty.length > 0) {
+      const { data, error } = await client
+        .from("piece_overrides")
+        .update(patch)
+        .in("slug", empty)
+        .is("status", null)
+        .select("slug");
+      if (error) throw error;
+      take(data);
+    }
+    if (missing.length > 0) {
+      // 同時に行が作られていたら（Webhook の完売）作らない
+      const { data, error } = await client
+        .from("piece_overrides")
+        .upsert(missing.map((slug) => ({ slug, ...patch })), { onConflict: "slug", ignoreDuplicates: true })
+        .select("slug");
+      if (error) throw error;
+      take(data);
+    }
+  } catch (error) {
     console.error("[studio] ステータスの更新に失敗", error);
-    return { ok: false, error: saveError(error) };
+    if (written.size > 0) {
+      revalidateCatalog();
+      revalidatePath("/studio", "layout");
+    }
+    return { ok: false, error: saveError(error as { code?: string; message: string }) };
   }
 
-  revalidateCatalog();
-  revalidatePath("/studio", "layout");
-  return { ok: true, count: known.length };
+  if (written.size > 0) {
+    revalidateCatalog();
+    revalidatePath("/studio", "layout");
+  }
+  const missed = known.filter((slug) => !written.has(slug));
+  if (missed.length > 0) {
+    const names = missed.map((slug) => getProduct(slug)?.name ?? slug).join("・");
+    const done = written.size > 0 ? `ほかの ${written.size} 点は変えました。` : "";
+    return {
+      ok: false,
+      error: `${names} は、保存の直前にステータスが変わったので変えていません（注文が入ったなど）。${done}再読み込みしてください。`,
+    };
+  }
+  return { ok: true, count: written.size };
 }
 
 /**

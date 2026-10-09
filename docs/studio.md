@@ -116,6 +116,7 @@ SQL Editor で `supabase/migrations/` の中を番号順にそのまま流す。
 - `piece_overrides` — 商品の上書き（0001）
 - `orders` — 注文（0001）
 - `studio_auth_attempts` — ログインの試行記録。回数制限の土台（0002）
+- `orders.notified_at` / `piece_overrides.sold_session` — Webhook を再送に強くする列（0004）。**コードより先に流す**
 - 0003 はテーブルを作らない。`piece_overrides.status` の check に受注生産（`made_to_order`）を足すだけ。流していないと、受注生産を選んだときに「データベースがこのステータスをまだ受け付けません」と出る
 
 いずれも RLS を有効にしてポリシーは作っていない。読み書きするのはサーバー側の `service_role` だけで、これは RLS をバイパスする。anon キーが公開バンドルに紛れ込んでも、この三つには一行も届かない。
