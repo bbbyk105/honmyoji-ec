@@ -98,7 +98,8 @@ export function PieceTable({ groups, disabled }: { groups: PieceGroup[]; disable
     setMessage(null);
     startTransition(async () => {
       applyOptimistic({ slugs, status });
-      const result = await setPiecesStatus(slugs, status);
+      // 開いたときの状態（サーバーから来た base）も送る。DB の方が変わっていたら書かずに断られる
+      const result = await setPiecesStatus(slugs, status, Object.fromEntries(slugs.map((slug) => [slug, base[slug]])));
       startTransition(() => {
         if (!result.ok) {
           setMessage({ tone: "error", text: result.error });

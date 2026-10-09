@@ -106,11 +106,3 @@ export async function notifyStoreQuietly(mail: Mail): Promise<void> {
   }
 }
 
-/**
- * 本文の下に付ける、管理画面への絶対 URL。`NEXT_PUBLIC_SITE_URL` が無ければ
- * 本番のドメイン（`site.url`）。
- */
-export function siteLink(path: string): string {
-  const base = (process.env.NEXT_PUBLIC_SITE_URL || site.url).replace(/\/$/, "");
-  return `${base}${path}`;
-}

@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { PIECE_STATUS_OPTIONS } from "@/app/studio/options";
 import { getProduct } from "@/data/products";
 import { db, dbEnabled } from "@/lib/supabase";
-import { LOGIN_LIMITS, clientIp, recordSuccess, takeAttempt } from "@/lib/studio-guard";
+import { LOGIN_LIMITS, clientIp, limitKey, recordSuccess, takeAttempt } from "@/lib/studio-guard";
 import { notifyStudio } from "@/lib/studio-notify";
 import {
   createSession,
@@ -66,9 +66,11 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
   if (!email || !password) return { error: "メールアドレスとパスワードを入力してください。" };
 
   const ip = await clientIp();
+  // 数える鍵は IPv6 を /64 に丸めたもの。通知には実際の IP を出す
+  const key = limitKey(ip);
 
   // 照合の前に一回ぶんを取る。失敗はここで先に記録される（lib/studio-guard.ts）
-  const gate = await takeAttempt(ip);
+  const gate = await takeAttempt(key);
   if (!gate.allowed) {
     return {
       error: `試行が多すぎます。${gate.retryAfterMinutes} 分ほど置いてからもう一度お試しください。`,
@@ -88,7 +90,7 @@ export async function signIn(_prev: FormState, formData: FormData): Promise<Form
     return { error: "メールアドレスかパスワードが違います。" };
   }
 
-  await recordSuccess(ip);
+  await recordSuccess(key);
   await createSession(who);
   await notifyStudio(`MIROKU Studio — ${who} が ${ip} からログインしました。`);
 
@@ -178,7 +180,12 @@ export type StatusResult = { ok: true; count: number } | { ok: false; error: str
  * 以前は失敗しても何も返さず（void）、画面は選んだ値のまま黙っていた。受注生産は DB の
  * check に弾かれて一度も保存されていなかったのに、誰も気づけなかった。失敗は必ず画面へ返す。
  */
-export async function setPiecesStatus(slugs: string[], status: string): Promise<StatusResult> {
+export async function setPiecesStatus(
+  slugs: string[],
+  status: string,
+  /** 画面を開いたときの各作品のステータス（必須）。今の DB と違う・無いものがあれば書かない */
+  was: Record<string, string>,
+): Promise<StatusResult> {
   await requireSession();
 
   const option = PIECE_STATUS_OPTIONS.find((o) => o.value === status);
@@ -191,6 +198,33 @@ export async function setPiecesStatus(slugs: string[], status: string): Promise<
   const client = db();
   if (!client) {
     return { ok: false, error: "データベースに繋がっていません（SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY）。" };
+  }
+
+  // 開いたあとで DB の方が変わっていたら書かない。画面を開いたままの間に注文が入ると Webhook が
+  // 完売にするので、開いたときの「販売中」でまとめて上書きすると、売れた一点物がまた買える
+  // （作品の編集の savePiece と同じ考え）。行が無い・status が空ならコード側の状態と比べる。
+  const { data: current, error: readError } = await client
+    .from("piece_overrides")
+    .select("slug,status")
+    .in("slug", known);
+  if (readError) {
+    console.error("[studio] ステータスを読めませんでした", readError);
+    return { ok: false, error: saveError(readError) };
+  }
+  const stored = new Map((current ?? []).map((row) => [row.slug as string, row.status as string | null]));
+  const moved = known.filter((slug) => {
+    // 開いたときの状態が無い作品は確かめようがないので、書かない側に倒す
+    const expected = was[slug];
+    if (expected === undefined) return true;
+    const effective = stored.get(slug) ?? getProduct(slug)?.status;
+    return effective !== expected;
+  });
+  if (moved.length > 0) {
+    const names = moved.map((slug) => getProduct(slug)?.name ?? slug).join("・");
+    return {
+      ok: false,
+      error: `画面を開いたあとで、${names} のステータスが変わっています（注文が入ったなど）。再読み込みしてから変えてください。`,
+    };
   }
 
   // 列を status と updated_at だけにして upsert する。既にある行の価格や文言には触れない。

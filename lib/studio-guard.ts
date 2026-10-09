@@ -1,7 +1,7 @@
 import { db } from "@/lib/supabase";
 
 // IP の取り方は lib/client-ip.ts（公開フォームも使う）。ここからも読めるように
-export { clientIp, pickClientIp } from "@/lib/client-ip";
+export { clientIp, limitKey, pickClientIp } from "@/lib/client-ip";
 
 /* ------------------------------------------------------------------
    ログインの回数制限。**サーバ専用**。

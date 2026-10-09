@@ -121,8 +121,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - ログインはメールアドレスとパスワード。アカウントは env に並べる（`STUDIO_EMAIL` / `STUDIO_EMAIL_2` … 最大 5）。DB にユーザー表は作らない —— 数人で、招待も権限もパスワード再発行も要らないなら、表を持つと管理するものが増えるだけ。`matchAccount()` は**一致しても途中で止めず全員ぶん照合する**（早く返すと応答時間の差で「何番目のアカウントか」が漏れる）。硬さは四つで作っている（`docs/studio.md`）: scrypt ハッシュ・回数制限・ブラウザに縛った cookie・ログインのメール通知。**回数制限を外さないこと** — これが無いと、パスワードをいくら長くしても総当たりは時間の問題になる。
 - **`.env` の値に `$` を入れない**。dotenv は `scrypt$abc$def` の `$abc` / `$def` を未定義の変数として空に置き換えるので、値が `scrypt` の 6 文字になってログインが必ず失敗する（実際に踏んだ）。パスワードハッシュの区切りは `:`、生成する秘密は base64url（`+/=` も避ける）。
 - セッション cookie は `SameSite=Lax`。`Strict` にすると外部サイトのリンクから `/studio` を開くたびにログインし直しになる（実際に踏んだ）。Server Action は POST なので、`Lax` でもクロスサイトからの書き込みには cookie が付かない。
-- **回数制限は「記録してから数える」**（`lib/studio-guard.ts` の `takeAttempt`。照合の前に失敗を一つ書き、窓の中を数え、合っていたら `recordSuccess` が消す）。数えてから記録する順に戻すと、同時に送った N 本が全部「まだ 0 回」を見て通り、上限が N 回になる。**IP は Workers では `cf-connecting-ip` だけ** —— `x-forwarded-for` は Cloudflare が客の値の後ろに足すだけなので、先頭を鍵にすると送るたびに IP を変えてすり抜けられる（2026-10-08 の監査）。
-- **作品の編集の保存は、ステータスを選び直したときだけ status を書く**（`savePiece` と `PieceForm` の隠し欄 `status_was`）。毎回書くと、画面を開いたままの間に Webhook が付けた「完売」を、開いたときの「販売中」で上書きして、売れた一点物がまた買える。選び直していても、開いたあとで DB の値が変わっていたら書かずに再読み込みを頼む。
+- **回数制限は「記録してから数える」**（`lib/studio-guard.ts` の `takeAttempt`。照合の前に失敗を一つ書き、窓の中を数え、合っていたら `recordSuccess` が消す）。数えてから記録する順に戻すと、同時に送った N 本が全部「まだ 0 回」を見て通り、上限が N 回になる。**IP は Workers では `cf-connecting-ip` だけ** —— `x-forwarded-for` は Cloudflare が客の値の後ろに足すだけなので、先頭を鍵にすると送るたびに IP を変えてすり抜けられる（2026-10-08 の監査）。IPv6 は /64 に丸めて鍵にする（`lib/client-ip.ts` の `limitKey`。/64 の中で送信元を変えられるため）。丸めるのは数える鍵だけで、ログインの通知などには実際の IP を出す。
+- **作品の編集の保存は、ステータスを選び直したときだけ status を書く**（`savePiece` と `PieceForm` の隠し欄 `status_was`）。毎回書くと、画面を開いたままの間に Webhook が付けた「完売」を、開いたときの「販売中」で上書きして、売れた一点物がまた買える。選び直していても、開いたあとで DB の値が変わっていたら書かずに再読み込みを頼む。**一覧のまとめての変更（`setPiecesStatus`）も同じ** —— 画面を開いたときの各作品の状態（`was`）を送り、DB と違えば書かない。
 - **決済の作品の並びは `getPieces` が一つにする**（`x,x` や `<slug>,<folder>` は同じ一点）。重ねたまま通すと二度請求し、Webhook が同じ主キーを二行 upsert して 500 を返し続け、作品が販売中のまま残る。Webhook も metadata の slugs を `Set` で一つにしている。
 - 公開フォームのメールアドレスは `isEmail()`（`lib/email.ts`）で見る。正規表現を手書きしない —— 長さ（254 字）を先に見ないと、`.` を並べた長い文字列で計算量が 2 乗になる。
 - ログインの失敗理由（メールかパスワードか）を画面に出さない。メールが違ってもパスワードは必ず照合する — 早く返すと、応答の速さの差で「このアドレスは登録されている」が伝わる。
@@ -132,9 +132,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 落とし穴
 
 - **監査（2026-10-08）の直し — 戻さないこと**（2026-10-09）:
-  - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413 にする。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。`www.` と `http://` も入口で `https://honmyoujifuji.com` へ恒久の転送（www も Custom Domain として同じ Worker に付けてある）。
+  - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413、数でない Content-Length を 400 にする。Content-Length の無い本文（chunked）は `limitBody` が読みながら数えて 1MB で止める。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。`wrangler.jsonc` に `account_id` を固定してある（複数のアカウントでログインしていても取り違えない）。`www.` と `http://` も入口で `https://honmyoujifuji.com` へ恒久の転送（www も Custom Domain として同じ Worker に付けてある）。
   - **外の画像を Next に最適化させない**（`next.config.ts` に `remotePatterns` を置かない）。Cloudflare の画像変換は無料で月 5,000 件で、microCMS のホストを丸ごと許すと誰でも枠を使い切れた。Blog の写真は microCMS 自身の画像 API で縮め（`blogImage`）、`Frame` は外の URL を `unoptimized` で出す。
-  - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。
+  - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。**一時（307）のままにする** —— 転送先の slug は仮の名前から作っていて、正式な名前で変わる。恒久にするとブラウザが古い slug を覚えて 404 に飛ぶ。
   - **Blog の本文 HTML は描く前に無害化する**（`lib/blog-html.ts`、`xss`）。本文は `/studio` と同じオリジンで描かれるので、script が混ざるとログイン中の人の権限で管理画面を操作できた。プレビューの slug と draftKey は英数字と - _ だけ（SDK が URL にそのままつなぐ）。microCMS が落ちたら、ビルド中だけ予備の記事に落ち、動いている間は投げる（予備の記事が 10 分キャッシュされて本物が消えないように）。
   - 管理画面のセッションはアカウントの指紋入り（v3）。パスワードを変えたりアカウントを消したりすると、その人の既存のセッションはその場で切れる。ログアウトは作ったときと同じ属性（Secure・Path=/）で上書きして消す —— `jar.delete()` だと Secure が付かず、本番の `__Host-` cookie が残っていた。
   - Webhook は `checkout.session.async_payment_succeeded` も売れたものとして扱う。**二重販売の判定は書き込みで決める**（`lib/mark-sold.ts`。「まだ売れていない行だけ完売にする」update が 0 件になった作品が取り違え）。読んでから書くと、DB の不調や同時に来た Webhook で見逃す。thank-you は形の違う session_id では Stripe を呼ばない。
@@ -158,10 +158,18 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `"use server"` ファイルから非 async 値（定数）を export すると 500。定数は `app/contact/subjects.ts` のような別モジュールへ。
 - 浮遊アニメ（`.bag-float`）は WCAG 2.2.2 のため 3 周で止める設計。無限ループにしない。
 - **お店への知らせは全部メール（Resend、`lib/mail.ts`）**: お問い合わせ（返信先はお客さま）・新作のお知らせの登録・注文（Webhook、初めて入ったときだけ）・二重販売の警告・管理画面のログイン。env は `RESEND_API_KEY` / `RESEND_FROM` / `NOTIFY_EMAILS`（カンマ区切り）。無ければサーバーログのみ。**以前は Telegram だったが、本番に `TELEGRAM_*` が入っておらず、公開から 2026-09-29 までお問い合わせが一通も届いていなかった**（お客さまの画面は「送れました」のまま）。Telegram に戻さない。鍵が無いとダッシュボードに赤い帯（`MailNotice`）が出る。
-- **お客さまへの注文の確認メール**（2026-10-09）: Webhook が注文を初めて保存したときに一通送る（`orderConfirmationMail`・`sendToCustomerQuietly`）。**言語は日本語か英語**（`lib/lang.ts`）: 決済を始めるとき（`startCheckout`）にブラウザの Accept-Language の一番目で決め、決済の `metadata.lang` に入れる。Stripe の決済画面（`locale`）は日本語なら `ja`、それ以外は `auto`（中国語・韓国語なども Stripe が持っていればその言語で出る。2026-10-09 本人判断）。Stripe の決済画面には言語の切り替えボタンが無い（決済を作る時点で決まる）。確認メールと /checkout/thank-you はその `metadata.lang` を読む —— あとで判定し直さない（決済画面とメールで言語が食い違う）。**カート（MiniCart）も同じ言語で出す**: 作り置きのページに載るのでサーバーでは決められず、ブラウザが `navigator.languages` で決める（`hooks/useBrowserLang.ts`、文言は `components/cart/cart-text.ts`）。決済のフォームがその言語を `lang` で送り、`startCheckout` はそれを Accept-Language より優先する。決済の失敗の文言（`ERRORS`）も同じ言語。お店へのメールにも「お客さまの言語」を書く。文面は /checkout/thank-you の画面と同じ言葉。送り元は `RESEND_FROM`（notify@、受信箱なし）、返信先は `site.email`（info@ → Email Routing でお店の Gmail）。**二重に売れたかもしれない注文には送らない**（「The piece is yours」を返金で取り消すことになる。お店が決めてから自分で書く）。
+- **お客さまへの注文の確認メール**（2026-10-09）: Webhook が注文を初めて保存したときに一通送る（`orderConfirmationMail`・`sendToCustomerQuietly`）。**言語は日本語か英語**（`lib/lang.ts`）: 決済を始めるとき（`startCheckout`）にブラウザの Accept-Language の一番目で決め、決済の `metadata.lang` に入れる。Stripe の決済画面（`locale`）は日本語なら `ja`、それ以外は `auto`（中国語・韓国語なども Stripe が持っていればその言語で出る。2026-10-09 本人判断）。Stripe の決済画面には言語の切り替えボタンが無い（決済を作る時点で決まる）。確認メールと /checkout/thank-you はその `metadata.lang` を読む —— あとで判定し直さない（決済画面とメールで言語が食い違う）。**カート（MiniCart）も同じ言語で出す**: 作り置きのページに載るのでサーバーでは決められず、ブラウザが `navigator.languages` で決める（`hooks/useBrowserLang.ts`、文言は `components/cart/cart-text.ts`）。決済のフォームがその言語を `lang` で送り、`startCheckout` はそれを Accept-Language より優先する。決済の失敗の文言（`ERRORS`）も同じ言語。お店へのメールにも「お客さまの言語」を書く。文面は /checkout/thank-you の画面と同じ言葉。作品ごとの値段は Stripe の明細（払った額）から組む —— カタログの値段は払うまでの間に直されうる。送り元は `RESEND_FROM`（notify@、受信箱なし）、返信先は `site.email`（info@ → Email Routing でお店の Gmail）。**二重に売れたかもしれない注文には送らない**（「The piece is yours」を返金で取り消すことになる。お店が決めてから自分で書く）。
 - **二重販売の備え**: Checkout は 35 分で閉じる（`expires_at`。既定の 24 時間だと同じ一点の決済画面が二つ開ける）。それでも決済の前に作品がもう完売 / 取り置き中だったら、Webhook が「要確認」のメールを送る（文面は `lib/order-mail.ts`、テストあり）。
 - microCMS の API キーに `NEXT_PUBLIC_` を付けない。`lib/microcms.ts` はサーバ専用 — `"use client"` から import しない。
 - `NEXT_PUBLIC_SITE_URL` が OG 画像の `metadataBase`。本番ドメイン確定時に設定。
+
+## SEO（2026-10-09）
+
+- `app/sitemap.ts`（固定ページ・作品 26 点と写真・Blog の記事、1 時間ごと）と `app/robots.ts`（止めるのは `/api/` だけ。`/studio` や thank-you は noindex で外してあり、robots で塞ぐと noindex が読まれない）。Cloudflare が robots.txt の前に Content Signals を足して出す。
+- **どのページにも canonical**（`alternates.canonical`、自分自身のクエリ無しの URL）。`/contact?product=…` のような問い合わせの導線がクエリ付きで増えるため。
+- 構造化データは `lib/seo.ts` が組み、`components/seo/JsonLd.tsx` が body に出す（`metadata.other` に入れると `<meta>` になって読まれない）。**JsonLd はページの版の後ろに置く**。`globals.css` の測る前のヘッダーの字を紙の色にするセレクタは `main > .surface-paper:nth-child(1 of :not(script, .fixed))` で、script と fixed の要素（プレビューの帯）を数えない —— 以前の `:first-child` は先頭に script や帯が入ると外れ、開いた直後にヘッダーが読めなかった。値段が未定の作品は Product を出さない（offers が無いと無効）。地図と位置（`hasMap`・`geo`）は Place の項目なので、店（OnlineStore）の `location` に本妙寺の Place を立てて付ける。住所は `data/site.ts` の `legal.addressParts` から（特商法の表記もここから組む）。ページで `openGraph` を書くときは `OPEN_GRAPH_BASE` を広げる（Next は openGraph を丸ごと差し替えるので、書かないと siteName や locale が落ちる）。サイトの基準 URL は `lib/site-url.ts` 一つ（canonical・サイトマップ・構造化データ・メールのリンク）。作品 = Product（値段・在庫・送料・返品不可。在庫は状態から: Coming soon は OutOfStock、完売は SoldOut）＋パンくず、記事 = BlogPosting＋パンくず、トップ = OnlineStore と WebSite。**ページに見えていることだけを書く**。**送料の正本は `data/shipping.ts`**（`SHIPPING_AUD`・`shippingFor()`）—— 決済・作品ページと一覧の表記・特商法の表記・構造化データがここを読むので、送料を変えれば全部変わる（サーバ専用ではない場所に置いたのは、特商法の表記の `data/site.ts` から読むため）。**電話番号は載せない**（作り手の携帯。特商法のページにだけ出す）。店には Instagram（`sameAs`）と本妙寺の地図（`hasMap`・`geo`、`data/site.ts` の `maps` / `geo`）を載せる。地図は Contact に「Open in Google Maps」のリンクだけ置き、**iframe で埋め込まない**（Google の重いスクリプトと cookie を初回から読む。SEO チェックリスト #56）。
+- 試し買い用（`data/products.ts` の `test`）は noindex・サイトマップに入れない・構造化データを出さない・送料なし。**一覧に出す作品は `getListedCatalog()`**（`lib/catalog.ts`。トップ・一覧・作品の前後と関連・サイトマップ）—— ページごとに `isListed` を付けて回ると付け忘れる（トップの件数がずれた）。2026-10-09 に A$1 の一点で本番の決済を確かめて消した（印の仕組みだけ残してある）。
+- パンくずは画面には出していない（版面に足すとテンプレートらしく見える）。構造化データだけ。
 
 ## デザイン
 
@@ -186,7 +194,6 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 - 日本語版ページ（i18n）。
 - 26 点の正式な名前・文言・寸法（今は仮）。価格は 2026-09-29 に 26 点とも入れたが、状態は Coming soon のまま —— 売り出す日を決めて /studio で Available に（`data/products.ts` の冒頭の註）。
 - 着姿のうち、どの作品か特定できていないカット（`image/` の 0.10.03・0.13.02/14/28）の割り当て。
-- `site.instagram` の実値差し替え（`site.email` は 2026-10-08 に info@honmyoujifuji.com にした。Cloudflare の Email Routing でお店の Gmail へ転送）。
 
 ## コマンド
 

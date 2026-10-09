@@ -75,7 +75,7 @@ export default async function ThankYouPage({
 
           <p className="mt-10 font-jp text-body leading-[2] text-bone">
             作品は数日のうちに、本妙寺から手で包んでお送りします。発送しましたら、追跡番号をメールでお知らせします。
-            {email ? `ご注文の確認メールを ${email} にお送りしました。` : ""}
+            {email ? `ご注文の内容は ${email} にメールでお知らせします。` : ""}
           </p>
 
           <p className="mt-5 font-jp text-small leading-[2] text-mist">
@@ -104,7 +104,7 @@ export default async function ThankYouPage({
         <p className="mt-10 font-sans text-body text-bone">
           The piece is yours. It leaves Honmyoji within a few days, wrapped by hand, and we write
           to you with the tracking number as soon as it is on its way.
-          {email ? ` A confirmation of your order is on its way to ${email}.` : ""}
+          {email ? ` We will write to you at ${email} with the details of your order.` : ""}
         </p>
 
         <p className="mt-5 max-w-[48ch] font-sans text-small text-mist">

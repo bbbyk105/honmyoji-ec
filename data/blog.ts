@@ -22,6 +22,8 @@ export type BlogPost = {
   titleJa: string;
   dek: string;
   date: string;
+  /** 最後に書き直した日（microCMS の revisedAt）。サイトマップの lastmod と構造化データの dateModified */
+  updated?: string;
   season: string;
   topic: string;
   /** 未設定なら Frame が role / ratio のプレースホルダを出す */

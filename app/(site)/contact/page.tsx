@@ -7,6 +7,7 @@ import { subjectOptions } from "./subjects";
 import { ContactForm } from "./ContactForm";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/contact" },
   title: "Contact",
   description: "Reserve a piece, ask a question, or commission a bag from Honmyoji Temple.",
 };
@@ -60,6 +61,12 @@ export default async function ContactPage({
               <div>
                 <dt className="font-sans text-meta text-mist">Where</dt>
                 <dd className="mt-1.5">{site.location}</dd>
+                {/* 地図は埋め込まない（iframe は Google の重いスクリプトと cookie を初回から読む）。開く口だけ */}
+                <dd className="mt-1.5">
+                  <a href={site.maps} target="_blank" rel="noopener noreferrer" className="link-line text-ivory">
+                    Open in Google Maps
+                  </a>
+                </dd>
               </div>
               <div>
                 <dt className="font-sans text-meta text-mist">Reply</dt>

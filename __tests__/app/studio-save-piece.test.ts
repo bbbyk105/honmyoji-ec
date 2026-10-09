@@ -103,3 +103,57 @@ describe("savePiece", () => {
     expect(calls.map((c) => c.method)).toEqual(["GET"]);
   });
 });
+
+describe("setPiecesStatus", () => {
+  /** DB の piece_overrides（slug → status）。GET は in.(…) の slug だけ返す。 */
+  function rows(statuses: Record<string, string>) {
+    const calls: { method: string; body?: string }[] = [];
+    global.fetch = jest.fn(async (input: RequestInfo | URL, init?: RequestInit) => {
+      const method = init?.method ?? "GET";
+      calls.push({ method, body: typeof init?.body === "string" ? init.body : undefined });
+      if (method === "GET") {
+        const raw = new URL(String(input)).searchParams.get("slug") ?? "";
+        const slugs = (/^in\.\((.*)\)$/.exec(raw)?.[1] ?? "").split(",").map((v) => v.replace(/^"|"$/g, ""));
+        const data = slugs.filter((slug) => slug in statuses).map((slug) => ({ slug, status: statuses[slug] }));
+        return new Response(JSON.stringify(data), { status: 200, headers: { "content-type": "application/json" } });
+      }
+      return new Response(null, { status: 201 });
+    }) as unknown as typeof fetch;
+    return calls;
+  }
+
+  it("開いたときと DB が同じなら書く", async () => {
+    const calls = rows({ "tokiwa-evergreen": "available" });
+    const { setPiecesStatus } = load();
+    const result = await setPiecesStatus(["tokiwa-evergreen"], "reserved", { "tokiwa-evergreen": "available" });
+    expect(result).toEqual({ ok: true, count: 1 });
+    expect(calls.map((c) => c.method)).toEqual(["GET", "POST"]);
+  });
+
+  it("開いたあとで Webhook が完売にしていたら書かない（売れた一点物を戻さない）", async () => {
+    const calls = rows({ "tokiwa-evergreen": "sold_out" });
+    const { setPiecesStatus } = load();
+    const result = await setPiecesStatus(["tokiwa-evergreen"], "available", { "tokiwa-evergreen": "available" });
+    expect(result.ok).toBe(false);
+    expect(!result.ok && result.error).toMatch(/再読み込み/);
+    expect(calls.map((c) => c.method)).toEqual(["GET"]);
+  });
+
+  it("行が無ければコード側の状態と比べる", async () => {
+    rows({});
+    const { setPiecesStatus } = load();
+    const result = await setPiecesStatus(["tokiwa-evergreen"], "available", { "tokiwa-evergreen": "coming_soon" });
+    expect(result).toEqual({ ok: true, count: 1 });
+  });
+});
+
+describe("setPiecesStatus の開いたときの状態", () => {
+  it("開いたときの状態が無い作品は書かない（確かめようがない）", async () => {
+    global.fetch = jest.fn(async () =>
+      new Response(JSON.stringify([]), { status: 200, headers: { "content-type": "application/json" } }),
+    ) as unknown as typeof fetch;
+    const { setPiecesStatus } = load();
+    const result = await setPiecesStatus(["tokiwa-evergreen"], "available", {});
+    expect(result.ok).toBe(false);
+  });
+});

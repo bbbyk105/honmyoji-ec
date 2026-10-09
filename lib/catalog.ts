@@ -3,7 +3,7 @@ import "server-only";
 import { cache } from "react";
 
 import { db } from "@/lib/supabase";
-import { findByKey, products, type Product, type ProductStatus } from "@/data/products";
+import { findByKey, isListed, products, type Product, type ProductStatus } from "@/data/products";
 
 /* ------------------------------------------------------------------
    商品カタログ = data/products.ts + DB のオーバーレイ。
@@ -163,6 +163,12 @@ export const getCatalog = cache(async (): Promise<Product[]> => {
   if (overrides.size === 0) return products;
   return products.map((p) => merge(p, overrides.get(p.slug)));
 });
+
+/**
+ * 一覧に出す作品（試し買い用を除く）。トップ・一覧・作品ページの前後と関連作品・サイトマップは
+ * ここを読む —— ページごとに isListed を付けて回ると、付け忘れが出る（件数がずれた）。
+ */
+export const getListedCatalog = cache(async (): Promise<Product[]> => (await getCatalog()).filter(isListed));
 
 /** slug でも旧 folder 名でも引ける — products.ts の `findByKey` と同じ約束。 */
 export async function getPiece(key: string): Promise<Product | undefined> {

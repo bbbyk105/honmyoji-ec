@@ -3,10 +3,10 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { isPurchasable } from "@/data/products";
+import { isPurchasable, leadSrc } from "@/data/products";
+import { SHIPPING_COUNTRIES, shippingFor } from "@/data/shipping";
 import { getPieces, toCents } from "@/lib/catalog";
 import { isLang, langFromAcceptLanguage, type Lang } from "@/lib/lang";
-import { SHIPPING_AUD, SHIPPING_COUNTRIES } from "@/lib/stripe-config";
 
 /* ------------------------------------------------------------------
    カート → Stripe Checkout。
@@ -87,6 +87,8 @@ export async function startCheckout(
   }
 
   const base = await origin();
+  // 試し買い用（data/products.ts の test）だけの決済には送料を付けない（data/shipping.ts）
+  const shipping = shippingFor(pieces);
 
   try {
     const session = await client.checkout.sessions.create({
@@ -103,7 +105,7 @@ export async function startCheckout(
           product_data: {
             name: `${piece.name} — ${piece.kanji}`,
             description: piece.note,
-            images: [`${base}/images/products/${piece.folder}/1.webp`],
+            images: [`${base}${leadSrc(piece.folder)}`],
             metadata: { slug: piece.slug, sku: piece.sku },
           },
         },
@@ -112,12 +114,12 @@ export async function startCheckout(
         allowed_countries: [...SHIPPING_COUNTRIES],
       },
       shipping_options:
-        SHIPPING_AUD > 0
+        shipping > 0
           ? [
               {
                 shipping_rate_data: {
                   type: "fixed_amount",
-                  fixed_amount: { amount: SHIPPING_AUD * 100, currency: "aud" },
+                  fixed_amount: { amount: toCents(shipping), currency: "aud" },
                   display_name: "International shipping (tracked)",
                 },
               },

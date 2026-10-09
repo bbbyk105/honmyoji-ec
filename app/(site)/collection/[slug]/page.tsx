@@ -7,6 +7,7 @@ import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { ProductHero } from "@/components/collection/ProductHero";
 import { StatusPill } from "@/components/collection/StatusPill";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
@@ -14,10 +15,14 @@ import { SHELL } from "@/components/site/Shell";
 import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
-import { getCatalog, getPiece } from "@/lib/catalog";
+import { getListedCatalog, getPiece } from "@/lib/catalog";
+import { breadcrumbJsonLd, OPEN_GRAPH_BASE, productJsonLd } from "@/lib/seo";
+import { shippingFor } from "@/data/shipping";
+import { stripeEnabled } from "@/lib/stripe-config";
 import {
   LINE_LABEL,
   LINE_RATIO,
+  aud,
   cm,
   isPurchasable,
   priceLabel,
@@ -48,12 +53,22 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: `${product.name} ${product.kanji}${price ? ` — ${price}` : ""}`,
     description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
-    openGraph: { images: [{ url: productImage(product.slug, 1) }] },
+    alternates: { canonical: productPath(product) },
+    openGraph: { ...OPEN_GRAPH_BASE, images: [{ url: productImage(product.slug, 1) }] },
+    // 試し買い用は検索エンジンに載せない
+    ...(product.test ? { robots: { index: false, follow: false } } : {}),
   };
+}
+
+/** 送料の一言。0（送料込み・試し買い用）なら「Shipping included」。 */
+function shippingNote(product: Product): string {
+  const shipping = shippingFor([product]);
+  return shipping > 0 ? `+ ${aud.format(shipping)} shipping` : "Shipping included";
 }
 
 function cta(product: Product) {
   const q = `?product=${product.slug}`;
+  const shipping = shippingFor([product]);
   switch (product.status) {
     case "available":
       /* 管理画面で Available にしても、値段が入っていなければカートには入らない（`isPurchasable`）。 */
@@ -61,7 +76,10 @@ function cta(product: Product) {
         ? {
             primary: { href: `/contact${q}&subject=reserve`, label: "Reserve this piece" },
             secondary: { href: `/contact${q}&subject=question`, label: "Ask a question" },
-            note: "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
+            // 決済が使えればカートからそのまま Stripe へ。使えなければ（鍵が無い）カートを送ってもらい、決済リンクを返す
+            note: stripeEnabled
+              ? `Add it to your cart and check out — you pay by card through Stripe${shipping > 0 ? `, and ${aud.format(shipping)} shipping is added at checkout` : ""}.`
+              : "Add it to your cart and send it to us. We reply with a private checkout link, and you pay by card through Stripe.",
           }
         : {
             primary: { href: `/contact${q}&subject=question`, label: "Ask about this piece" },
@@ -104,8 +122,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   if (!product) notFound();
   if (slug !== product.slug) redirect(productPath(product));
 
-  const catalog = await getCatalog();
-  const index = catalog.findIndex((p) => p.slug === product.slug);
+  // 前後と関連作品は一覧に出る作品だけ（試し買い用は混ぜない）
+  const catalog = await getListedCatalog();
+  const index = Math.max(0, catalog.findIndex((p) => p.slug === product.slug));
   const prev = catalog[(index - 1 + catalog.length) % catalog.length];
   const next = catalog[(index + 1) % catalog.length];
   const related = catalog.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 4);
@@ -113,6 +132,8 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const careHref = await blogHref("holding-the-weave", "Care");
   const action = cta(product);
   const price = priceLabel(product);
+  /* 値段が未定なら null（商品の構造化データは offers が無いと無効になる） */
+  const productLd = productJsonLd(product);
 
   /* 拡大表示の通し番号は一本。0 番がヒーロー（1.webp）、1 番から下のギャラリー。 */
   const photos = Array.from({ length: product.galleryCount }, (_, i) => {
@@ -185,7 +206,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               {price ? (
                 <>
                   <span className="font-display text-[32px] font-light leading-none tabular-nums text-ivory">{price}</span>
-                  <span className="font-sans text-meta text-mist">Shipping included</span>
+                  <span className="font-sans text-meta text-mist">{shippingNote(product)}</span>
                 </>
               ) : null}
               <StatusPill status={product.status} className={price ? "ml-auto" : ""} />
@@ -368,6 +389,20 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
         </div>
       </nav>
       </div>
+      {/* 構造化データは版の後ろに（main の先頭の子を .surface-paper のままにする。globals.css の
+          :first-child がヘッダーの字の色を決めている）。試し買い用は noindex なので出さない */}
+      {product.test ? null : (
+        <JsonLd
+          data={[
+            ...(productLd ? [productLd] : []),
+            breadcrumbJsonLd([
+              { name: "Home", path: "/" },
+              { name: "Collection", path: "/collection" },
+              { name: `${product.name} ${product.kanji}`, path: productPath(product) },
+            ]),
+          ]}
+        />
+      )}
     </LightboxProvider>
   );
 }

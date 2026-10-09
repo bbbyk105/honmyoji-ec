@@ -5,6 +5,7 @@ import { faq } from "@/data/site";
 import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
+  alternates: { canonical: "/faq" },
   title: "FAQ",
   description:
     "What is tatami-beri? Is every bag one of a kind? Why the price? Care, durability, custom orders and shipping — answered in English and Japanese.",

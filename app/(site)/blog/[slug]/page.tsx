@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogArticle } from "@/components/blog/BlogArticle";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { getBlogPosts, getBlogPost, nextPost } from "@/lib/microcms";
+import { blogPostingJsonLd, breadcrumbJsonLd, OPEN_GRAPH_BASE, OPEN_GRAPH_IMAGE } from "@/lib/seo";
 
 type Params = { slug: string };
 
@@ -18,7 +20,15 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   return {
     title: entry.title,
     description: entry.dek,
-    openGraph: entry.image ? { images: [{ url: entry.image }] } : undefined,
+    alternates: { canonical: `/blog/${entry.slug}` },
+    openGraph: {
+      ...OPEN_GRAPH_BASE,
+      type: "article",
+      title: entry.title,
+      description: entry.dek,
+      ...(entry.date ? { publishedTime: entry.date } : {}),
+      images: [{ url: entry.image ?? OPEN_GRAPH_IMAGE }],
+    },
   };
 }
 
@@ -28,5 +38,20 @@ export default async function BlogArticlePage({ params }: { params: Promise<Para
   const entry = entries.find((e) => e.slug === slug);
   if (!entry) notFound();
 
-  return <BlogArticle entry={entry} next={nextPost(entries, slug)} />;
+  return (
+    <>
+      <BlogArticle entry={entry} next={nextPost(entries, slug)} />
+      {/* 構造化データは版の後ろに（main の先頭の子を変えない。globals.css の :first-child） */}
+      <JsonLd
+        data={[
+          blogPostingJsonLd(entry),
+          breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Blog", path: "/blog" },
+            { name: entry.title, path: `/blog/${entry.slug}` },
+          ]),
+        ]}
+      />
+    </>
+  );
 }

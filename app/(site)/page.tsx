@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "@/components/site/Arrow";
@@ -9,8 +10,10 @@ import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { HomeHero } from "@/components/home/HomeHero";
 import { PieceTile } from "@/components/collection/PieceTile";
+import { JsonLd } from "@/components/seo/JsonLd";
 import { LINE_BLURB, LINE_LABEL, LINE_ORDER, productImage } from "@/data/products";
-import { getCatalog } from "@/lib/catalog";
+import { getListedCatalog } from "@/lib/catalog";
+import { storeJsonLd } from "@/lib/seo";
 import { blogMeta } from "@/data/blog";
 import { blogHref, getBlogPosts } from "@/lib/microcms";
 import { founder } from "@/data/site";
@@ -64,9 +67,14 @@ const LINE_COVER: Record<(typeof LINE_ORDER)[number], string> = {
   apron: "apron-01",
 };
 
+/* タイトルと説明は layout の既定（サイト全体の名前と説明）。正規の URL だけここで決める。 */
+export const metadata: Metadata = {
+  alternates: { canonical: "/" },
+};
+
 export default async function HomePage() {
   /* カタログ経由で引くので、管理画面で直した価格とステータスがそのまま出る。 */
-  const catalog = await getCatalog();
+  const catalog = await getListedCatalog();
   const featured = FEATURED.map((f) => catalog.find((p) => p.folder === f)).filter((p) => p !== undefined);
 
   const recentNotes = (await getBlogPosts()).slice(0, 3);
@@ -402,6 +410,8 @@ export default async function HomePage() {
           </div>
         </section>
       </div>
+      {/* 構造化データは版の後ろに（main の先頭の子を変えない。globals.css の :first-child） */}
+      <JsonLd data={storeJsonLd()} />
     </>
   );
 }

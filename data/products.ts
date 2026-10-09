@@ -52,7 +52,21 @@ export type Product = {
   weightG: number | null;
   /** public/images/products/<folder>/1.webp … n.webp。1 が主役（比率は `LINE_RATIO`） */
   galleryCount: number;
+  /**
+   * 試し買い用（本番の決済を本物のカードで確かめるため）。一覧・関連作品・サイトマップに出さず、
+   * 検索エンジンにも載せず（noindex・構造化データなし）、送料を付けない。URL を知っている人だけが
+   * 買える。2026-10-09 に A$1 の一点（test-purchase）で本番の決済 → Webhook → 注文・完売・メールを
+   * 確かめて消した。また試すときは、この印を付けた一点を足し、写真を test-01/ に置く。
+   * 買うと Webhook が完売にする（DB の piece_overrides に行が残る）。同じ slug で足し直すときや
+   * 消すときは、その行も消す（残っていると完売が重なって決済に進めない）。
+   */
+  test?: boolean;
 };
+
+/** 一覧・関連作品・サイトマップに出すか。試し買い用は出さない。 */
+export function isListed(p: Pick<Product, "test">): boolean {
+  return !p.test;
+}
 
 export const STATUS_LABEL: Record<ProductStatus, { en: string; ja: string }> = {
   available: { en: "Available", ja: "購入可能" },

@@ -3,6 +3,9 @@
  * 英語を主、日本語を従（ページ内の副題・小見出し）— 日本語版ページは後日フェーズ。
  */
 
+import { aud } from "./products";
+import { SHIPPING_AUD } from "./shipping";
+
 export const site = {
   name: "MIROKU",
   tagline: "Tatami-beri Bags from Honmyoji Temple",
@@ -13,7 +16,10 @@ export const site = {
   /** 本番の URL。OG 画像の基準とメールのリンクに使う（`NEXT_PUBLIC_SITE_URL` があればそちら）。 */
   url: "https://honmyoujifuji.com",
   email: "info@honmyoujifuji.com", // Cloudflare の Email Routing でお店の Gmail へ転送
-  instagram: "https://www.instagram.com/", // TODO: 実アカウント URL
+  instagram: "https://www.instagram.com/fuji_honmyouji",
+  /** 本妙寺の場所（Google マップ）。Contact に出すのと、構造化データ（lib/seo.ts）の hasMap / geo。 */
+  maps: "https://maps.google.com/?cid=11166856979426179977",
+  geo: { latitude: 35.1640741, longitude: 138.7349672 },
   nav: [
     { href: "/collection", label: "Collection", ja: "作品" },
     { href: "/about", label: "About", ja: "想い" },
@@ -307,15 +313,26 @@ export const founder = {
   },
 };
 
+/** 特商法の住所の部品。表記（legal.address）と構造化データ（lib/seo.ts）が同じものを読む。 */
+const ADDRESS = {
+  streetAddress: "1254-2 Nakazato",
+  addressLocality: "Fuji",
+  addressRegion: "Shizuoka",
+  addressCountry: "JP",
+} as const;
+
 export const legal = {
   seller: "MIROKU",
-  address: "1254-2 Nakazato, Fuji City, Shizuoka, Japan",
+  addressParts: ADDRESS,
+  address: `${ADDRESS.streetAddress}, ${ADDRESS.addressLocality} City, ${ADDRESS.addressRegion}, Japan`,
   addressJa: "静岡県富士市中里1254-2",
   phone: "+81 80-3470-1863",
   responsible: "Emi Kashiwazake（柏酒 英美）",
-  price: "From A$150. All prices are shown in Australian dollars (AUD) and include Japanese consumption tax.",
+  price: "Shown on each piece. All prices are in Australian dollars (AUD) and include Japanese consumption tax.",
   shipping:
-    "Standard international shipping is included in the price. If you need express delivery, contact us before ordering; the difference will be invoiced separately.",
+    SHIPPING_AUD > 0
+      ? `${aud.format(SHIPPING_AUD)} per order for tracked international shipping, added at checkout. If you need express delivery, contact us before ordering; the difference will be invoiced separately.`
+      : "Tracked international shipping is included in the price. If you need express delivery, contact us before ordering; the difference will be invoiced separately.",
   payment: "Credit card via Stripe. Payment is taken in full at checkout.",
   delivery:
     "Pieces in stock ship within one month of your order. Custom-made pieces take longer; we will give you a date when the order is agreed.",

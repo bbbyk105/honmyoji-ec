@@ -163,7 +163,7 @@
 */
 .surface-paper,
 .tone-paper,
-html:has(main > .surface-paper:first-child) [data-surface-follow]:not([data-tone]) {
+html:has(main > .surface-paper:nth-child(1 of :not(script, .fixed))) [data-surface-follow]:not([data-tone]) {
   --color-sumi: #e9e2d6;
   --color-ivory: #15130f;
   --color-bone: #3b362f;   /* 9.3:1 */

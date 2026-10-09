@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import { Nunito_Sans, Poppins, Prompt } from "next/font/google";
 import "./globals.css";
 import { site } from "@/data/site";
+import { OPEN_GRAPH_BASE, OPEN_GRAPH_IMAGE } from "@/lib/seo";
+import { SITE_ORIGIN } from "@/lib/site-url";
 
 /**
  * html と body、そしてフォントだけ。
@@ -59,19 +61,20 @@ const prompt = Prompt({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? site.url),
+  metadataBase: new URL(SITE_ORIGIN),
   title: {
     default: `${site.name} — Tatami-beri bags, made once`,
     template: `%s — ${site.name}`,
   },
   description: site.description,
+  // title と description は書かない。書くと openGraph を持たないページ（About・FAQ など）の
+  // og:title / og:description が全部トップのものになる（Next はここに無いときだけページの値で埋める）
   openGraph: {
-    title: `${site.name} — Tatami-beri bags, made once`,
-    description: site.description,
-    type: "website",
-    locale: "en_US",
-    images: [{ url: "/images/scenes/altar-standing.webp" }],
+    ...OPEN_GRAPH_BASE,
+    images: [{ url: OPEN_GRAPH_IMAGE }],
   },
+  // X（Twitter）で共有したときは大きい写真のカード
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

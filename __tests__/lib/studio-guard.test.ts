@@ -52,6 +52,20 @@ describe("pickClientIp", () => {
     expect(pickIp(headers, false)).toBe("203.0.113.7");
   });
 
+  it("IP は丸めずに返す（通知に実際のアドレスを残す）", () => {
+    expect(pickIp(h({ "cf-connecting-ip": "2001:db8:1234:5678:aaaa::1" }), true)).toBe("2001:db8:1234:5678:aaaa::1");
+  });
+
+  it("数える鍵（limitKey）は IPv6 を /64 に丸める（/64 の中で送信元を変えてもすり抜けられない）", () => {
+    const { limitKey } = load(false);
+    const a = limitKey("2001:db8:1234:5678:aaaa::1");
+    expect(a).toBe("2001:db8:1234:5678::/64");
+    expect(limitKey("2001:0db8:1234:5678:ffff:eeee:dddd:cccc")).toBe(a);
+    expect(limitKey("::ffff:203.0.113.7")).toBe("203.0.113.7");
+    expect(limitKey("2001:db8::1")).toBe("2001:db8:0:0::/64");
+    expect(limitKey("203.0.113.7")).toBe("203.0.113.7");
+  });
+
   it("x-forwarded-for が無ければ x-real-ip、それも無ければ unknown", () => {
     expect(pickIp(h({ "x-real-ip": "203.0.113.7" }), false)).toBe("203.0.113.7");
     expect(pickIp(h({}), false)).toBe("unknown");
