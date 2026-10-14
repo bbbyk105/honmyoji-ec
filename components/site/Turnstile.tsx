@@ -45,7 +45,9 @@ declare global {
  * スクリプトを一度だけ読む。読み込みの状態はモジュールに持たず、window と DOM に聞く ——
  * 読み込み中にページを離れて戻ったときも、StrictMode で付け外されたときも、その時に置かれて
  * いる部品が待てる（next/script の onReady はどちらの場合も呼ばれず、枠が出なかった）。
- * 読めなかった <script> は外す（次に置かれたときに読み直せるように）。
+ * 読めなかった <script> は外す（次に置かれたときに読み直せるように）。load は来たのに API が無い
+ * とき（ブロッカーが空のスクリプトに差し替えた等）も外す —— 残すと、次に置かれた部品が二度と
+ * 来ない load を待ち続け、枠も案内も出ない。
  */
 function loadTurnstile(): Promise<TurnstileApi> {
   if (window.turnstile) return Promise.resolve(window.turnstile);
@@ -58,19 +60,16 @@ function loadTurnstile(): Promise<TurnstileApi> {
       document.head.appendChild(script);
     }
     const el = script;
+    const fail = (reason: string) => {
+      el.remove();
+      reject(new Error(reason));
+    };
     el.addEventListener(
       "load",
-      () => (window.turnstile ? resolve(window.turnstile) : reject(new Error("turnstile is missing"))),
+      () => (window.turnstile ? resolve(window.turnstile) : fail("turnstile is missing after load")),
       { once: true },
     );
-    el.addEventListener(
-      "error",
-      () => {
-        el.remove();
-        reject(new Error("turnstile script failed"));
-      },
-      { once: true },
-    );
+    el.addEventListener("error", () => fail("turnstile script failed"), { once: true });
   });
 }
 
@@ -98,10 +97,11 @@ export function Turnstile({ action, email, resetKey }: Props) {
     let cancelled = false;
     let id: string | null = null;
 
-    loadTurnstile().then(
-      (api) => {
+    loadTurnstile()
+      .then((api) => {
         const el = box.current;
         if (cancelled || !el) return;
+        // render が投げたとき（引数の誤りなど）も下の catch へ落とし、案内を出す
         id =
           api.render(el, {
             sitekey: SITE_KEY,
@@ -113,11 +113,12 @@ export function Turnstile({ action, email, resetKey }: Props) {
             "unsupported-callback": () => setUnavailable(true),
           }) ?? null;
         widget.current = id;
-      },
-      () => {
-        if (!cancelled) setUnavailable(true);
-      },
-    );
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        console.error("[turnstile] 確認の枠を出せませんでした", err);
+        setUnavailable(true);
+      });
 
     return () => {
       cancelled = true;

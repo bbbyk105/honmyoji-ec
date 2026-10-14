@@ -13,7 +13,13 @@ import { SUBJECTS } from "./subjects";
 
 export type ContactState =
   | { status: "idle" }
-  | { status: "error"; message: string; errors?: Partial<Record<"name" | "email" | "message", string>> }
+  | {
+      status: "error";
+      message: string;
+      errors?: Partial<Record<"name" | "email" | "message", string>>;
+      /** 確認の印を使ったあとで断った。フォームはこれを見て印を取り直す（components/site/Turnstile.tsx） */
+      tokenSpent?: true;
+    }
   | { status: "sent"; message: string };
 
 /**
@@ -76,14 +82,17 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
 
   const ip = await clientIp();
 
-  // 人が送っているか（Cloudflare Turnstile）。上限より先に見る —— bot がサイト全体の
-  // 一日の枠（50 通）を使い切ると、お客さまが送れなくなる
+  // 人が送っているか（Cloudflare Turnstile）。上限より先に見る —— bot がお問い合わせの
+  // 一日の枠（lib/form-quota.ts の PER_DAY）を使い切ると、お客さまが送れなくなる
   const check = await verifyTurnstile(String(formData.get(TURNSTILE_FIELD) ?? ""), { action: "contact", ip });
-  if (!check.ok) return { status: "error", message: CHECK_FAILED_MESSAGE };
+  if (!check.ok) {
+    return { status: "error", message: CHECK_FAILED_MESSAGE, ...(check.spent ? { tokenSpent: true as const } : {}) };
+  }
 
+  // ここから先で断るときは、印はもう使ってある（tokenSpent）
   // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
   const quota = await takeFormQuota(limitKey(ip), "contact");
-  if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE };
+  if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE, tokenSpent: true };
 
   const topic = SUBJECTS[subject];
   const piece = parsePiece(product);
@@ -114,6 +123,7 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
     return {
       status: "error",
       message: "We could not send your message. Please try again, or email us directly.",
+      tokenSpent: true,
     };
   }
 

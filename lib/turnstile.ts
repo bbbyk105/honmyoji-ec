@@ -2,6 +2,8 @@ import "server-only";
 
 import { SITE_ORIGIN } from "@/lib/site-url";
 
+export { TURNSTILE_FIELD } from "@/lib/turnstile-field";
+
 /* ------------------------------------------------------------------
    公開フォームの「人が送っているか」の照合（Cloudflare Turnstile）。フォームの中の
    components/site/Turnstile.tsx が作った印を、Cloudflare に問い合わせて確かめる。
@@ -13,9 +15,6 @@ import { SITE_ORIGIN } from "@/lib/site-url";
    ------------------------------------------------------------------ */
 
 const VERIFY_URL = "https://challenges.cloudflare.com/turnstile/v0/siteverify";
-
-/** フォームが印を入れる欄（Turnstile の既定の名前）。 */
-export const TURNSTILE_FIELD = "cf-turnstile-response";
 
 /** Cloudflare の試験用の秘密（試験用のサイトキーの印だけを必ず通す）。手元の開発で使う。 */
 const TEST_SECRET = "1x0000000000000000000000000000000AA";
@@ -29,15 +28,17 @@ const TIMEOUT_MS = 5000;
 /** こちら側の設定の誤りを表す error-codes。訪問者のせいではないので断らない。 */
 const OUR_FAULT = new Set(["missing-input-secret", "invalid-input-secret", "internal-error"]);
 
-export type TurnstileResult = { ok: true; skipped?: string } | { ok: false; reason: string };
+/**
+ * `spent` は印を Cloudflare に送ったか（送った印は使い切り）。フォームはこれを見て、送っていなければ
+ * 印を取り直さない —— 取り直すと、確認の途中の人はやり直しになる。
+ */
+export type TurnstileResult = { ok: true; skipped?: string } | { ok: false; reason: string; spent: boolean };
 
 type VerifyResponse = { success?: boolean; "error-codes"?: string[]; action?: string; hostname?: string };
 
 /** 本番で印を作ってよい場所（サイトの基準のドメインと www）。Cloudflare の推奨どおり action と一緒に見る。 */
-function allowedHosts(): Set<string> {
-  const host = new URL(SITE_ORIGIN).hostname.replace(/^www\./, "");
-  return new Set([host, `www.${host}`]);
-}
+const SITE_HOST = new URL(SITE_ORIGIN).hostname.replace(/^www\./, "");
+const ALLOWED_HOSTS = new Set([SITE_HOST, `www.${SITE_HOST}`]);
 
 /**
  * 本番は Worker の秘密（`npx wrangler secret put TURNSTILE_SECRET_KEY`）。手元は .env に本物が
@@ -61,8 +62,8 @@ export async function verifyTurnstile(
   token: string,
   { action, ip }: { action: string; ip?: string },
 ): Promise<TurnstileResult> {
-  if (!token) return { ok: false, reason: "missing-token" };
-  if (token.length > TOKEN_MAX) return { ok: false, reason: "invalid-token" };
+  if (!token) return { ok: false, reason: "missing-token", spent: false };
+  if (token.length > TOKEN_MAX) return { ok: false, reason: "invalid-token", spent: false };
 
   const secret = secretKey();
   if (!secret) {
@@ -78,9 +79,15 @@ export async function verifyTurnstile(
       body: JSON.stringify({ secret, response: token, ...(ip && ip !== "unknown" ? { remoteip: ip } : {}) }),
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (!res.ok) {
+    // 通すのは Cloudflare の不調（5xx）だけ。4xx（429 を含む）は送り手の側で起きうる応答
+    // （でたらめな印を大量に送られたときなど）なので、通すと bot まで素通りする
+    if (res.status >= 500) {
       console.error(`[turnstile] 照合が ${res.status} を返したので、確かめずに通しました`);
       return { ok: true, skipped: `http-${res.status}` };
+    }
+    if (!res.ok) {
+      console.error(`[turnstile] 照合が ${res.status} を返したので断りました`);
+      return { ok: false, reason: `http-${res.status}`, spent: true };
     }
     raw = await res.json();
   } catch (err) {
@@ -95,9 +102,9 @@ export async function verifyTurnstile(
 
   if (data.success === true) {
     // 印にはそれを作ったフォームの action と場所が入っている。試験用の印には入っていないことがある
-    if (data.action && data.action !== action) return { ok: false, reason: "action-mismatch" };
-    if (process.env.NODE_ENV === "production" && data.hostname && !allowedHosts().has(data.hostname)) {
-      return { ok: false, reason: "hostname-mismatch" };
+    if (data.action && data.action !== action) return { ok: false, reason: "action-mismatch", spent: true };
+    if (process.env.NODE_ENV === "production" && data.hostname && !ALLOWED_HOSTS.has(data.hostname)) {
+      return { ok: false, reason: "hostname-mismatch", spent: true };
     }
     return { ok: true };
   }
@@ -107,5 +114,5 @@ export async function verifyTurnstile(
     console.error(`[turnstile] 設定の誤り（${codes.join(", ")}）なので、確かめずに通しました`);
     return { ok: true, skipped: codes.join(",") };
   }
-  return { ok: false, reason: codes.join(",") || "rejected" };
+  return { ok: false, reason: codes.join(",") || "rejected", spent: true };
 }

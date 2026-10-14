@@ -50,6 +50,14 @@ describe("takeQuota", () => {
     expect(await takeQuota(s, "192.0.2.1", "2026-10-09", "contact")).toEqual({ ok: true });
   });
 
+  it("フォームの名前が無い・知らない呼び出し（デプロイの切り替わりの旧版）も、お問い合わせの枠で数える", async () => {
+    const s = memoryStorage();
+    for (let i = 0; i < PER_DAY.contact; i++) {
+      await takeQuota(s, `10.2.${Math.floor(i / 200)}.${i % 200}`, "2026-10-09", undefined as never);
+    }
+    expect(await takeQuota(s, "192.0.2.1", "2026-10-09", "contact")).toEqual({ ok: false, reason: "day" });
+  });
+
   it("日が変われば数え直し、前の日の数は消す", async () => {
     const s = memoryStorage();
     for (let i = 0; i < PER_IP_PER_DAY; i++) await takeQuota(s, "203.0.113.7", "2026-10-09", "contact");

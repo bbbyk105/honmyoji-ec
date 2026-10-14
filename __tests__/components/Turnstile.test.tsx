@@ -128,6 +128,35 @@ describe("Turnstile", () => {
     expect(screen.getByRole("status").textContent).toContain(EMAIL);
   });
 
+  it("load は来たのに API が無い（ブロッカーが差し替えた）ときは案内を出し、次に置かれたら読み直す", async () => {
+    const first = render(<Turnstile action="contact" email={EMAIL} />);
+    const blocked = script();
+    await act(async () => {
+      blocked!.dispatchEvent(new Event("load"));
+    });
+    expect(screen.getByRole("status").textContent).toContain(EMAIL);
+    first.unmount();
+
+    // 読み終えた <script> に load はもう来ないので、新しく読み直していなければ待ち続ける
+    render(<Turnstile action="contact" email={EMAIL} />);
+    expect(script()).not.toBeNull();
+    expect(script()).not.toBe(blocked);
+    await finishLoading();
+
+    expect(live.size).toBe(1);
+    expect(screen.queryByRole("status")).toBeNull();
+  });
+
+  it("枠を描くときに Turnstile が投げたら、案内を出す", async () => {
+    api.render.mockImplementationOnce(() => {
+      throw new Error("TurnstileError: invalid sitekey");
+    });
+    render(<Turnstile action="contact" email={EMAIL} />);
+    await finishLoading();
+
+    expect(screen.getByRole("status").textContent).toContain(EMAIL);
+  });
+
   it("枠がエラーを返したら同じ案内を出し、通れば消す", async () => {
     render(<Turnstile action="contact" email={EMAIL} />);
     await finishLoading();

@@ -1,8 +1,9 @@
 "use client";
 
-import { startTransition, useActionState, useId, type FormEvent } from "react";
+import { startTransition, useActionState, useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/site/Button";
 import { Turnstile } from "@/components/site/Turnstile";
+import { TURNSTILE_FIELD } from "@/lib/turnstile-field";
 import { sendInquiry, type ContactState } from "./actions";
 
 type Props = {
@@ -37,17 +38,32 @@ export function ContactForm({ email, product, subject, subjects }: Props) {
     素の GET で `/contact?name=…&message=…` へ送り、名前・メール・本文が URL と履歴とログに残る。
     action があれば React がサーバーで POST の form を描く（確認の印が無いので断られるが、漏れない）。
   */
+  // 確認の印がまだ無い（確認の途中・チェックボックスを押す前）うちに押されたときの案内
+  const [waiting, setWaiting] = useState(false);
+
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
+    // 印が無いまま送っても必ず断られる（サーバーは印を使わずに断る）。送らずに待ってもらう
+    if (!formData.get(TURNSTILE_FIELD)) {
+      setWaiting(true);
+      return;
+    }
+    setWaiting(false);
     startTransition(() => dispatch(formData));
   }
 
   /*
-    印を取り直すのは、サーバーが印を使ったあとで断ったとき（確認・一日の上限・送信の失敗）だけ。
-    入力漏れ（errors 付き）は印を使う前に断っているので取り直さない（components/site/Turnstile.tsx）。
+    印を取り直すのは、サーバーが印を使ったあとで断ったとき（tokenSpent: 確認・一日の上限・送信の失敗）だけ。
+    入力漏れや印が届かなかったときは、印を使う前に断っているので取り直さない
+    （取り直すと、確認の途中の人はやり直しになる。components/site/Turnstile.tsx）。
   */
-  const tokenSpent = state.status === "error" && !state.errors ? state : null;
+  const tokenSpent = state.status === "error" && state.tokenSpent ? state : null;
+  const alert = waiting
+    ? "One moment — the check above is still confirming you are a person. If a box appears, tick it, then send."
+    : state.status === "error"
+      ? state.message
+      : null;
 
   if (state.status === "sent") {
     return (
@@ -177,9 +193,9 @@ export function ContactForm({ email, product, subject, subjects }: Props) {
 
       <Turnstile action="contact" email={email} resetKey={tokenSpent} />
 
-      {state.status === "error" ? (
+      {alert ? (
         <p role="alert" className="border border-clay/60 px-4 py-4 font-sans text-small text-clay">
-          {state.message}
+          {alert}
         </p>
       ) : null}
 

@@ -56,7 +56,7 @@ describe("verifyTurnstile", () => {
   it("印が無ければ Cloudflare に聞かずに断る", async () => {
     const result = await load().verifyTurnstile("", { action: "contact" });
 
-    expect(result).toEqual({ ok: false, reason: "missing-token" });
+    expect(result).toMatchObject({ ok: false, reason: "missing-token" });
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -69,7 +69,7 @@ describe("verifyTurnstile", () => {
 
   it("偽物・使い回しの印は断る", async () => {
     reply({ success: false, "error-codes": ["invalid-input-response"] });
-    expect(await load().verifyTurnstile("forged", { action: "contact" })).toEqual({
+    expect(await load().verifyTurnstile("forged", { action: "contact" })).toMatchObject({
       ok: false,
       reason: "invalid-input-response",
     });
@@ -80,7 +80,7 @@ describe("verifyTurnstile", () => {
 
   it("別のフォームの印は断る", async () => {
     reply({ success: true, action: "subscribe" });
-    expect(await load().verifyTurnstile("tok", { action: "contact" })).toEqual({
+    expect(await load().verifyTurnstile("tok", { action: "contact" })).toMatchObject({
       ok: false,
       reason: "action-mismatch",
     });
@@ -88,7 +88,7 @@ describe("verifyTurnstile", () => {
 
   it("本番では、このサイト以外で作られた印を断る", async () => {
     reply({ success: true, action: "contact", hostname: "evil.example" });
-    expect(await load().verifyTurnstile("tok", { action: "contact" })).toEqual({
+    expect(await load().verifyTurnstile("tok", { action: "contact" })).toMatchObject({
       ok: false,
       reason: "hostname-mismatch",
     });
@@ -126,6 +126,19 @@ describe("verifyTurnstile", () => {
     // 届かない
     fetchMock.mockRejectedValueOnce(new TypeError("fetch failed"));
     expect((await load().verifyTurnstile("tok", { action: "contact" })).ok).toBe(true);
+  });
+
+  it("Cloudflare が 4xx（429 を含む）を返したときは通さない（送り手の側で起きうる応答なので）", async () => {
+    reply({}, 429);
+    expect(await load().verifyTurnstile("tok", { action: "contact" })).toMatchObject({ ok: false, spent: true });
+    reply({}, 400);
+    expect((await load().verifyTurnstile("tok", { action: "contact" })).ok).toBe(false);
+  });
+
+  it("印を Cloudflare に送ったかどうかを返す（送っていなければ、フォームは印を取り直さない）", async () => {
+    expect(await load().verifyTurnstile("", { action: "contact" })).toMatchObject({ ok: false, spent: false });
+    reply({ success: false, "error-codes": ["timeout-or-duplicate"] });
+    expect(await load().verifyTurnstile("used", { action: "contact" })).toMatchObject({ ok: false, spent: true });
   });
 
   it("本番で秘密が入っていなければ、確かめずに通してログに出す", async () => {

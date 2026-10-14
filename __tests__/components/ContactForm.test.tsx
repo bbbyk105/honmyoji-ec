@@ -13,10 +13,11 @@ jest.mock("@/app/(site)/contact/actions", () => ({
 
 // 確認の枠は Cloudflare のスクリプトを読むので、ここでは印の入った欄だけを置き、渡された resetKey を記録する
 const resetKeys: unknown[] = [];
+let mockToken = "token-from-widget";
 jest.mock("@/components/site/Turnstile", () => ({
   Turnstile: ({ resetKey }: { resetKey?: unknown }) => {
     resetKeys.push(resetKey);
-    return <input type="hidden" name="cf-turnstile-response" value="token-from-widget" />;
+    return <input type="hidden" name="cf-turnstile-response" value={mockToken} readOnly />;
   },
 }));
 
@@ -36,6 +37,7 @@ async function send() {
 beforeEach(() => {
   sendInquiry.mockReset();
   resetKeys.length = 0;
+  mockToken = "token-from-widget";
 });
 
 describe("ContactForm", () => {
@@ -69,10 +71,27 @@ describe("ContactForm", () => {
     expect(resetKeys.at(-1) ?? null).toBeNull();
   });
 
-  it("確認や送信で断られたとき（印を使ったあと）は、断られるたびに印を取り直す", async () => {
+  it("印がまだ無いあいだ（確認の途中）は送らず、確認を待つよう出す", async () => {
+    mockToken = "";
+    render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
+    await send();
+
+    expect(sendInquiry).not.toHaveBeenCalled();
+    expect(screen.getByRole("alert").textContent).toMatch(/check/i);
+  });
+
+  it("印を使う前に断られたとき（印が届かなかった）は取り直さない", async () => {
+    sendInquiry.mockResolvedValue({ status: "error", message: "We could not confirm this was sent by a person." });
+    render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
+    await send();
+
+    expect(resetKeys.at(-1) ?? null).toBeNull();
+  });
+
+  it("印を使ったあとで断られたとき（tokenSpent）は、断られるたびに印を取り直す", async () => {
     sendInquiry
-      .mockResolvedValueOnce({ status: "error", message: "We could not confirm this was sent by a person." })
-      .mockResolvedValueOnce({ status: "error", message: "We could not send your message." });
+      .mockResolvedValueOnce({ status: "error", message: "We could not confirm this was sent by a person.", tokenSpent: true })
+      .mockResolvedValueOnce({ status: "error", message: "We could not send your message.", tokenSpent: true });
     render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
 
     await send();

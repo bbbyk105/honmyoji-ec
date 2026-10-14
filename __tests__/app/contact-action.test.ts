@@ -79,6 +79,21 @@ describe("sendInquiry", () => {
     expect(takeFormQuota).not.toHaveBeenCalled();
   });
 
+  it("印を使ったあとで断ったときだけ tokenSpent を付ける（フォームが印を取り直す合図）", async () => {
+    // 印が無い: Cloudflare に送っていない
+    expect(await send({ "cf-turnstile-response": "" })).not.toHaveProperty("tokenSpent");
+    // 入力漏れ: 印を使う前に断っている
+    expect(await send({ message: "hi" })).not.toHaveProperty("tokenSpent");
+    // Cloudflare が断った
+    fetchMock.mockResolvedValueOnce(
+      new Response(JSON.stringify({ success: false, "error-codes": ["timeout-or-duplicate"] })),
+    );
+    expect(await send()).toMatchObject({ status: "error", tokenSpent: true });
+    // 照合は通ったが、送れなかった
+    notifyStore.mockRejectedValueOnce(new Error("resend down"));
+    expect(await send()).toMatchObject({ status: "error", tokenSpent: true });
+  });
+
   it("Cloudflare が断った印も届けない", async () => {
     fetchMock.mockResolvedValueOnce(
       new Response(JSON.stringify({ success: false, "error-codes": ["invalid-input-response"] })),
@@ -104,7 +119,8 @@ describe("sendInquiry", () => {
 
     const mail = notifyStore.mock.calls[0][0];
     expect(mail.subject).toBe("【MIROKU】【営業の可能性】お問い合わせ — Question about a piece（株式会社サンプル 山田）");
-    expect(mail.text.split("\n")[0]).toBe("※ 営業・売り込みの可能性があります（弊社・ご担当者様・集客）。");
+    // 「ご担当者様」は丁寧なお客さまも書くので手がかりにしない
+    expect(mail.text.split("\n")[0]).toBe("※ 営業・売り込みの可能性があります（弊社・集客）。");
   });
 
   it("件名は決まった選択肢だけ。知らない値やプロトタイプの名前は「Other」にする", async () => {

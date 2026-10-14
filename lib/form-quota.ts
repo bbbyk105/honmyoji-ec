@@ -53,9 +53,13 @@ export async function takeQuota(
   const perIp = (await storage.get<number>(ipKey)) ?? 0;
   if (perIp >= PER_IP_PER_DAY) return { ok: false, reason: "ip" };
 
-  const totalKey = `total:${form}`;
+  // Durable Object の RPC で受けた値なので確かめる。知らない値・無い値（デプロイの切り替わりで
+  // 旧版の Worker が take(ip) と呼ぶなど）はお問い合わせの枠で数える —— PER_DAY[undefined] だと
+  // `total >= undefined` が常に偽になり、上限が効かない
+  const kind: PublicForm = form === "subscribe" ? "subscribe" : "contact";
+  const totalKey = `total:${kind}`;
   const total = (await storage.get<number>(totalKey)) ?? 0;
-  if (total >= PER_DAY[form]) return { ok: false, reason: "day" };
+  if (total >= PER_DAY[kind]) return { ok: false, reason: "day" };
 
   await storage.put(ipKey, perIp + 1);
   await storage.put(totalKey, total + 1);
