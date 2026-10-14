@@ -35,6 +35,7 @@ beforeEach(() => {
   env().TURNSTILE_SECRET_KEY = "real-secret";
   env().NODE_ENV = "production";
   jest.spyOn(console, "error").mockImplementation(() => {});
+  jest.spyOn(console, "info").mockImplementation(() => {});
 });
 
 afterEach(() => {
@@ -85,6 +86,27 @@ describe("verifyTurnstile", () => {
     });
   });
 
+  it("本番では、このサイト以外で作られた印を断る", async () => {
+    reply({ success: true, action: "contact", hostname: "evil.example" });
+    expect(await load().verifyTurnstile("tok", { action: "contact" })).toEqual({
+      ok: false,
+      reason: "hostname-mismatch",
+    });
+
+    reply({ success: true, action: "contact", hostname: "honmyoujifuji.com" });
+    expect((await load().verifyTurnstile("tok", { action: "contact" })).ok).toBe(true);
+    reply({ success: true, action: "contact", hostname: "www.honmyoujifuji.com" });
+    expect((await load().verifyTurnstile("tok", { action: "contact" })).ok).toBe(true);
+  });
+
+  it("応答の形が崩れていても投げずに通す（お問い合わせを落とさない）", async () => {
+    reply(null);
+    expect((await load().verifyTurnstile("tok", { action: "contact" })).ok).toBe(true);
+
+    fetchMock.mockResolvedValueOnce(new Response("<html>bad gateway</html>", { status: 200 }));
+    expect((await load().verifyTurnstile("tok", { action: "contact" })).ok).toBe(true);
+  });
+
   it("IP が分からないときは remoteip を送らない", async () => {
     reply({ success: true, action: "contact" });
     await load().verifyTurnstile("tok", { action: "contact", ip: "unknown" });
@@ -123,5 +145,6 @@ describe("verifyTurnstile", () => {
 
     expect(result).toEqual({ ok: true });
     expect(sentBody().secret).toBe("1x0000000000000000000000000000000AA");
+    expect(console.info).toHaveBeenCalledWith(expect.stringContaining("試験用の秘密"));
   });
 });

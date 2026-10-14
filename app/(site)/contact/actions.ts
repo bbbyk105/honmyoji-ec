@@ -55,7 +55,9 @@ const SALES_LABEL = "【営業の可能性】";
 export async function sendInquiry(_prev: ContactState, formData: FormData): Promise<ContactState> {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
-  const subject = String(formData.get("subject") ?? "other");
+  // 件名は決まった選択肢だけ（直に叩かれると任意の文字や `constructor` が来る）
+  const rawSubject = String(formData.get("subject") ?? "");
+  const subject = Object.hasOwn(SUBJECTS, rawSubject) ? rawSubject : "other";
   const product = String(formData.get("product") ?? "").trim().slice(0, 300);
   const message = String(formData.get("message") ?? "").trim();
   const honeypot = String(formData.get("website") ?? "");
@@ -80,10 +82,10 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
   if (!check.ok) return { status: "error", message: CHECK_FAILED_MESSAGE };
 
   // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
-  const quota = await takeFormQuota(limitKey(ip));
+  const quota = await takeFormQuota(limitKey(ip), "contact");
   if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE };
 
-  const topic = SUBJECTS[subject] ?? subject;
+  const topic = SUBJECTS[subject];
   const piece = parsePiece(product);
   // 営業らしいものも捨てずに届ける（卸の相談などを落とさない）。件名に印を付けて分けるだけ
   const signals = salesSignals(name, message);

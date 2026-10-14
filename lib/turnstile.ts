@@ -1,5 +1,7 @@
 import "server-only";
 
+import { SITE_ORIGIN } from "@/lib/site-url";
+
 /* ------------------------------------------------------------------
    公開フォームの「人が送っているか」の照合（Cloudflare Turnstile）。フォームの中の
    components/site/Turnstile.tsx が作った印を、Cloudflare に問い合わせて確かめる。
@@ -29,7 +31,13 @@ const OUR_FAULT = new Set(["missing-input-secret", "invalid-input-secret", "inte
 
 export type TurnstileResult = { ok: true; skipped?: string } | { ok: false; reason: string };
 
-type VerifyResponse = { success?: boolean; "error-codes"?: string[]; action?: string };
+type VerifyResponse = { success?: boolean; "error-codes"?: string[]; action?: string; hostname?: string };
+
+/** 本番で印を作ってよい場所（サイトの基準のドメインと www）。Cloudflare の推奨どおり action と一緒に見る。 */
+function allowedHosts(): Set<string> {
+  const host = new URL(SITE_ORIGIN).hostname.replace(/^www\./, "");
+  return new Set([host, `www.${host}`]);
+}
 
 /**
  * 本番は Worker の秘密（`npx wrangler secret put TURNSTILE_SECRET_KEY`）。手元は .env に本物が
@@ -37,7 +45,11 @@ type VerifyResponse = { success?: boolean; "error-codes"?: string[]; action?: st
  * の印を出すので、本物の秘密と組むと必ず断られる。
  */
 function secretKey(): string | undefined {
-  if (process.env.NODE_ENV !== "production") return TEST_SECRET;
+  if (process.env.NODE_ENV !== "production") {
+    // 本番で黙ってここに来ると、確認が試験用の秘密で回る。手元でだけ見えるように残す
+    console.info("[turnstile] 本番ではないので、試験用の秘密で確かめます");
+    return TEST_SECRET;
+  }
   return process.env.TURNSTILE_SECRET_KEY || undefined;
 }
 
@@ -58,7 +70,7 @@ export async function verifyTurnstile(
     return { ok: true, skipped: "no-secret" };
   }
 
-  let data: VerifyResponse;
+  let raw: unknown;
   try {
     const res = await fetch(VERIFY_URL, {
       method: "POST",
@@ -70,15 +82,23 @@ export async function verifyTurnstile(
       console.error(`[turnstile] 照合が ${res.status} を返したので、確かめずに通しました`);
       return { ok: true, skipped: `http-${res.status}` };
     }
-    data = (await res.json()) as VerifyResponse;
+    raw = await res.json();
   } catch (err) {
-    console.error("[turnstile] 照合に届かなかったので、確かめずに通しました", err);
+    console.error("[turnstile] 照合に届かなかった（または応答が読めなかった）ので、確かめずに通しました", err);
     return { ok: true, skipped: "unreachable" };
   }
+  if (!raw || typeof raw !== "object") {
+    console.error("[turnstile] 照合の応答の形が崩れていたので、確かめずに通しました");
+    return { ok: true, skipped: "malformed" };
+  }
+  const data = raw as VerifyResponse;
 
   if (data.success === true) {
-    // 印にはそれを作ったフォームの action が入っている。試験用の印には入っていないことがある
+    // 印にはそれを作ったフォームの action と場所が入っている。試験用の印には入っていないことがある
     if (data.action && data.action !== action) return { ok: false, reason: "action-mismatch" };
+    if (process.env.NODE_ENV === "production" && data.hostname && !allowedHosts().has(data.hostname)) {
+      return { ok: false, reason: "hostname-mismatch" };
+    }
     return { ok: true };
   }
 

@@ -53,7 +53,7 @@ export default async function ContactPage({
         <div className="grid gap-14 pt-14 md:grid-cols-12 md:gap-8 md:pt-20">
           {/* 用紙が先。スマホでは問い合わせフォームを最初に出す */}
           <div className="md:col-span-7 md:col-start-6 md:row-start-1">
-            <ContactForm product={productLabel} subject={initialSubject} subjects={subjectOptions} />
+            <ContactForm email={site.email} product={productLabel} subject={initialSubject} subjects={subjectOptions} />
           </div>
 
           <aside className="md:col-span-4 md:col-start-1 md:row-start-1">

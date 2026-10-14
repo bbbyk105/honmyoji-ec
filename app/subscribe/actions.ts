@@ -18,8 +18,9 @@ export async function subscribeNote(_prev: SubscribeState, formData: FormData): 
     return { status: "error", message: "Please enter a valid email address." };
   }
 
-  // 一日の上限（lib/form-quota.ts）。お問い合わせと同じ枠
-  const quota = await takeFormQuota(limitKey(await clientIp()));
+  // 一日の上限（lib/form-quota.ts）。お問い合わせとは別の枠 —— ここには Turnstile が無いので、
+  // 同じ枠だと bot がここを叩いて、お客さまのお問い合わせの枠まで使い切れる
+  const quota = await takeFormQuota(limitKey(await clientIp()), "subscribe");
   if (!quota.ok) {
     return {
       status: "error",

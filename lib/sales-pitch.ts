@@ -10,7 +10,7 @@
    ------------------------------------------------------------------ */
 
 /** 和文の語（全角・半角の違いは NFKC で揃えてから見る）。 */
-const JA_TERMS = [
+const JA_WORDS = [
   "弊社",
   "御社",
   "貴社",
@@ -26,29 +26,39 @@ const JA_TERMS = [
   "ウェブ制作",
   "補助金",
 ];
+const JA_TERMS = JA_WORDS.map((label) => ({ label, needle: label.normalize("NFKC").toLowerCase() }));
 
-/** 英語の語。語の切れ目で見る（"seo" が "Seoul" に当たらないように）。 */
+/**
+ * 略語は大文字で書かれたときだけ（韓国の姓 Seo〈서〉のお客さまを取り違えない）。小文字の
+ * 「seo」は、売り込みの決まり文句と組になったときだけ下の EN_TERMS で拾う。
+ */
+const CASED_TERMS: { label: string; pattern: RegExp }[] = [
+  { label: "SEO", pattern: /\bSEO\b/ },
+  { label: "MEO", pattern: /\bMEO\b/ },
+];
+
+/**
+ * 英語の語（小文字にしてから見る）。語の切れ目で見る。「our agency」「digital marketing」の
+ * ような、旅行会社やその仕事をしているお客さまも書く言い回しは入れない。
+ */
 const EN_TERMS: { label: string; pattern: RegExp }[] = [
-  { label: "SEO", pattern: /\bseo\b/ },
-  { label: "MEO", pattern: /\bmeo\b/ },
+  { label: "SEO", pattern: /\bseo\s+(?:services?|agency|experts?|optimi[sz]ation|packages?|audit)\b/ },
   { label: "backlinks", pattern: /\bback-?links?\b/ },
   { label: "guest post", pattern: /\bguest\s+post/ },
   { label: "web design", pattern: /\b(?:web|website)\s+(?:design|development|redesign)/ },
   { label: "Google ranking", pattern: /\b(?:first\s+page\s+of\s+google|rank(?:ing)?\s+(?:higher\s+)?on\s+google)\b/ },
   { label: "traffic", pattern: /\b(?:more|increase\s+(?:your\s+)?|website)\s*traffic\b/ },
   { label: "lead generation", pattern: /\blead\s+generation\b/ },
-  { label: "digital marketing", pattern: /\bdigital\s+marketing\b/ },
-  { label: "marketing agency", pattern: /\b(?:marketing|our)\s+agency\b/ },
   { label: "outsourcing", pattern: /\boutsourc/ },
   { label: "virtual assistant", pattern: /\bvirtual\s+assistant/ },
 ];
 
 /** 営業らしさの手がかりになった語を返す（無ければ空）。名前と本文を合わせて見る。 */
 export function salesSignals(...texts: string[]): string[] {
-  const lower = texts.join("\n").normalize("NFKC").toLowerCase();
-  const found = JA_TERMS.filter((term) => lower.includes(term.normalize("NFKC").toLowerCase()));
-  for (const { label, pattern } of EN_TERMS) {
-    if (pattern.test(lower)) found.push(label);
-  }
-  return found;
+  const text = texts.join("\n").normalize("NFKC");
+  const lower = text.toLowerCase();
+  const found = JA_TERMS.filter((term) => lower.includes(term.needle)).map((term) => term.label);
+  for (const { label, pattern } of CASED_TERMS) if (pattern.test(text)) found.push(label);
+  for (const { label, pattern } of EN_TERMS) if (pattern.test(lower)) found.push(label);
+  return [...new Set(found)];
 }

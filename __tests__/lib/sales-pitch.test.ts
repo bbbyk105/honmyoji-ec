@@ -13,7 +13,9 @@ describe("salesSignals", () => {
   it("英語の SEO・制作の売り込みを見分ける", () => {
     const pitch =
       "Hi, I noticed your website is not on the first page of Google. Our agency offers SEO and backlinks to increase your traffic.";
-    expect(salesSignals("Mark", pitch)).toEqual(["SEO", "backlinks", "Google ranking", "traffic", "marketing agency"]);
+    // 「Our agency」は旅行会社なども書くので見ない（2026-10-15 のコードレビュー）
+    expect(salesSignals("Mark", pitch)).toEqual(["SEO", "backlinks", "Google ranking", "traffic"]);
+    expect(salesSignals("", "We offer affordable seo services for small shops.")).toEqual(["SEO"]);
   });
 
   it("全角や大文字小文字が違っても見分ける", () => {
@@ -30,7 +32,15 @@ describe("salesSignals", () => {
       "突然のご連絡失礼いたします。母への贈り物に、緑のボトルバッグを探しています。",
       "I run a small homeware shop in Hobart and would love to talk about stocking your bags.",
       "Could you make one in navy? My traffic-light red one is perfect but I need something quieter.",
+      "Our agency is organising a small tour group to Fuji in April. Could we visit the temple and buy bags?",
+      "I work in digital marketing in Sydney and fell in love with Ai. Do you ship to Perth?",
     ];
     for (const message of messages) expect(salesSignals("Customer", message)).toEqual([]);
+  });
+
+  it("韓国の姓の Seo を SEO と取り違えない", () => {
+    expect(salesSignals("Minji Seo", "Do you ship to Busan?")).toEqual([]);
+    expect(salesSignals("Seo-yeon Park", "Is Hanada still available?")).toEqual([]);
+    expect(salesSignals("Ada", "My name is Seo Minji and I would like Beni.")).toEqual([]);
   });
 });

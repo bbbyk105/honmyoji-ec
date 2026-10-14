@@ -11,9 +11,13 @@ jest.mock("@/app/(site)/contact/actions", () => ({
   sendInquiry: (...args: unknown[]) => sendInquiry(...args),
 }));
 
-// 確認の枠は Cloudflare のスクリプトを読むので、ここでは印の入った欄だけを置く
+// 確認の枠は Cloudflare のスクリプトを読むので、ここでは印の入った欄だけを置き、渡された resetKey を記録する
+const resetKeys: unknown[] = [];
 jest.mock("@/components/site/Turnstile", () => ({
-  Turnstile: () => <input type="hidden" name="cf-turnstile-response" value="token-from-widget" />,
+  Turnstile: ({ resetKey }: { resetKey?: unknown }) => {
+    resetKeys.push(resetKey);
+    return <input type="hidden" name="cf-turnstile-response" value="token-from-widget" />;
+  },
 }));
 
 const subjects = [
@@ -31,12 +35,13 @@ async function send() {
 
 beforeEach(() => {
   sendInquiry.mockReset();
+  resetKeys.length = 0;
 });
 
 describe("ContactForm", () => {
   it("断られて戻ってきても、書いた本文と選んだ件名が残る", async () => {
     sendInquiry.mockResolvedValue({ status: "error", message: "Please try again." });
-    render(<ContactForm product={null} subject="question" subjects={subjects} />);
+    render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
 
     fireEvent.change(field("Subject"), { target: { value: "custom" } });
     fireEvent.change(field("Name"), { target: { value: "Ada" } });
@@ -51,9 +56,38 @@ describe("ContactForm", () => {
     expect(field("Subject").value).toBe("custom");
   });
 
+  it("入力漏れで断られたときは印を取り直さない（サーバーは印を使う前に断っている）", async () => {
+    sendInquiry.mockResolvedValue({
+      status: "error",
+      message: "Please check the highlighted fields.",
+      errors: { email: "Please enter a valid email address." },
+    });
+    render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
+    await send();
+
+    // 取り直すと、怪しいと判定された人にはチェックボックスがまた出て、直してすぐ送ると印が空になる
+    expect(resetKeys.at(-1) ?? null).toBeNull();
+  });
+
+  it("確認や送信で断られたとき（印を使ったあと）は、断られるたびに印を取り直す", async () => {
+    sendInquiry
+      .mockResolvedValueOnce({ status: "error", message: "We could not confirm this was sent by a person." })
+      .mockResolvedValueOnce({ status: "error", message: "We could not send your message." });
+    render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
+
+    await send();
+    const first = resetKeys.at(-1);
+    await send();
+    const second = resetKeys.at(-1);
+
+    expect(first).not.toBeNull();
+    expect(first).not.toBeUndefined();
+    expect(second).not.toBe(first);
+  });
+
   it("確認の印を一緒に送る", async () => {
     sendInquiry.mockResolvedValue({ status: "sent", message: "Thank you." });
-    render(<ContactForm product={null} subject="question" subjects={subjects} />);
+    render(<ContactForm email="info@honmyoujifuji.com" product={null} subject="question" subjects={subjects} />);
 
     fireEvent.change(field("Name"), { target: { value: "Ada" } });
     await send();

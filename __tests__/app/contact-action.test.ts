@@ -9,14 +9,16 @@ export {};
 
 type Mail = { subject: string; text: string; replyTo?: string };
 const notifyStore = jest.fn<Promise<void>, [Mail]>(async () => {});
-const takeFormQuota = jest.fn<Promise<{ ok: true }>, [string]>(async () => ({ ok: true }));
+const takeFormQuota = jest.fn<Promise<{ ok: true }>, [string, string]>(async () => ({ ok: true }));
 
 jest.mock("server-only", () => ({}));
 jest.mock("next/headers", () => ({
   headers: async () => new Headers({ "x-forwarded-for": "203.0.113.5" }),
 }));
 jest.mock("@/lib/mail", () => ({ notifyStore: (mail: never) => notifyStore(mail) }));
-jest.mock("@/lib/form-quota-gate", () => ({ takeFormQuota: (ip: string) => takeFormQuota(ip) }));
+jest.mock("@/lib/form-quota-gate", () => ({
+  takeFormQuota: (ip: string, form: string) => takeFormQuota(ip, form),
+}));
 
 type Actions = typeof import("@/app/(site)/contact/actions");
 const { sendInquiry } = jest.requireActual<Actions>("@/app/(site)/contact/actions");
@@ -47,7 +49,8 @@ beforeEach(() => {
   notifyStore.mockClear();
   takeFormQuota.mockClear();
   fetchMock.mockReset();
-  fetchMock.mockResolvedValue(new Response(JSON.stringify({ success: true, action: "contact" })));
+  // 呼ぶたびに新しい Response（同じものを二度読むと Body is unusable で「届かない」扱いになる）
+  fetchMock.mockImplementation(async () => new Response(JSON.stringify({ success: true, action: "contact" })));
   global.fetch = fetchMock as unknown as typeof fetch;
   env().TURNSTILE_SECRET_KEY = "real-secret";
   env().NODE_ENV = "production";
@@ -62,7 +65,7 @@ describe("sendInquiry", () => {
     const result = await send();
 
     expect(result.status).toBe("sent");
-    expect(takeFormQuota).toHaveBeenCalledWith("203.0.113.5");
+    expect(takeFormQuota).toHaveBeenCalledWith("203.0.113.5", "contact");
     expect(notifyStore).toHaveBeenCalledTimes(1);
     expect(notifyStore.mock.calls[0][0].subject).toBe("【MIROKU】お問い合わせ — Question about a piece（Ada）");
     expect(notifyStore.mock.calls[0][0].replyTo).toBe("ada@example.com");
@@ -102,6 +105,14 @@ describe("sendInquiry", () => {
     const mail = notifyStore.mock.calls[0][0];
     expect(mail.subject).toBe("【MIROKU】【営業の可能性】お問い合わせ — Question about a piece（株式会社サンプル 山田）");
     expect(mail.text.split("\n")[0]).toBe("※ 営業・売り込みの可能性があります（弊社・ご担当者様・集客）。");
+  });
+
+  it("件名は決まった選択肢だけ。知らない値やプロトタイプの名前は「Other」にする", async () => {
+    await send({ subject: "constructor" });
+    await send({ subject: "x".repeat(500) });
+
+    expect(notifyStore.mock.calls[0][0].subject).toBe("【MIROKU】お問い合わせ — Other（Ada）");
+    expect(notifyStore.mock.calls[1][0].subject).toBe("【MIROKU】お問い合わせ — Other（Ada）");
   });
 
   it("隠し欄が埋まっていれば、送れたふりをして何もしない", async () => {
