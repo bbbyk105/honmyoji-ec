@@ -1,7 +1,8 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { startTransition, useActionState, useId, type FormEvent } from "react";
 import { Button } from "@/components/site/Button";
+import { Turnstile } from "@/components/site/Turnstile";
 import { sendInquiry, type ContactState } from "./actions";
 
 type Props = {
@@ -21,8 +22,20 @@ const label = "block font-sans text-meta font-medium text-bone";
 const hint = "mt-2 font-sans text-meta text-clay";
 
 export function ContactForm({ product, subject, subjects }: Props) {
-  const [state, action, pending] = useActionState<ContactState, FormData>(sendInquiry, { status: "idle" });
+  const [state, dispatch, pending] = useActionState<ContactState, FormData>(sendInquiry, { status: "idle" });
   const uid = useId();
+
+  /*
+    `<form action={…}>` に渡さず、onSubmit から送る。React 19 は form の action が終わると
+    制御していない欄を初期値に戻すので、入力漏れや確認（Turnstile）で断られるたびに、
+    書いた本文が空に、件名が最初の値に戻っていた（components/studio/useStudioForm.ts と同じ話）。
+    JS が無いと確認の印が作れず送れないので、action に渡す意味（JS 無しでも送れる）も無い。
+  */
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    startTransition(() => dispatch(formData));
+  }
 
   if (state.status === "sent") {
     return (
@@ -37,7 +50,7 @@ export function ContactForm({ product, subject, subjects }: Props) {
   const err = (k: "name" | "email" | "message") => errors[k];
 
   return (
-    <form action={action} className="space-y-7" noValidate>
+    <form onSubmit={onSubmit} className="space-y-7" noValidate>
       {product ? (
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border border-line px-5 py-5">
           <span className="font-sans text-meta text-mist">Piece</span>
@@ -149,6 +162,9 @@ export function ContactForm({ product, subject, subjects }: Props) {
         <label htmlFor="website">Website</label>
         <input id="website" name="website" tabIndex={-1} autoComplete="off" />
       </div>
+
+      {/* 送るたびに印を取り直す（印は一度しか使えない） */}
+      <Turnstile action="contact" resetKey={state} />
 
       {state.status === "error" ? (
         <p role="alert" className="border border-clay/60 px-4 py-4 font-sans text-small text-clay">

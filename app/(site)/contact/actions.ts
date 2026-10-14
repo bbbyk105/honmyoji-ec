@@ -5,7 +5,9 @@ import { clientIp, limitKey } from "@/lib/client-ip";
 import { isEmail } from "@/lib/email";
 import { takeFormQuota } from "@/lib/form-quota-gate";
 import { notifyStore } from "@/lib/mail";
+import { salesSignals } from "@/lib/sales-pitch";
 import { siteUrl } from "@/lib/site-url";
+import { TURNSTILE_FIELD, verifyTurnstile } from "@/lib/turnstile";
 
 import { SUBJECTS } from "./subjects";
 
@@ -37,6 +39,15 @@ const MESSAGE_MAX = 5000;
 /** 一日の上限に達したとき。メールは直接なら届く（info@ → お店の Gmail）。 */
 const FORM_LIMIT_MESSAGE = `We have received many messages today. Please email us directly at ${site.email} — a person reads every one.`;
 
+/** 人が送っているかを確かめられなかったとき（lib/turnstile.ts）。直接のメールなら届く。 */
+const CHECK_FAILED_MESSAGE = `We could not confirm this was sent by a person. Please try again, or email us directly at ${site.email}.`;
+
+/**
+ * 営業らしいものに付ける件名の印。お店の Gmail はこの語でフィルタして別のラベルへ振り分ける。
+ * export しない（"use server" のファイルから関数以外を出すと 500 になる）。
+ */
+const SALES_LABEL = "【営業の可能性】";
+
 /**
  * お問い合わせ送信。お店にメールで届ける（Resend、`lib/mail.ts`）。返信先はお客さまの
  * アドレスなので、お店は返信を押すだけで答えられる。鍵が無ければサーバーログに出す。
@@ -61,13 +72,23 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
 
+  const ip = await clientIp();
+
+  // 人が送っているか（Cloudflare Turnstile）。上限より先に見る —— bot がサイト全体の
+  // 一日の枠（50 通）を使い切ると、お客さまが送れなくなる
+  const check = await verifyTurnstile(String(formData.get(TURNSTILE_FIELD) ?? ""), { action: "contact", ip });
+  if (!check.ok) return { status: "error", message: CHECK_FAILED_MESSAGE };
+
   // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
-  const quota = await takeFormQuota(limitKey(await clientIp()));
+  const quota = await takeFormQuota(limitKey(ip));
   if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE };
 
   const topic = SUBJECTS[subject] ?? subject;
   const piece = parsePiece(product);
+  // 営業らしいものも捨てずに届ける（卸の相談などを落とさない）。件名に印を付けて分けるだけ
+  const signals = salesSignals(name, message);
   const text = [
+    ...(signals.length ? [`※ 営業・売り込みの可能性があります（${signals.join("・")}）。`, ""] : []),
     `${name} さんからお問い合わせがありました。`,
     "このメールに返信すると、そのままお客さまに届きます。",
     "",
@@ -81,7 +102,11 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
   ].join("\n");
 
   try {
-    await notifyStore({ subject: `【MIROKU】お問い合わせ — ${topic}（${name}）`, text, replyTo: email });
+    await notifyStore({
+      subject: `【MIROKU】${signals.length ? SALES_LABEL : ""}お問い合わせ — ${topic}（${name}）`,
+      text,
+      replyTo: email,
+    });
   } catch (err) {
     console.error("[contact] failed", err);
     return {

@@ -80,6 +80,14 @@ export default async function ContactPage({
                   </a>
                 </dd>
               </div>
+              {/* フォームから届く売り込み（日本のフォーム営業が多い）への断り。届いたものは件名で分ける（lib/sales-pitch.ts） */}
+              <div>
+                <dt className="font-sans text-meta text-mist">Please, no</dt>
+                <dd className="mt-1.5">Sales or advertising pitches.</dd>
+                <dd lang="ja" className="mt-1 font-jp text-[13px] tracking-[0.04em] text-mist">
+                  営業・広告のご連絡はご遠慮ください。
+                </dd>
+              </div>
             </dl>
             <div className="mt-12 max-w-[420px]">
               <Frame

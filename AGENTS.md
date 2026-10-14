@@ -140,6 +140,9 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - 管理画面のセッションはアカウントの指紋入り（v3）。パスワードを変えたりアカウントを消したりすると、その人の既存のセッションはその場で切れる。ログアウトは作ったときと同じ属性（Secure・Path=/）で上書きして消す —— `jar.delete()` だと Secure が付かず、本番の `__Host-` cookie が残っていた。
   - Webhook は `checkout.session.async_payment_succeeded` も売れたものとして扱う。**二重販売の判定は DB の中で決める**（`record_sale`。作品の行を押さえてから、その時点の状態で判定する）。Worker で読んでから書くと、DB の不調や同時に来た Webhook で見逃す。thank-you は形の違う session_id では Stripe を呼ばない。
   - **公開フォームは一日の上限つき**（`lib/form-quota.ts`。同じ IP から 5 通、サイト全体で 50 通。数えるのは Durable Object `FormQuota`、`worker/index.ts` が export）。Resend の無料枠（一日 100 通）を注文のメールに残すため。上限に達したら info@ へ直接と案内する。数えに行けないときは通す。お問い合わせの本文は 5,000 字まで。
+  - **お問い合わせは Cloudflare Turnstile で「人が送っているか」を確かめる**（2026-10-15。bot の営業が隠し欄と上限をすり抜けて届いていた）。部品は `components/site/Turnstile.tsx`（スクリプトは置いたページでだけ読む）、照合は `lib/turnstile.ts`。**照合は一日の上限より先**（bot にサイト全体の 50 通を使い切らせない）、入力の確かめより後（印は一度しか使えないので、入力漏れで印を潰さない）。断るのは印が無い・偽物・使い回し・別のフォームの印のときだけで、Cloudflare に届かない・秘密が無いなど、こちら側の都合のときは通す。手元は Cloudflare の試験用のキーで動く（`NODE_ENV` が production 以外なら、.env に本物の秘密があっても試験用を使う）。本番の秘密は `npx wrangler secret put TURNSTILE_SECRET_KEY`。
+  - **営業らしいお問い合わせは捨てずに、件名に【営業の可能性】を付けて届ける**（`lib/sales-pitch.ts`。お店の Gmail でこの語をフィルタして別のラベルへ）。卸の相談のような本物の商談も「弊社」と書くので、捨てると取りこぼす。語は「お客さまがバッグについて書くときにまず使わない言葉」だけ（「営業」単体は「営業時間」に当たるので入れない）。
+  - **ContactForm は `<form action>` ではなく onSubmit から送る**。React 19 は action の後に form を初期値へ戻すので、入力漏れや確認で断られるたびに本文が消えていた（2026-10-15 に直した。`useStudioForm` と同じ話）。
 
 - **Cloudflare Workers（OpenNext）では、モジュールを読み込む時間が 1 アクセスの CPU 時間に乗る**（2026-10-08 に移行を始めた）。外枠（`SiteChrome`）や全ページから重いライブラリを読まないこと。
   - **Stripe の SDK は読むだけで 80ms**。「決済が使えるか」と送料は `lib/stripe-config.ts`、SDK（`lib/stripe.ts`）は決済を作る・確かめる所だけ。`checkout/actions.ts` は `MiniCart` 経由で全ページが参照するので、SDK は関数の中で `await import()` する。
@@ -191,9 +194,8 @@ Always read `DESIGN.md` before making visual or UI decisions. Fonts, colours, sp
 
 ## 未着手 / 次フェーズ
 
-- Stripe Checkout（現状は Add to cart → Send this cart → お問い合わせで取り置き → 手動決済案内）。
 - 日本語版ページ（i18n）。
-- 26 点の正式な名前・文言・寸法（今は仮）。価格は 2026-09-29 に 26 点とも入れたが、状態は Coming soon のまま —— 売り出す日を決めて /studio で Available に（`data/products.ts` の冒頭の註）。
+- 26 点の正式な名前・文言・寸法と重さ（今は仮・寸法と重さは空）。価格は 2026-09-29 に 26 点とも入れ、2026-10-15 時点で /studio から購入可能（Available）にしてある（コード側の値は Coming soon のまま。DB の上書きで出ている）。
 - 着姿のうち、どの作品か特定できていないカット（`image/` の 0.10.03・0.13.02/14/28）の割り当て。
 
 ## コマンド
