@@ -63,7 +63,9 @@ const prompt = Prompt({
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_ORIGIN),
   title: {
-    default: `${site.name} — Tatami-beri bags, made once`,
+    // 英語の売り場では畳の縁は "tatami edge" と書かれることが多いので併記する（lib/piece-text.ts）
+    // 言葉を前に、60 字ほどに収める（検索結果で切れない）
+    default: `Tatami-beri (tatami edge) bags from a Japanese temple — ${site.name}`,
     template: `%s — ${site.name}`,
   },
   description: site.description,

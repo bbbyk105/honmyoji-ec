@@ -59,7 +59,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
   - **`Reveal` は井戸を含むブロックをフェードさせない**（キャプションだけ動かす）。写真と文章を一つの `Reveal` に同居させないこと — 同居すると文章が素で現れる。
 - `components/site/DriftBand.tsx` — 縦スクロールに紐付けて横に流れる写真の帯。自走マーキーにはしない。**並べるのはバッグが主役の写真だけ**（風景・堂内のカットは入れない）。写真は一本の床に揃える（上下に段違いにしない）。トップでは `bridge` で墨と紙の境目にまたがらせ、面の切り替わりを縞にしない。
 - 価格の表記は `data/products.ts` の `aud` ひとつ（`A$220`）。ロケールを `en-AU` にすると記号が素の `$` に戻り、どの国のドルか分からなくなる。値段の隣に通貨名を書き足さない（記号が言っている）。
-- 商品 URL は読みやすい複合 slug（`tokiwa-evergreen`）。画像フォルダは `folder`（`bottle-01`）。旧カタログの URL は `next.config.ts` で `/collection` へ（一時リダイレクト）。
+- 商品 URL は読みやすい複合 slug（`tokiwa-evergreen`）。**slug は名前が正式になっても変えない**（2026-10-15〜）。画像フォルダは `folder`（`bottle-01`）。旧カタログの URL は `next.config.ts` で `/collection` へ（一時リダイレクト）。
+- **検索向けの言葉は `lib/piece-text.ts`**（作品の title・説明文・写真の alt・構造化データの商品名。区分ごとの素材の言い方は `data/products.ts` の `LINE_MATERIAL`）。説明文は「区分・一点もの（受注生産は made to order）→ 素材と場所 → 一言」の順（スマホの検索結果は 120 字ほどで切れる）。名前と一言は詩のままにして、何の品か（区分と素材）をここで足す。英語の売り場では畳の縁は "tatami edge"（"tatami heri"）と書かれることが多いので、検索向けの言葉には併記する（サイトの語は tatami-beri のまま）。作品ページの h1 は区分の行と名前の両方（`PieceHeading`）、FAQ の問いは `<summary>` の中の h2。
 
 ## 画像パイプライン（重要）
 
@@ -135,7 +136,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - **監査（2026-10-08）の直し — 戻さないこと**（2026-10-09）:
   - Worker の入口（`worker/guard.ts`）で `/cdn-cgi/` を 404、Content-Length が 1MB を超える本文を 413、数でない Content-Length を 400 にする。Content-Length の無い本文（chunked）は `limitBody` が読みながら数えて 1MB で止める。OpenNext の worker.js には開発用の `/cdn-cgi/image/`（任意の URL の画像を変換する）が本番にも入っていて、POST の本文は上限なしで二度読まれる。workers.dev は止めた（`workers_dev: false`）。`wrangler.jsonc` に `account_id` を固定してある（複数のアカウントでログインしていても取り違えない）。`www.` と `http://` も入口で `https://honmyoujifuji.com` へ恒久の転送（www も Custom Domain として同じ Worker に付けてある）。
   - **外の画像を Next に最適化させない**（`next.config.ts` に `remotePatterns` を置かない）。Cloudflare の画像変換は無料で月 5,000 件で、microCMS のホストを丸ごと許すと誰でも枠を使い切れた。Blog の写真は microCMS 自身の画像 API で縮め（`blogImage`）、`Frame` は外の URL を `unoptimized` で出す。
-  - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。**一時（307）のままにする** —— 転送先の slug は仮の名前から作っていて、正式な名前で変わる。恒久にするとブラウザが古い slug を覚えて 404 に飛ぶ。
+  - 作品のページは `dynamicParams = false`（一覧に無い URL は作らずに 404。でたらめな URL ごとに 404 が R2 に溜まらない）。旧 folder 名（`bottle-07`）の URL は `next.config.ts` の redirects が作品の URL へ送る（dynamicParams = false なのでページの中では送れない）。**作品の URL（slug）は変えない**（2026-10-15〜。販売中で検索に載るので、名前が正式になっても slug は今のまま）。だから folder → slug の転送は恒久（308。`data/products.ts` の `productRedirects`、試し買い用だけ一時）。どうしても slug を変えるときは旧い方を作品の `previousSlugs` に残す（恒久に転送される）。今の slug は `__tests__/data/products.test.ts` が見張る。もう無い旧作品（sakura など）→ 一覧の転送だけは、戻ってくる可能性があるので一時（307）のまま。
   - **Blog の本文 HTML は描く前に無害化する**（`lib/blog-html.ts`、`xss`）。本文は `/studio` と同じオリジンで描かれるので、script が混ざるとログイン中の人の権限で管理画面を操作できた。プレビューの slug と draftKey は英数字と - _ だけ（SDK が URL にそのままつなぐ）。microCMS が落ちたら、ビルド中だけ予備の記事に落ち、動いている間は投げる（予備の記事が 10 分キャッシュされて本物が消えないように）。
   - 管理画面のセッションはアカウントの指紋入り（v3）。パスワードを変えたりアカウントを消したりすると、その人の既存のセッションはその場で切れる。ログアウトは作ったときと同じ属性（Secure・Path=/）で上書きして消す —— `jar.delete()` だと Secure が付かず、本番の `__Host-` cookie が残っていた。
   - Webhook は `checkout.session.async_payment_succeeded` も売れたものとして扱う。**二重販売の判定は DB の中で決める**（`record_sale`。作品の行を押さえてから、その時点の状態で判定する）。Worker で読んでから書くと、DB の不調や同時に来た Webhook で見逃す。thank-you は形の違う session_id では Stripe を呼ばない。

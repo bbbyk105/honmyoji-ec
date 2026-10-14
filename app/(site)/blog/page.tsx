@@ -13,8 +13,8 @@ const MEASURE = "max-w-[var(--blog-measure)]";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/blog" },
-  title: "Blog",
-  description: "Notes on material, making, care, and place — from Honmyoji Temple, Fuji.",
+  title: "Blog: notes from Honmyoji Temple",
+  description: "Notes on tatami-beri (tatami edge), making, care and place — from Honmyoji Temple in Fuji City, Japan.",
 };
 
 function LeadCopy({

@@ -1,8 +1,9 @@
 import "server-only";
 
 import type { BlogPost } from "@/data/blog";
-import { LINE_LABEL, leadSrc, productPath, type Product, type ProductStatus } from "@/data/products";
+import { leadSrc, productPath, type Product, type ProductStatus } from "@/data/products";
 import { legal, site } from "@/data/site";
+import { pieceKind, pieceProductName } from "@/lib/piece-text";
 import { siteUrl } from "@/lib/site-url";
 import { SHIPPING_COUNTRIES, shippingFor } from "@/data/shipping";
 
@@ -56,13 +57,14 @@ export function productJsonLd(p: Product): Json | null {
   return {
     "@context": "https://schema.org",
     "@type": "Product",
-    name: `${p.name} ${p.kanji}`,
+    // 名前だけ（"Ai 藍"）だと、検索や Google ショッピングで何の品か分からない
+    name: pieceProductName(p),
     description: `${p.note} ${p.story}`,
     image: productImages(p),
     sku: p.sku,
     url,
     brand: { "@type": "Brand", name: site.name },
-    category: LINE_LABEL[p.line].en,
+    category: pieceKind(p),
     material: p.materials.join(", "),
     offers: {
       "@type": "Offer",
