@@ -7,7 +7,7 @@ import { faq, founder } from "@/data/site";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/about" },
-  title: "About",
+  title: "About the maker and Honmyoji Temple",
   description:
     "MIROKU is made at Honmyoji Temple in Fuji City by Emi Kashiwazake — tatami-beri remnants, recycled paper band, one piece at a time.",
 };

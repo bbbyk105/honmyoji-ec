@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { ViewTransition } from "react";
 import { LINE_RATIO, productImage, type Product } from "@/data/products";
+import { pieceAlt } from "@/lib/piece-text";
 import { ZoomHit } from "./Lightbox";
 
 /**
@@ -23,7 +24,7 @@ export function ProductHero({ product }: { product: Product }) {
       <ViewTransition name={`bag-${product.folder}`} share="morph" default="none">
         <Image
           src={productImage(product.slug, 1)}
-          alt={`${product.name} — ${product.note}`}
+          alt={pieceAlt(product)}
           fill
           priority
           fetchPriority="high"

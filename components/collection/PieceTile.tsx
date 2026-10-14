@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ViewTransition } from "react";
 import { ImageWell, type WellFrom, type WellReveal } from "@/components/site/ImageWell";
 import { LINE_RATIO, priceLabel, productImage, productPath, type Product } from "@/data/products";
+import { pieceAlt } from "@/lib/piece-text";
 import { SoldBand } from "./SoldBand";
 import { StatusPill } from "./StatusPill";
 
@@ -71,7 +72,7 @@ export function PieceTile({
           <ViewTransition name={`bag-${product.folder}`} share="morph" default="none">
             <Image
               src={productImage(product.slug, 1)}
-              alt={`${product.name} — ${product.note}`}
+              alt={pieceAlt(product)}
               fill
               priority={priority}
               sizes={sizes}

@@ -107,3 +107,15 @@ describe("価格", () => {
     }
   });
 });
+
+describe("作品の URL", () => {
+  it("slug は変えない（販売中で検索にも載っている。変えるなら旧 slug からの恒久の転送を足し、ここも直す）", () => {
+    expect(products.map((p) => p.slug)).toEqual([
+      "tokiwa-evergreen", "akane-madder", "rikyu-grey-green", "seiji-celadon", "moegi-spring-green",
+      "hanada-pale-indigo", "kuchiba-fallen-leaf", "ai-indigo", "aotake-green-bamboo", "nishiki-brocade",
+      "matsuba-pine-needle", "koke-moss", "yoru-night", "beni-crimson", "iroha-script", "somei-cherry",
+      "uguisu-olive", "sakuranezumi-cherry-grey", "hishi-diamond", "kago-basket", "shima-stripe", "kon-navy",
+      "kurumi-walnut", "yuhi-sunset", "hana-floral", "ukiyo-print",
+    ]);
+  });
+});

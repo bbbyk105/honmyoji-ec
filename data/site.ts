@@ -10,7 +10,7 @@ export const site = {
   name: "MIROKU",
   tagline: "Tatami-beri Bags from Honmyoji Temple",
   description:
-    "One-of-a-kind bags handwoven at Honmyoji Temple in Fuji City, Japan, from tatami-beri remnants and recycled paper band. Made once. Made for you.",
+    "One-of-a-kind bags handwoven at Honmyoji Temple in Fuji City, Japan, from tatami-beri — the woven edging of tatami mats, also called tatami edge — and recycled paper band. Made once. Made for you.",
   location: "Honmyoji Temple, Fuji City, Shizuoka, Japan",
   locationJa: "静岡県富士市 本妙寺",
   /** 本番の URL。OG 画像の基準とメールのリンクに使う（`NEXT_PUBLIC_SITE_URL` があればそちら）。 */
@@ -89,7 +89,7 @@ export const faq: FaqItem[] = [
     q: "What is Tatami-beri?",
     qJa: "畳の縁（Tatami-beri）とは何ですか？",
     a: [
-      "Tatami-beri is the decorative fabric edging traditionally used around Japanese tatami mats. It comes in a wide variety of colors, patterns and textures.",
+      "Tatami-beri (also called tatami edge, or heri) is the decorative fabric edging traditionally used around Japanese tatami mats. It comes in a wide variety of colors, patterns and textures.",
       "We give this unique Japanese textile a new life by transforming it into handmade bags.",
     ],
     aJa: [

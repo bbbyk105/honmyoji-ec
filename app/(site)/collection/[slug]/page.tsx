@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { InquiryCta } from "@/components/cart/InquiryCta";
 import { GalleryStrip } from "@/components/collection/GalleryStrip";
 import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
+import { PieceHeading } from "@/components/collection/PieceHeading";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { ProductHero } from "@/components/collection/ProductHero";
 import { StatusPill } from "@/components/collection/StatusPill";
@@ -16,6 +17,7 @@ import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
 import { getListedCatalog, getPiece } from "@/lib/catalog";
+import { pieceDescription, pieceGalleryAlt, pieceTitle } from "@/lib/piece-text";
 import { breadcrumbJsonLd, OPEN_GRAPH_BASE, productJsonLd } from "@/lib/seo";
 import { shippingFor } from "@/data/shipping";
 import { stripeEnabled } from "@/lib/stripe-config";
@@ -51,8 +53,9 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
   if (!product) return {};
   const price = priceLabel(product);
   return {
-    title: `${product.name} ${product.kanji}${price ? ` — ${price}` : ""}`,
-    description: `${product.note} ${LINE_LABEL[product.line].en}, ${product.sku}. Handmade at Honmyoji Temple, Fuji.`,
+    // 名前（"Ai 藍"）だけでは何の品か分からないので、区分と素材を足す（lib/piece-text.ts）
+    title: pieceTitle(product, price),
+    description: pieceDescription(product),
     alternates: { canonical: productPath(product) },
     openGraph: { ...OPEN_GRAPH_BASE, images: [{ url: productImage(product.slug, 1) }] },
     // 試し買い用は検索エンジンに載せない
@@ -138,7 +141,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   /* 拡大表示の通し番号は一本。0 番がヒーロー（1.webp）、1 番から下のギャラリー。 */
   const photos = Array.from({ length: product.galleryCount }, (_, i) => {
     const src = productImage(product.slug, i + 1);
-    return { src, alt: `${product.name}, photograph ${i + 1} of ${product.galleryCount}`, caption: product.name };
+    return { src, alt: pieceGalleryAlt(product, i + 1, product.galleryCount), caption: product.name };
   });
   const extras = photos.slice(1);
   const kind = [LINE_LABEL[product.line].en, product.bottleSize].filter(Boolean).join(" · ");
@@ -178,18 +181,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               Collection
             </Button>
 
-            <p
-              className="hero-settle mt-12 font-sans text-meta text-mist"
-              style={{ "--delay": "60ms" } as React.CSSProperties}
-            >
-              {kind}
-            </p>
-            <h1
-              className="hero-settle mt-4 font-display text-display font-light text-ivory"
-              style={{ "--delay": "120ms" } as React.CSSProperties}
-            >
-              {product.name}
-            </h1>
+            <PieceHeading kind={kind} name={product.name} />
             <p
               lang="ja"
               className="hero-settle mt-4 font-jp text-[16px] tracking-[0.06em] text-bone"

@@ -6,9 +6,9 @@ import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/faq" },
-  title: "FAQ",
+  title: "What is tatami-beri? Questions and answers",
   description:
-    "What is tatami-beri? Is every bag one of a kind? Why the price? Care, durability, custom orders and shipping — answered in English and Japanese.",
+    "What is tatami-beri (tatami edge)? Is every bag one of a kind? Why the price? Care, durability, custom orders and shipping — answered in English and Japanese.",
 };
 
 export default function FaqPage() {
@@ -41,12 +41,13 @@ export default function FaqPage() {
                     <span className="w-6 shrink-0 font-sans text-meta tabular-nums text-mist">
                       {twoDigits(i + 1)}
                     </span>
-                    <span className="flex-1">
+                    {/* 問いは見出し（h2）。<summary> の中に見出しを一つ置くのは HTML の決まりどおり。見た目は span と同じ */}
+                    <h2 className="flex-1">
                       <span className="block font-display text-[clamp(22px,1vw+14px,29px)] font-light leading-[1.28] tracking-[-0.01em] text-ivory">
                         {item.q}
-                      </span>
+                      </span>{" "}
                       <span lang="ja" className="mt-2 block font-jp text-[13px] tracking-[0.04em] text-mist">{item.qJa}</span>
-                    </span>
+                    </h2>
                     <span
                       aria-hidden
                       className="relative mt-2 block h-4 w-4 shrink-0 before:absolute before:left-0 before:top-1/2 before:h-px before:w-full before:bg-ivory after:absolute after:left-1/2 after:top-0 after:h-full after:w-px after:bg-ivory after:transition-transform group-open:after:scale-y-0"

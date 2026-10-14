@@ -5,6 +5,8 @@
  * `scripts/prepare-photos.py` が `image/`（クライアントの書き出し）から作る。
  *
  * **名前・読み・一言・物語・寸法は仮**。先方から正式な名前と文言が届いたら差し替える。
+ * **ただし slug（URL）は変えない**（2026-10-15〜。販売中で検索に載っている。名前が正式になっても
+ * `/collection/ai-indigo` のまま）。どうしても変えるなら next.config.ts に旧 slug からの恒久の転送を足す。
  * 名前は写真の色から付けた伝統色・文様の名で、事実として言えるのは写真に写っているもの
  * （色・柄・持ち手）だけ。来歴（どの部屋の縁か等）は書いていない — 聞いてから足すこと。
  *
@@ -88,7 +90,7 @@ export const LINE_LABEL: Record<ProductLine, { en: string; ja: string; plural: s
 /** 区分ごとの一文。何でできていて、どういう形か —— それ以上は言わない。 */
 export const LINE_BLURB: Record<ProductLine, string> = {
   "tatami-beri":
-    "Tatami-beri woven over paper band recycled in Fuji City. Three heights — small, medium and large — each made to carry a bottle.",
+    "Tatami-beri (tatami edge) woven over paper band recycled in Fuji City. Three heights — small, medium and large — each made to carry a bottle.",
   origami: "Wide bands of tatami-beri folded from one flat piece into a bag that stands on its point.",
   handbag: "Tatami-beri pieced into diamonds under a carved handle, or woven over and under like a basket.",
   kimono: "Vintage kimono cloth, cut and pieced into a crescent on a long strap.",

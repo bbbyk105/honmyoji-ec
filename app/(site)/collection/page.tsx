@@ -9,9 +9,9 @@ import { twoDigits } from "@/lib/format";
 
 export const metadata: Metadata = {
   alternates: { canonical: "/collection" },
-  title: "Collection",
+  title: "Tatami-beri bags, handbags and kimono bags",
   description:
-    "One-of-a-kind bottle bags, origami bags, handbags, kimono shoulder bags and aprons, handmade from tatami-beri and vintage kimono cloth at Honmyoji Temple, Fuji.",
+    "One-of-a-kind tatami-beri (tatami edge) bottle bags, origami bags and handbags, with kimono shoulder bags and aprons — each handmade at Honmyoji Temple in Fuji City, Japan.",
 };
 
 /*
@@ -44,7 +44,8 @@ export default async function CollectionPage() {
             Collection
           </h1>
           <p className="max-w-[40ch] font-sans text-body text-bone md:col-span-5 md:col-start-8 md:pb-3">
-            {pieces.length} pieces, each made once. Prices are in Australian dollars
+            {pieces.length} pieces in tatami-beri (tatami edge) and vintage kimono cloth, each made once by hand at
+            Honmyoji Temple. Prices are in Australian dollars
             {SHIPPING_AUD > 0 ? `; shipping is ${aud.format(SHIPPING_AUD)} per order, added at checkout.` : ", with shipping included."}
           </p>
         </header>
