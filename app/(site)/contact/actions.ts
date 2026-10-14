@@ -5,13 +5,21 @@ import { clientIp, limitKey } from "@/lib/client-ip";
 import { isEmail } from "@/lib/email";
 import { takeFormQuota } from "@/lib/form-quota-gate";
 import { notifyStore } from "@/lib/mail";
+import { salesSignals } from "@/lib/sales-pitch";
 import { siteUrl } from "@/lib/site-url";
+import { TURNSTILE_FIELD, verifyTurnstile } from "@/lib/turnstile";
 
 import { SUBJECTS } from "./subjects";
 
 export type ContactState =
   | { status: "idle" }
-  | { status: "error"; message: string; errors?: Partial<Record<"name" | "email" | "message", string>> }
+  | {
+      status: "error";
+      message: string;
+      errors?: Partial<Record<"name" | "email" | "message", string>>;
+      /** 確認の印を使ったあとで断った。フォームはこれを見て印を取り直す（components/site/Turnstile.tsx） */
+      tokenSpent?: true;
+    }
   | { status: "sent"; message: string };
 
 /**
@@ -37,6 +45,15 @@ const MESSAGE_MAX = 5000;
 /** 一日の上限に達したとき。メールは直接なら届く（info@ → お店の Gmail）。 */
 const FORM_LIMIT_MESSAGE = `We have received many messages today. Please email us directly at ${site.email} — a person reads every one.`;
 
+/** 人が送っているかを確かめられなかったとき（lib/turnstile.ts）。直接のメールなら届く。 */
+const CHECK_FAILED_MESSAGE = `We could not confirm this was sent by a person. Please try again, or email us directly at ${site.email}.`;
+
+/**
+ * 営業らしいものに付ける件名の印。お店の Gmail はこの語でフィルタして別のラベルへ振り分ける。
+ * export しない（"use server" のファイルから関数以外を出すと 500 になる）。
+ */
+const SALES_LABEL = "【営業の可能性】";
+
 /**
  * お問い合わせ送信。お店にメールで届ける（Resend、`lib/mail.ts`）。返信先はお客さまの
  * アドレスなので、お店は返信を押すだけで答えられる。鍵が無ければサーバーログに出す。
@@ -44,7 +61,9 @@ const FORM_LIMIT_MESSAGE = `We have received many messages today. Please email u
 export async function sendInquiry(_prev: ContactState, formData: FormData): Promise<ContactState> {
   const name = String(formData.get("name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
-  const subject = String(formData.get("subject") ?? "other");
+  // 件名は決まった選択肢だけ（直に叩かれると任意の文字や `constructor` が来る）
+  const rawSubject = String(formData.get("subject") ?? "");
+  const subject = Object.hasOwn(SUBJECTS, rawSubject) ? rawSubject : "other";
   const product = String(formData.get("product") ?? "").trim().slice(0, 300);
   const message = String(formData.get("message") ?? "").trim();
   const honeypot = String(formData.get("website") ?? "");
@@ -61,13 +80,26 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
     return { status: "error", message: "Please check the highlighted fields.", errors };
   }
 
-  // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
-  const quota = await takeFormQuota(limitKey(await clientIp()));
-  if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE };
+  const ip = await clientIp();
 
-  const topic = SUBJECTS[subject] ?? subject;
+  // 人が送っているか（Cloudflare Turnstile）。上限より先に見る —— bot がお問い合わせの
+  // 一日の枠（lib/form-quota.ts の PER_DAY）を使い切ると、お客さまが送れなくなる
+  const check = await verifyTurnstile(String(formData.get(TURNSTILE_FIELD) ?? ""), { action: "contact", ip });
+  if (!check.ok) {
+    return { status: "error", message: CHECK_FAILED_MESSAGE, ...(check.spent ? { tokenSpent: true as const } : {}) };
+  }
+
+  // ここから先で断るときは、印はもう使ってある（tokenSpent）
+  // 一日の上限（lib/form-quota.ts）。形の整ったものだけ数える
+  const quota = await takeFormQuota(limitKey(ip), "contact");
+  if (!quota.ok) return { status: "error", message: FORM_LIMIT_MESSAGE, tokenSpent: true };
+
+  const topic = SUBJECTS[subject];
   const piece = parsePiece(product);
+  // 営業らしいものも捨てずに届ける（卸の相談などを落とさない）。件名に印を付けて分けるだけ
+  const signals = salesSignals(name, message);
   const text = [
+    ...(signals.length ? [`※ 営業・売り込みの可能性があります（${signals.join("・")}）。`, ""] : []),
     `${name} さんからお問い合わせがありました。`,
     "このメールに返信すると、そのままお客さまに届きます。",
     "",
@@ -81,12 +113,17 @@ export async function sendInquiry(_prev: ContactState, formData: FormData): Prom
   ].join("\n");
 
   try {
-    await notifyStore({ subject: `【MIROKU】お問い合わせ — ${topic}（${name}）`, text, replyTo: email });
+    await notifyStore({
+      subject: `【MIROKU】${signals.length ? SALES_LABEL : ""}お問い合わせ — ${topic}（${name}）`,
+      text,
+      replyTo: email,
+    });
   } catch (err) {
     console.error("[contact] failed", err);
     return {
       status: "error",
       message: "We could not send your message. Please try again, or email us directly.",
+      tokenSpent: true,
     };
   }
 

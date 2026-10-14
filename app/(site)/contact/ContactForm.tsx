@@ -1,10 +1,14 @@
 "use client";
 
-import { useActionState, useId } from "react";
+import { startTransition, useActionState, useId, useState, type FormEvent } from "react";
 import { Button } from "@/components/site/Button";
+import { Turnstile } from "@/components/site/Turnstile";
+import { TURNSTILE_FIELD } from "@/lib/turnstile-field";
 import { sendInquiry, type ContactState } from "./actions";
 
 type Props = {
+  /** 確認（Turnstile）が動かないときに案内する宛先 */
+  email: string;
   product?: { slug: string; name: string; kanji: string } | null;
   subject: string;
   subjects: { value: string; label: string }[];
@@ -20,9 +24,46 @@ const field =
 const label = "block font-sans text-meta font-medium text-bone";
 const hint = "mt-2 font-sans text-meta text-clay";
 
-export function ContactForm({ product, subject, subjects }: Props) {
-  const [state, action, pending] = useActionState<ContactState, FormData>(sendInquiry, { status: "idle" });
+export function ContactForm({ email, product, subject, subjects }: Props) {
+  const [state, dispatch, pending] = useActionState<ContactState, FormData>(sendInquiry, { status: "idle" });
   const uid = useId();
+
+  /*
+    JS を読み終えたあとは onSubmit から送る。React 19 は form の action が終わると制御していない
+    欄を初期値に戻すので、入力漏れや確認（Turnstile）で断られるたびに、書いた本文が空に、件名が
+    最初の値に戻っていた（components/studio/useStudioForm.ts と同じ話）。onSubmit で
+    preventDefault すると React は action を呼ばず、form も戻さない。
+
+    **action も外さない**。読み終える前（hydration の前）に押されたとき、action の無い form は
+    素の GET で `/contact?name=…&message=…` へ送り、名前・メール・本文が URL と履歴とログに残る。
+    action があれば React がサーバーで POST の form を描く（確認の印が無いので断られるが、漏れない）。
+  */
+  // 確認の印がまだ無い（確認の途中・チェックボックスを押す前）うちに押されたときの案内
+  const [waiting, setWaiting] = useState(false);
+
+  function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    // 印が無いまま送っても必ず断られる（サーバーは印を使わずに断る）。送らずに待ってもらう
+    if (!formData.get(TURNSTILE_FIELD)) {
+      setWaiting(true);
+      return;
+    }
+    setWaiting(false);
+    startTransition(() => dispatch(formData));
+  }
+
+  /*
+    印を取り直すのは、サーバーが印を使ったあとで断ったとき（tokenSpent: 確認・一日の上限・送信の失敗）だけ。
+    入力漏れや印が届かなかったときは、印を使う前に断っているので取り直さない
+    （取り直すと、確認の途中の人はやり直しになる。components/site/Turnstile.tsx）。
+  */
+  const tokenSpent = state.status === "error" && state.tokenSpent ? state : null;
+  const alert = waiting
+    ? "One moment — the check above is still confirming you are a person. If a box appears, tick it, then send."
+    : state.status === "error"
+      ? state.message
+      : null;
 
   if (state.status === "sent") {
     return (
@@ -37,7 +78,7 @@ export function ContactForm({ product, subject, subjects }: Props) {
   const err = (k: "name" | "email" | "message") => errors[k];
 
   return (
-    <form action={action} className="space-y-7" noValidate>
+    <form action={dispatch} onSubmit={onSubmit} className="space-y-7" noValidate>
       {product ? (
         <div className="flex flex-wrap items-baseline gap-x-5 gap-y-1 border border-line px-5 py-5">
           <span className="font-sans text-meta text-mist">Piece</span>
@@ -150,9 +191,11 @@ export function ContactForm({ product, subject, subjects }: Props) {
         <input id="website" name="website" tabIndex={-1} autoComplete="off" />
       </div>
 
-      {state.status === "error" ? (
+      <Turnstile action="contact" email={email} resetKey={tokenSpent} />
+
+      {alert ? (
         <p role="alert" className="border border-clay/60 px-4 py-4 font-sans text-small text-clay">
-          {state.message}
+          {alert}
         </p>
       ) : null}
 

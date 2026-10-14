@@ -9,11 +9,18 @@
    ここは数え方だけ（純粋。テストで直に叩く）。呼び口は lib/form-quota-gate.ts。
    ------------------------------------------------------------------ */
 
+/** 公開フォームの種類。 */
+export type PublicForm = "contact" | "subscribe";
+
 /** 同じ IP から一日に送れる数（お問い合わせとお知らせを合わせて）。 */
 export const PER_IP_PER_DAY = 5;
 
-/** サイト全体で一日に送れる数。Resend の一日 100 通のうち半分。残りは注文とログインの知らせに。 */
-export const PER_DAY = 50;
+/**
+ * サイト全体で一日に送れる数。**フォームごとに別の枠**で、合わせて Resend の一日 100 通の半分
+ * （残りは注文とログインの知らせに）。お知らせの登録には Turnstile が無いので、同じ枠だと bot が
+ * そこを叩いてお問い合わせの枠まで使い切れた（2026-10-15 のコードレビュー）。
+ */
+export const PER_DAY: Record<PublicForm, number> = { contact: 40, subscribe: 10 };
 
 export type FormQuotaResult = { ok: true } | { ok: false; reason: "ip" | "day" };
 
@@ -30,7 +37,12 @@ export function quotaDay(now = new Date()): string {
 }
 
 /** 一通ぶんを取る。上限なら取らずに理由を返す。 */
-export async function takeQuota(storage: QuotaStorage, ip: string, day: string): Promise<FormQuotaResult> {
+export async function takeQuota(
+  storage: QuotaStorage,
+  ip: string,
+  day: string,
+  form: PublicForm,
+): Promise<FormQuotaResult> {
   if ((await storage.get<string>("day")) !== day) {
     // 前の日の数は要らない。消してから今日を始める（storage が際限なく伸びない）
     await storage.deleteAll();
@@ -41,10 +53,15 @@ export async function takeQuota(storage: QuotaStorage, ip: string, day: string):
   const perIp = (await storage.get<number>(ipKey)) ?? 0;
   if (perIp >= PER_IP_PER_DAY) return { ok: false, reason: "ip" };
 
-  const total = (await storage.get<number>("total")) ?? 0;
-  if (total >= PER_DAY) return { ok: false, reason: "day" };
+  // Durable Object の RPC で受けた値なので確かめる。知らない値・無い値（デプロイの切り替わりで
+  // 旧版の Worker が take(ip) と呼ぶなど）はお問い合わせの枠で数える —— PER_DAY[undefined] だと
+  // `total >= undefined` が常に偽になり、上限が効かない
+  const kind: PublicForm = form === "subscribe" ? "subscribe" : "contact";
+  const totalKey = `total:${kind}`;
+  const total = (await storage.get<number>(totalKey)) ?? 0;
+  if (total >= PER_DAY[kind]) return { ok: false, reason: "day" };
 
   await storage.put(ipKey, perIp + 1);
-  await storage.put("total", total + 1);
+  await storage.put(totalKey, total + 1);
   return { ok: true };
 }

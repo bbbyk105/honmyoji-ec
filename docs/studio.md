@@ -146,6 +146,12 @@ STRIPE_WEBHOOK_SECRET=
 RESEND_API_KEY=
 RESEND_FROM=      # 例: MIROKU <notify@example.com>。Resend で認証したドメインのアドレス
 NOTIFY_EMAILS=    # 受け取るアドレス。カンマ区切りで複数可
+
+# お問い合わせの「人が送っているか」の確認（Cloudflare Turnstile、ダッシュボードのウィジェット「本妙寺」）。
+# 本番の Worker にだけ入れる: npx wrangler secret put TURNSTILE_SECRET_KEY
+# 手元は .env に入れても使わない（試験用のキーで動く）。サイトキーは公開してよい値なので
+# components/site/Turnstile.tsx に書いてある。無いと確かめずに通し、ログに [turnstile] が出る。
+TURNSTILE_SECRET_KEY=
 ```
 
 **メールの三つが無いと、お問い合わせも注文もお店に届かない**（お客さまの画面は「送れました」のまま、中身はサーバーのログに残るだけ）。公開から 2026-09-29 まで、この状態だった（当時は Telegram で、本番に `TELEGRAM_*` が入っていなかった）。ダッシュボードは鍵が無いと赤い帯で知らせる。`RESEND_FROM` を入れないと Resend の試験用アドレスから送られ、Resend のアカウントの持ち主にしか届かない。

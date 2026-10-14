@@ -53,7 +53,7 @@ export default async function ContactPage({
         <div className="grid gap-14 pt-14 md:grid-cols-12 md:gap-8 md:pt-20">
           {/* 用紙が先。スマホでは問い合わせフォームを最初に出す */}
           <div className="md:col-span-7 md:col-start-6 md:row-start-1">
-            <ContactForm product={productLabel} subject={initialSubject} subjects={subjectOptions} />
+            <ContactForm email={site.email} product={productLabel} subject={initialSubject} subjects={subjectOptions} />
           </div>
 
           <aside className="md:col-span-4 md:col-start-1 md:row-start-1">
@@ -78,6 +78,14 @@ export default async function ContactPage({
                   <a href={`mailto:${site.email}`} className="link-line text-ivory">
                     {site.email}
                   </a>
+                </dd>
+              </div>
+              {/* フォームから届く売り込み（日本のフォーム営業が多い）への断り。届いたものは件名で分ける（lib/sales-pitch.ts） */}
+              <div>
+                <dt className="font-sans text-meta text-mist">Please, no</dt>
+                <dd className="mt-1.5">Sales or advertising pitches.</dd>
+                <dd lang="ja" className="mt-1 font-jp text-[13px] tracking-[0.04em] text-mist">
+                  営業・広告のご連絡はご遠慮ください。
                 </dd>
               </div>
             </dl>
