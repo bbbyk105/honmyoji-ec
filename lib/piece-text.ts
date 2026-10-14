@@ -1,4 +1,4 @@
-import { LINE_LABEL, type Product, type ProductLine } from "@/data/products";
+import { LINE_LABEL, LINE_MATERIAL, type Product } from "@/data/products";
 
 /* ------------------------------------------------------------------
    作品を検索エンジンと読み上げに向けて言う言葉（title・説明文・写真の alt・構造化データの名前）。
@@ -11,16 +11,13 @@ import { LINE_LABEL, type Product, type ProductLine } from "@/data/products";
    サーバー専用にしない —— 一覧の写真（PieceTile）や商品ページの写真の alt も使う。
    ------------------------------------------------------------------ */
 
-type Piece = Pick<Product, "name" | "kanji" | "line" | "note">;
+type Piece = Pick<Product, "name" | "kanji" | "line" | "note"> & Partial<Pick<Product, "status">>;
 
-/** 区分ごとの素材の言い方（説明文に入れる）。data/products.ts の LINE_BLURB と食い違わないこと。 */
-const LINE_MATERIAL: Record<ProductLine, string> = {
-  "tatami-beri": "Woven from tatami-beri (tatami edge) remnants and recycled paper band",
-  origami: "Folded from wide bands of tatami-beri (tatami edge)",
-  handbag: "Made from tatami-beri (tatami edge)",
-  kimono: "Pieced from vintage kimono cloth",
-  apron: "With a panel of vintage kimono cloth",
-};
+/** 一言を一つの文として閉じる。一言は /studio で書き換えられ、句点が無いと次の文とつながる。 */
+function sentence(text: string): string {
+  const t = text.trim();
+  return /[.!?…。」"')]$/.test(t) ? t : `${t}.`;
+}
 
 /** 作品が何であるか（"Tatami-beri bottle bag"）。 */
 export function pieceKind(p: Pick<Product, "line">): string {
@@ -38,16 +35,19 @@ export function pieceTitle(p: Piece, price: string | null): string {
 }
 
 /**
- * 作品のページの説明文。検索結果では 150 字ほどで切れるので、何であるかを先に言う。
+ * 作品のページの説明文。検索結果は PC で 150 字、スマホで 120 字ほどで切れるので、
+ * 何であるか → 素材（tatami edge）と場所 → 一言、の順にする（一言は長さがまちまち）。
+ * 受注生産は「one of a kind」と言わない（ページは "Made to order, no two the same" と出す）。
  * 作品番号（SKU）は入れない（探す人は打たない）。
  */
 export function pieceDescription(p: Piece): string {
-  return `${pieceKind(p)}, one of a kind. ${p.note} ${LINE_MATERIAL[p.line]}, handmade at Honmyoji Temple in Fuji City, Japan.`;
+  const made = p.status === "made_to_order" ? "made to order" : "one of a kind";
+  return `${pieceKind(p)}, ${made} — ${LINE_MATERIAL[p.line]} at Honmyoji Temple in Fuji City, Japan. ${sentence(p.note)}`;
 }
 
 /** 作品の主役の写真の alt（一覧・トップ・商品ページのヒーロー）。 */
 export function pieceAlt(p: Piece): string {
-  return `${p.name} — ${pieceKind(p)}. ${p.note}`;
+  return `${p.name} — ${pieceKind(p)}. ${sentence(p.note)}`;
 }
 
 /** 商品ページのギャラリーの写真の alt。 */

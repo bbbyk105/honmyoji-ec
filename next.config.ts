@@ -1,6 +1,6 @@
 import type { NextConfig } from "next";
 
-import { products } from "./data/products";
+import { productRedirects, products } from "./data/products";
 
 const nextConfig: NextConfig = {
   // 外の画像は最適化しない（remotePatterns を置かない）。Cloudflare の画像変換は無料プランだと
@@ -22,10 +22,8 @@ const nextConfig: NextConfig = {
       },
       // 書き出し番号（folder、`bottle-07`）の URL → 作品の URL。作品のページは dynamicParams = false
       // なので、ページの中で送り直すことができない（一覧に無い URL は作らずに 404 になる）。
-      // 恒久（308）。folder も slug も変えないので、ブラウザと検索エンジンに覚えさせてよい。
-      ...products
-        .filter((p) => p.folder !== p.slug)
-        .map((p) => ({ source: `/collection/${p.folder}`, destination: `/collection/${p.slug}`, permanent: true })),
+      // 名前を変えた作品の旧 slug（previousSlugs）も同じ。恒久（308）、試し買い用だけ一時（data/products.ts）。
+      ...productRedirects(products),
       // Journal → Blog（2026-08-31）。既に配ったリンクと検索結果を切らさない。
       { source: "/journal", destination: "/blog", permanent: true },
       { source: "/journal/:slug", destination: "/blog/:slug", permanent: true },

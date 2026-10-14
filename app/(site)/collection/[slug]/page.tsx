@@ -17,7 +17,7 @@ import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
 import { getListedCatalog, getPiece } from "@/lib/catalog";
-import { pieceDescription, pieceGalleryAlt, pieceTitle } from "@/lib/piece-text";
+import { pieceDescription, pieceGalleryAlt, pieceKind, pieceTitle } from "@/lib/piece-text";
 import { breadcrumbJsonLd, OPEN_GRAPH_BASE, productJsonLd } from "@/lib/seo";
 import { shippingFor } from "@/data/shipping";
 import { stripeEnabled } from "@/lib/stripe-config";
@@ -144,7 +144,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     return { src, alt: pieceGalleryAlt(product, i + 1, product.galleryCount), caption: product.name };
   });
   const extras = photos.slice(1);
-  const kind = [LINE_LABEL[product.line].en, product.bottleSize].filter(Boolean).join(" · ");
+  const kind = [pieceKind(product), product.bottleSize].filter(Boolean).join(" · ");
   const tall = LINE_RATIO[product.line] === "4/5";
 
   /*

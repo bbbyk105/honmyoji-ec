@@ -22,7 +22,7 @@ describe("作品の言葉", () => {
 
   it("説明文は何であるかを先に言い、畳の縁の作品には tatami edge を併記する。作品番号は入れない", () => {
     const text = pieceDescription(bottle);
-    expect(text.startsWith("Tatami-beri bottle bag, one of a kind.")).toBe(true);
+    expect(text.startsWith("Tatami-beri bottle bag, one of a kind")).toBe(true);
     expect(text).toContain(bottle.note);
     expect(text).toContain("tatami edge");
     expect(text).toContain("Honmyoji Temple");
@@ -56,4 +56,32 @@ describe("作品の言葉", () => {
 it("一覧のボトルバッグの説明にも tatami edge を一度だけ書く（本文にも表記ゆれを入れる）", () => {
   expect(LINE_BLURB["tatami-beri"]).toContain("Tatami-beri (tatami edge)");
   expect(LINE_BLURB["tatami-beri"].match(/tatami edge/g)).toHaveLength(1);
+});
+
+describe("説明文の組み方（2026-10-15 のコードレビュー）", () => {
+  it("受注生産（made_to_order）の作品に one of a kind と書かない（ページの表記と食い違う）", () => {
+    const text = pieceDescription({ ...bottle, status: "made_to_order" });
+    expect(text).not.toContain("one of a kind");
+    expect(text).toContain("made to order");
+  });
+
+  it("一言の末尾に句点が無くても、次の文とつながらない（一言は /studio で書き換えられる）", () => {
+    const text = pieceDescription({ ...bottle, note: "Moss and indigo bands under a navy handle" });
+    expect(text).toContain("Moss and indigo bands under a navy handle.");
+    expect(pieceAlt({ ...bottle, note: "Moss and indigo bands" })).toBe(`${bottle.name} — Tatami-beri bottle bag. Moss and indigo bands.`);
+  });
+
+  it("狙う言葉（tatami edge）と場所は一言より前に置く（スマホの検索結果は 120 字ほどで切れる）", () => {
+    for (const p of products.filter((x) => ["tatami-beri", "origami", "handbag"].includes(x.line))) {
+      const text = pieceDescription(p);
+      expect(text.indexOf("tatami edge")).toBeLessThan(120);
+      expect(text.indexOf("Honmyoji Temple")).toBeLessThan(text.indexOf(p.note));
+    }
+  });
+
+  it("エプロンの説明で、一言と同じことを繰り返さない", () => {
+    for (const p of products.filter((x) => x.line === "apron")) {
+      expect(pieceDescription(p).match(/panel/g)?.length ?? 0).toBeLessThanOrEqual(1);
+    }
+  });
 });

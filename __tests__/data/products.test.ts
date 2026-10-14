@@ -109,13 +109,22 @@ describe("価格", () => {
 });
 
 describe("作品の URL", () => {
-  it("slug は変えない（販売中で検索にも載っている。変えるなら旧 slug からの恒久の転送を足し、ここも直す）", () => {
-    expect(products.map((p) => p.slug)).toEqual([
+  it("今の slug は変えない（販売中で検索にも載っている）。作品を足すのはよい。変えるなら旧 slug を previousSlugs に残す", () => {
+    const live = new Set(products.map((p) => p.slug));
+    const kept = new Set(products.flatMap((p) => [p.slug, ...(p.previousSlugs ?? [])]));
+    const frozen = [
       "tokiwa-evergreen", "akane-madder", "rikyu-grey-green", "seiji-celadon", "moegi-spring-green",
       "hanada-pale-indigo", "kuchiba-fallen-leaf", "ai-indigo", "aotake-green-bamboo", "nishiki-brocade",
       "matsuba-pine-needle", "koke-moss", "yoru-night", "beni-crimson", "iroha-script", "somei-cherry",
       "uguisu-olive", "sakuranezumi-cherry-grey", "hishi-diamond", "kago-basket", "shima-stripe", "kon-navy",
       "kurumi-walnut", "yuhi-sunset", "hana-floral", "ukiyo-print",
-    ]);
+    ];
+    // 今もある slug か、名前を変えた作品の previousSlugs に残っていること（next.config.ts が恒久に転送する）
+    for (const slug of frozen) expect(live.has(slug) || kept.has(slug)).toBe(true);
+  });
+
+  it("旧 slug（previousSlugs）は今の slug・folder と重ならない", () => {
+    const taken = new Set(products.flatMap((p) => [p.slug, p.folder]));
+    for (const p of products) for (const old of p.previousSlugs ?? []) expect(taken.has(old)).toBe(false);
   });
 });

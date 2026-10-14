@@ -63,7 +63,30 @@ export type Product = {
    * 消すときは、その行も消す（残っていると完売が重なって決済に進めない）。
    */
   test?: boolean;
+  /**
+   * この作品が前に使っていた slug。**slug は変えない**（2026-10-15〜）が、どうしても変えるときは
+   * 旧い方をここに残す —— next.config.ts が今の slug へ恒久（308）に転送し、検索に載った URL が 404 にならない。
+   */
+  previousSlugs?: string[];
 };
+
+/**
+ * 作品の旧い URL → 今の URL の転送（next.config.ts の redirects が使う）。
+ * - 書き出し番号（folder、`/collection/bottle-07`）と、名前を変えた作品の旧 slug（`previousSlugs`）。
+ * - **恒久（308）**。slug は変えないので、ブラウザと検索エンジンに覚えさせてよい。
+ * - 試し買い用（test）だけは一時（307）。folder（`test-01`）を使い回し、slug はそのたびに変わる ——
+ *   恒久にすると、消した試し買い用の slug をブラウザが覚えて 404 に飛ぶ。
+ */
+export function productRedirects(
+  list: readonly Pick<Product, "slug" | "folder" | "test" | "previousSlugs">[],
+): { source: string; destination: string; permanent: boolean }[] {
+  return list.flatMap((p) => {
+    const destination = `/collection/${p.slug}`;
+    const permanent = !p.test;
+    const olds = [...(p.folder !== p.slug ? [p.folder] : []), ...(p.previousSlugs ?? [])];
+    return olds.map((old) => ({ source: `/collection/${old}`, destination, permanent }));
+  });
+}
 
 /** 一覧・関連作品・サイトマップに出すか。試し買い用は出さない。 */
 export function isListed(p: Pick<Product, "test">): boolean {
@@ -88,6 +111,19 @@ export const LINE_LABEL: Record<ProductLine, { en: string; ja: string; plural: s
 };
 
 /** 区分ごとの一文。何でできていて、どういう形か —— それ以上は言わない。 */
+/**
+ * 区分ごとの素材の言い方。検索結果の説明文（lib/piece-text.ts の pieceDescription）に入る。
+ * 英語の売り場では畳の縁は "tatami edge" と書かれることが多いので併記する。LINE_BLURB と食い違わないこと。
+ * 一言（note）と同じことを繰り返さない（エプロンの一言は「panel and pocket」を言っている）。
+ */
+export const LINE_MATERIAL: Record<ProductLine, string> = {
+  "tatami-beri": "woven from tatami-beri (tatami edge) remnants and recycled paper band",
+  origami: "folded from wide bands of tatami-beri (tatami edge)",
+  handbag: "made from tatami-beri (tatami edge)",
+  kimono: "pieced from vintage kimono cloth",
+  apron: "sewn with vintage kimono cloth",
+};
+
 export const LINE_BLURB: Record<ProductLine, string> = {
   "tatami-beri":
     "Tatami-beri (tatami edge) woven over paper band recycled in Fuji City. Three heights — small, medium and large — each made to carry a bottle.",

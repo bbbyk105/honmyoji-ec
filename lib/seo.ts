@@ -1,9 +1,9 @@
 import "server-only";
 
 import type { BlogPost } from "@/data/blog";
-import { LINE_LABEL, leadSrc, productPath, type Product, type ProductStatus } from "@/data/products";
+import { leadSrc, productPath, type Product, type ProductStatus } from "@/data/products";
 import { legal, site } from "@/data/site";
-import { pieceProductName } from "@/lib/piece-text";
+import { pieceKind, pieceProductName } from "@/lib/piece-text";
 import { siteUrl } from "@/lib/site-url";
 import { SHIPPING_COUNTRIES, shippingFor } from "@/data/shipping";
 
@@ -64,7 +64,7 @@ export function productJsonLd(p: Product): Json | null {
     sku: p.sku,
     url,
     brand: { "@type": "Brand", name: site.name },
-    category: LINE_LABEL[p.line].en,
+    category: pieceKind(p),
     material: p.materials.join(", "),
     offers: {
       "@type": "Offer",
