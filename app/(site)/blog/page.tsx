@@ -5,7 +5,9 @@ import { Button } from "@/components/site/Button";
 import { Frame } from "@/components/site/Frame";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
+import { PieceIndex, toPieceRefs } from "@/components/collection/PieceIndex";
 import { formatBlogDate, blogMeta } from "@/data/blog";
+import { getListedCatalog } from "@/lib/catalog";
 import { getBlogPosts } from "@/lib/microcms";
 
 /** 記事側と同じ行長（`--blog-measure`）。一覧と本文で折り返し位置を揃える。 */
@@ -50,7 +52,7 @@ function LeadCopy({
 }
 
 export default async function BlogIndexPage() {
-  const entries = await getBlogPosts();
+  const [entries, pieces] = await Promise.all([getBlogPosts(), getListedCatalog()]);
   const [lead, ...rest] = entries;
 
   /* 読むものは紙の面（2026-09-25）。一覧も記事も、同じ紙を繰る。 */
@@ -147,6 +149,17 @@ export default async function BlogIndexPage() {
             ))}
           </ol>
         ) : null}
+
+        {/*
+          記事は /collection へしか触れていなかった。ここから各作品のページへ直接行けるようにする。
+          写真の格子にはしない（このページは手記の一覧のまま）。
+        */}
+        <section className="mt-pause" aria-labelledby="blog-pieces">
+          <h2 id="blog-pieces" className="font-display text-section font-light text-ivory">
+            The pieces
+          </h2>
+          <PieceIndex pieces={toPieceRefs(pieces)} className="mt-lead" />
+        </section>
       </div>
     </section>
   );
