@@ -24,6 +24,14 @@ export function pieceKind(p: Pick<Product, "line">): string {
   return LINE_LABEL[p.line].en;
 }
 
+/**
+ * 作品ページの h1 の区分の行（"Tatami-beri bottle bag · Large"）。
+ * 名前は別の span。区分が抜けないよう、title（`pieceTitle`）と同じ `pieceKind` を使う。
+ */
+export function pieceHeadingKind(p: Pick<Product, "line" | "bottleSize">): string {
+  return [pieceKind(p), p.bottleSize].filter(Boolean).join(" · ");
+}
+
 /** 構造化データの商品名。名前だけ（"Ai 藍"）だと、検索や Google ショッピングで何の品か分からない。 */
 export function pieceProductName(p: Piece): string {
   return `${p.name} ${p.kanji} — ${pieceKind(p)}`;

@@ -5,6 +5,7 @@ import { InquiryCta } from "@/components/cart/InquiryCta";
 import { GalleryStrip } from "@/components/collection/GalleryStrip";
 import { LightboxProvider, Zoomable } from "@/components/collection/Lightbox";
 import { PieceHeading } from "@/components/collection/PieceHeading";
+import { PieceNameLinks } from "@/components/collection/PieceIndex";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { ProductHero } from "@/components/collection/ProductHero";
 import { StatusPill } from "@/components/collection/StatusPill";
@@ -17,7 +18,8 @@ import { SwipeStrip } from "@/components/site/SwipeStrip";
 import { imageSize } from "@/data/image-sizes";
 import { blogHref } from "@/lib/microcms";
 import { getListedCatalog, getPiece } from "@/lib/catalog";
-import { pieceDescription, pieceGalleryAlt, pieceKind, pieceTitle } from "@/lib/piece-text";
+import { otherInLine } from "@/lib/piece-links";
+import { pieceDescription, pieceGalleryAlt, pieceHeadingKind, pieceTitle } from "@/lib/piece-text";
 import { breadcrumbJsonLd, OPEN_GRAPH_BASE, productJsonLd } from "@/lib/seo";
 import { shippingFor } from "@/data/shipping";
 import { stripeEnabled } from "@/lib/stripe-config";
@@ -130,7 +132,10 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
   const index = Math.max(0, catalog.findIndex((p) => p.slug === product.slug));
   const prev = catalog[(index - 1 + catalog.length) % catalog.length];
   const next = catalog[(index + 1) % catalog.length];
-  const related = catalog.filter((p) => p.slug !== product.slug && p.line === product.line).slice(0, 4);
+  /* 写真は四つまで。残りも名前でリンクする（ボトルバッグは十四点あり、四つだと後ろが届かない）。 */
+  const sameLine = otherInLine(catalog, product);
+  const related = sameLine.slice(0, 4);
+  const rest = sameLine.slice(4);
   /* お手入れの記事へ。記事は microCMS 側で入れ替わるので slug を焼き込まない。 */
   const careHref = await blogHref("holding-the-weave", "Care");
   const action = cta(product);
@@ -144,7 +149,7 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
     return { src, alt: pieceGalleryAlt(product, i + 1, product.galleryCount), caption: product.name };
   });
   const extras = photos.slice(1);
-  const kind = [pieceKind(product), product.bottleSize].filter(Boolean).join(" · ");
+  const kind = pieceHeadingKind(product);
   const tall = LINE_RATIO[product.line] === "4/5";
 
   /*
@@ -365,6 +370,9 @@ export default async function ProductPage({ params }: { params: Promise<Params> 
               <PieceTile key={p.slug} product={p} reveal="none" sizes="(min-width: 640px) 25vw, 80vw" />
             ))}
           </SwipeStrip>
+          {rest.length > 0 ? (
+            <PieceNameLinks pieces={rest} label={LINE_LABEL[product.line].plural} className="mt-8" />
+          ) : null}
         </section>
       ) : null}
 

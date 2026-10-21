@@ -9,6 +9,7 @@ import { ChapterRail, type Chapter } from "@/components/site/ChapterRail";
 import { Reveal } from "@/components/site/Reveal";
 import { SHELL } from "@/components/site/Shell";
 import { HomeHero } from "@/components/home/HomeHero";
+import { PieceNameLinks } from "@/components/collection/PieceIndex";
 import { PieceTile } from "@/components/collection/PieceTile";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { LINE_BLURB, LINE_LABEL, LINE_ORDER, productImage } from "@/data/products";
@@ -290,6 +291,7 @@ export default async function HomePage() {
           {/*
             5. Lines — 区分の索引。二十六点を一枚の格子に流す前に、何の店かを五行で言う。
             写真は小さく、左に揃える（行の頭が揃うので、表として読める）。表は動かさない。
+            行の下に、その区分の作品の名前を置く。一覧を経由しなくても、ここから各作品のページへ行ける。
           */}
           <section id="ch-lines" className={`${SHELL} pb-pause pt-pause`}>
             <Reveal>
@@ -305,7 +307,7 @@ export default async function HomePage() {
                   <li key={line} className="border-b border-line">
                     <Link
                       href={`/collection#${line}`}
-                      className="group grid grid-cols-[88px_1fr_auto] items-center gap-5 py-6 no-underline sm:grid-cols-[132px_1fr_auto] md:grid-cols-[168px_1fr_1fr_auto] md:gap-10"
+                      className="group grid grid-cols-[88px_1fr_auto] items-center gap-5 pb-4 pt-6 no-underline sm:grid-cols-[132px_1fr_auto] md:grid-cols-[168px_1fr_1fr_auto] md:gap-10"
                     >
                       <span className="relative block aspect-[3/2] overflow-hidden bg-sumi">
                         <Image
@@ -327,6 +329,7 @@ export default async function HomePage() {
                         <Arrow className="cta-arrow" />
                       </span>
                     </Link>
+                    <PieceNameLinks pieces={items} label={LINE_LABEL[line].plural} className="pb-6" />
                   </li>
                 );
               })}

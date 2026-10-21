@@ -3,6 +3,8 @@ import {
   pieceAlt,
   pieceDescription,
   pieceGalleryAlt,
+  pieceHeadingKind,
+  pieceKind,
   pieceProductName,
   pieceTitle,
 } from "@/lib/piece-text";
@@ -18,6 +20,19 @@ describe("作品の言葉", () => {
   it("title は名前・漢字・区分・値段", () => {
     expect(pieceTitle(bottle, "A$170")).toBe(`${bottle.name} ${bottle.kanji} — Tatami-beri bottle bag, A$170`);
     expect(pieceTitle(bottle, null)).toBe(`${bottle.name} ${bottle.kanji} — Tatami-beri bottle bag`);
+  });
+
+  it("どの作品の title と h1 にも区分（Tatami-beri bottle bag など）が入る", () => {
+    for (const piece of products.filter((p) => !p.test)) {
+      const kind = pieceKind(piece);
+      expect(kind.length).toBeGreaterThan(0);
+      expect(pieceTitle(piece, null)).toContain(kind);
+      expect(pieceTitle(piece, "A$1")).toContain(kind);
+      // h1 は区分の行と名前。間の空白は PieceHeading が span の外に置く
+      const h1 = `${pieceHeadingKind(piece)} ${piece.name}`;
+      expect(h1).toContain(kind);
+      expect(h1).toContain(piece.name);
+    }
   });
 
   it("説明文は何であるかを先に言い、畳の縁の作品には tatami edge を併記する。作品番号は入れない", () => {

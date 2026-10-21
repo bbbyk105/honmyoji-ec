@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BlogArticle } from "@/components/blog/BlogArticle";
+import { toPieceRefs } from "@/components/collection/PieceIndex";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { getListedCatalog } from "@/lib/catalog";
 import { getBlogPosts, getBlogPost, nextPost } from "@/lib/microcms";
 import { blogPostingJsonLd, breadcrumbJsonLd, OPEN_GRAPH_BASE, OPEN_GRAPH_IMAGE } from "@/lib/seo";
 
@@ -34,13 +36,13 @@ export async function generateMetadata({ params }: { params: Promise<Params> }):
 
 export default async function BlogArticlePage({ params }: { params: Promise<Params> }) {
   const { slug } = await params;
-  const entries = await getBlogPosts();
+  const [entries, pieces] = await Promise.all([getBlogPosts(), getListedCatalog()]);
   const entry = entries.find((e) => e.slug === slug);
   if (!entry) notFound();
 
   return (
     <>
-      <BlogArticle entry={entry} next={nextPost(entries, slug)} />
+      <BlogArticle entry={entry} next={nextPost(entries, slug)} pieces={toPieceRefs(pieces)} />
       {/* 構造化データは版の後ろに（main の先頭の子を変えない。globals.css の :first-child） */}
       <JsonLd
         data={[

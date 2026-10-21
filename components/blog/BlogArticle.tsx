@@ -6,11 +6,14 @@ import { Arrow } from "@/components/site/Arrow";
 import { Reveal } from "@/components/site/Reveal";
 import { ArticleToc } from "./ArticleToc";
 import { formatBlogDate, blogMeta, type BlogPost } from "@/data/blog";
+import { PieceIndex, type PieceRef } from "@/components/collection/PieceIndex";
 
 type Props = {
   entry: BlogPost;
   /** 記事末尾の「次の一本」。プレビューでは付けない。 */
   next?: BlogPost;
+  /** 各作品のページへの索引。下書きプレビューでは付けない。 */
+  pieces?: readonly PieceRef[];
 };
 
 /**
@@ -26,7 +29,7 @@ type Props = {
 /** 文章の列。写真・引用はこれを使わず版面いっぱいに出る。 */
 const MEASURE = "max-w-[var(--blog-measure)]";
 
-export function BlogArticle({ entry, next }: Props) {
+export function BlogArticle({ entry, next, pieces }: Props) {
   const hasImage = Boolean(entry.image);
 
   return (
@@ -148,6 +151,15 @@ export function BlogArticle({ entry, next }: Props) {
           })}
         </div>
       </div>
+
+      {pieces && pieces.length > 0 ? (
+        <section className="mx-auto mt-pause w-full max-w-[980px] px-5" aria-labelledby="article-pieces">
+          <h2 id="article-pieces" className="font-display text-title font-light text-ivory">
+            The pieces
+          </h2>
+          <PieceIndex pieces={pieces} className="mt-8" />
+        </section>
+      ) : null}
 
       {next ? (
         <footer className="mx-auto mt-pause w-full max-w-[980px] px-5">
