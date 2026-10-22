@@ -76,11 +76,16 @@ export function productJsonLd(p: Product): Json | null {
       seller: organizationRef,
       shippingDetails: {
         "@type": "OfferShippingDetails",
+        // 送料の正本は data/shipping.ts（特商法・一覧・決済と同じ A$40）
         shippingRate: { "@type": "MonetaryAmount", value: shippingFor([p]), currency: "AUD" },
-        shippingDestination: SHIPPING_COUNTRIES.map((country) => ({
-          "@type": "DefinedRegion",
-          addressCountry: country,
-        })),
+        // 発送先はオーストラリアだけ（data/shipping.ts の SHIPPING_COUNTRIES）。
+        // 届くまでの日数はオーナーの「およそ一週間」（準備 1–2 日 + 輸送 3–5 日、合計最大 7 日）。
+        shippingDestination: { "@type": "DefinedRegion", addressCountry: "AU" },
+        deliveryTime: {
+          "@type": "ShippingDeliveryTime",
+          handlingTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2, unitCode: "DAY" },
+          transitTime: { "@type": "QuantitativeValue", minValue: 3, maxValue: 5, unitCode: "DAY" },
+        },
       },
       // 特商法の返品の決まり: 一点物なので返品は受けない（破損・違う品は別に対応）
       hasMerchantReturnPolicy: {
