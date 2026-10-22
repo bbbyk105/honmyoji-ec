@@ -16,16 +16,27 @@ import { blogPostingJsonLd, breadcrumbJsonLd, productJsonLd, storeJsonLd } from 
 const piece = products[0];
 
 describe("productJsonLd", () => {
-  it("値段・在庫・送料 A$40・返品不可を、見えているとおりに書く", () => {
+  it("値段・在庫・送料 A$40・AU 向けの配送日数・返品不可を書く", () => {
     const ld = productJsonLd({ ...piece, status: "available", priceAud: 145 }) as unknown as {
-      offers: Record<string, unknown> & { shippingDetails: { shippingRate: { value: number } } };
+      offers: Record<string, unknown> & {
+        shippingDetails: { shippingRate: { value: number } };
+      };
       url: string;
       image: string[];
     };
     expect(ld.url).toBe(`https://honmyoujifuji.com/collection/${piece.slug}`);
     expect(ld.image[0]).toBe(`https://honmyoujifuji.com/images/products/${piece.folder}/1.webp`);
     expect(ld.offers).toMatchObject({ priceCurrency: "AUD", price: 145, availability: "https://schema.org/InStock" });
-    expect(ld.offers.shippingDetails.shippingRate.value).toBe(40);
+    expect(ld.offers.shippingDetails).toMatchObject({
+      "@type": "OfferShippingDetails",
+      shippingRate: { "@type": "MonetaryAmount", value: 40, currency: "AUD" },
+      shippingDestination: { "@type": "DefinedRegion", addressCountry: "AU" },
+      deliveryTime: {
+        "@type": "ShippingDeliveryTime",
+        handlingTime: { "@type": "QuantitativeValue", minValue: 1, maxValue: 2, unitCode: "DAY" },
+        transitTime: { "@type": "QuantitativeValue", minValue: 3, maxValue: 5, unitCode: "DAY" },
+      },
+    });
     expect(JSON.stringify(ld.offers)).toContain("MerchantReturnNotPermitted");
   });
 
