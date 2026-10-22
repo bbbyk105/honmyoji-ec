@@ -37,7 +37,13 @@ describe("productJsonLd", () => {
         transitTime: { "@type": "QuantitativeValue", minValue: 3, maxValue: 5, unitCode: "DAY" },
       },
     });
-    expect(JSON.stringify(ld.offers)).toContain("MerchantReturnNotPermitted");
+    expect(ld.offers).toMatchObject({
+      hasMerchantReturnPolicy: {
+        "@type": "MerchantReturnPolicy",
+        applicableCountry: ["AU"],
+        returnPolicyCategory: "https://schema.org/MerchantReturnNotPermitted",
+      },
+    });
   });
 
   it("完売は SoldOut、Coming soon は在庫なし（値段が出ていても買えない）", () => {

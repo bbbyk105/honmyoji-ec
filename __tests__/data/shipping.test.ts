@@ -1,5 +1,11 @@
-import { SHIPPING_AUD, shippingFor } from "@/data/shipping";
+import { SHIPPING_AUD, SHIPPING_COUNTRIES, shippingFor } from "@/data/shipping";
 import { legal } from "@/data/site";
+
+describe("SHIPPING_COUNTRIES", () => {
+  it("発送先はオーストラリアだけ", () => {
+    expect([...SHIPPING_COUNTRIES]).toEqual(["AU"]);
+  });
+});
 
 describe("shippingFor", () => {
   it("ふつうの作品は一注文 SHIPPING_AUD", () => {

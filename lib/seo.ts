@@ -78,9 +78,8 @@ export function productJsonLd(p: Product): Json | null {
         "@type": "OfferShippingDetails",
         // 送料の正本は data/shipping.ts（特商法・一覧・決済と同じ A$40）
         shippingRate: { "@type": "MonetaryAmount", value: shippingFor([p]), currency: "AUD" },
+        // 発送先はオーストラリアだけ（data/shipping.ts の SHIPPING_COUNTRIES）。
         // 届くまでの日数はオーナーの「およそ一週間」（準備 1–2 日 + 輸送 3–5 日、合計最大 7 日）。
-        // この日数を言われたのはオーストラリア向けなので、発送先は AU だけにする。
-        // ほかの国（SHIPPING_COUNTRIES）は同じ送料だが、輸送日数を書いていない。
         shippingDestination: { "@type": "DefinedRegion", addressCountry: "AU" },
         deliveryTime: {
           "@type": "ShippingDeliveryTime",
