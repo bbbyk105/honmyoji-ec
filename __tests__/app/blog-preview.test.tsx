@@ -114,6 +114,18 @@ describe("Blog draft preview（対象の記事だけ）", () => {
     expect(html).not.toContain("Draft preview");
   });
 
+  it("対象でも下書きが取れないときは公開版の通常メタになる（Preview/noindex にしない）", async () => {
+    draftEnabled = true;
+    cookieStore = { [PREVIEW_CONTENT_COOKIE]: "the-edge", [PREVIEW_DRAFT_COOKIE]: "dk123" };
+    mockGetBlogDraft.mockResolvedValue(undefined);
+    mockGetBlogPost.mockResolvedValue({ slug: "the-edge", title: "公開版", dek: "d", image: null, date: null });
+
+    const meta = await generateMetadata(params("the-edge"));
+    expect(mockGetBlogDraft).toHaveBeenCalledWith("the-edge", "dk123");
+    expect(meta.title).toBe("公開版");
+    expect(meta.robots).toBeUndefined();
+  });
+
   it("対象でも下書きも公開版も無ければ notFound()", async () => {
     draftEnabled = true;
     cookieStore = { [PREVIEW_CONTENT_COOKIE]: "the-edge", [PREVIEW_DRAFT_COOKIE]: "dk123" };

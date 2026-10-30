@@ -1,3 +1,4 @@
+import { cache } from "react";
 import type { Metadata } from "next";
 import { cookies, draftMode } from "next/headers";
 import Link from "next/link";
@@ -32,13 +33,21 @@ async function draftKeyIfPreviewing(slug: string): Promise<string | undefined> {
   return jar.get(PREVIEW_DRAFT_COOKIE)?.value || undefined;
 }
 
+/**
+ * draftKey が決まった記事の下書きを取る。generateMetadata とページ本体が
+ * 同じ下書きを見て足並みを揃えるよう、React cache() でリクエスト内に一度だけ
+ * fetch する（取れたら Preview/noindex、取れなければ両方とも公開版に落ちる）。
+ */
+const getDraftEntry = cache((slug: string, draftKey: string) => getBlogDraft(slug, draftKey));
+
 export async function generateMetadata({ params }: { params: Promise<Params> }): Promise<Metadata> {
   const { slug } = await params;
 
   // プレビュー中は検索に載せない（公開 URL と同じパスで下書きを描くため）。
-  // ただし cookie の対象がこの slug のときだけ —— 他の記事は通常のメタに落とす。
+  // ただし cookie の対象がこの slug で、かつ下書きが実際に取れたときだけ ——
+  // 取れなければページ本体と同じく公開版に落ちるので、通常のメタを返す。
   const draftKey = await draftKeyIfPreviewing(slug);
-  if (draftKey) {
+  if (draftKey && (await getDraftEntry(slug, draftKey))) {
     return { title: "Preview", robots: { index: false, follow: false } };
   }
 
@@ -68,7 +77,7 @@ export default async function BlogArticlePage({ params }: { params: Promise<Para
   // キャッシュに載らない（getBlogDraft は cache: "no-store"）。
   const draftKey = await draftKeyIfPreviewing(slug);
   if (draftKey) {
-    const entry = await getBlogDraft(slug, draftKey);
+    const entry = await getDraftEntry(slug, draftKey);
     // 下書きが取れなければ公開版の道に落とす（公開版も無ければ下で notFound()）。
     if (entry) {
       return (
