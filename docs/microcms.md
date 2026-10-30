@@ -13,6 +13,7 @@ Blog（`/blog`）の記事は microCMS から読む。商品カタログ（`data
 | `MICROCMS_API_KEY` | ○ | 管理画面 → サービス設定 → API キー（GET があれば足りる） |
 | `MICROCMS_BLOG_ENDPOINT` | – | API 名。既定 `blogs`。すでに別名で作ってあるならここで指定する |
 | `MICROCMS_WEBHOOK_SECRET` | – | Webhook の署名検証。未設定だと `/api/revalidate` は 503 |
+| `MICROCMS_PREVIEW_SECRET` | – | 画面プレビュー（Draft Mode）の入口 `/api/preview` の秘密鍵。未設定だとプレビューは常に 401 |
 
 **二つの必須変数が無い環境では、`data/blog.ts` の seed 記事が表示される。**
 鍵の無いローカルやプレビューでもビルドと表示が通るようにするため。API が落ちた
@@ -46,15 +47,41 @@ Blog（`/blog`）の記事は microCMS から読む。商品カタログ（`data
 本文の組みは `app/globals.css` の `.blog-prose`。見出し・引用・箇条書き・画像・
 表まで版面に合わせてあるので、リッチエディタ側で色や文字サイズを指定しないこと。
 
-## 3. 下書きプレビュー
+## 3. 下書きプレビュー（Draft Mode）
 
 管理画面 → API 設定 → 画面プレビュー に入れる URL：
 
 ```
-https://honmyoujifuji.com/blog/preview?slug={CONTENT_ID}&draftKey={DRAFT_KEY}
+https://honmyoujifuji.com/api/preview?secret={SECRET}&contentId={CONTENT_ID}&draftKey={DRAFT_KEY}
 ```
 
-下書きはキャッシュせず毎回取り直す。画面下に「Draft preview」の帯が出る。
+`{SECRET}` は `MICROCMS_PREVIEW_SECRET` の値（`{CONTENT_ID}` `{DRAFT_KEY}` は microCMS
+が差し込む）。本番の秘密は `npx wrangler secret put MICROCMS_PREVIEW_SECRET` で入れる。
+
+流れ：
+
+1. `/api/preview` が秘密鍵を確かめ（合わなければ 401、Draft Mode も立てない）、
+   Next の **Draft Mode** を立て、`draftKey` を `httpOnly` cookie に預ける。
+2. そのうえで記事ページ `/blog/{CONTENT_ID}` へ転送する。**転送先は内部パスだけ**
+   （`safeInternalPath` が外部 URL・`//`・`javascript:`・`\` 細工を弾く）。
+3. 記事ページは Draft Mode の間だけ、その `draftKey` で下書きを取り直す
+   （`cache: "no-store"`。`draftMode()` を読むことで ISR/OpenNext のキャッシュにも
+   載らない）。公開前の一本（まだ `getBlogPosts` に出ない記事）もこの経路で見える。
+   プレビュー中は `noindex`、構造化データと関連作品は出さない。
+4. 画面下の「Draft preview」の帯の **Leave preview** は `/api/preview/exit` を叩き、
+   Draft Mode を畳んで cookie を捨て、`/blog` へ戻す。
+
+検証（ローカル。`MICROCMS_PREVIEW_SECRET` と microCMS の鍵が要る）：
+
+```bash
+curl -si "http://localhost:3000/api/preview?secret=$MICROCMS_PREVIEW_SECRET&contentId=<ID>&draftKey=<KEY>"
+# => 307 と Set-Cookie（__prerender_bypass と miroku-draft-key）、Location: /blog/<ID>
+curl -si "http://localhost:3000/api/preview?secret=wrong&contentId=<ID>&draftKey=<KEY>"
+# => 401（Draft Mode を立てない）
+```
+
+> 旧 `/blog/preview?slug=…&draftKey=…`（秘密鍵なし・query だけ）のページも残してあるが、
+> 新しい入稿はこの秘密鍵つきの `/api/preview` を使う。
 
 ## 4. Webhook（公開したらすぐ反映）
 
