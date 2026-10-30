@@ -1,6 +1,6 @@
 import { cookies, draftMode } from "next/headers";
 import { redirect } from "next/navigation";
-import { PREVIEW_DRAFT_COOKIE, safeInternalPath } from "@/lib/preview";
+import { PREVIEW_CONTENT_COOKIE, PREVIEW_DRAFT_COOKIE, safeInternalPath } from "@/lib/preview";
 
 /* ------------------------------------------------------------------
    下書きプレビューの出口。Draft Mode を畳み、draftKey の cookie を捨てて
@@ -14,7 +14,9 @@ export async function GET(request: Request): Promise<Response> {
   const target = safeInternalPath(new URL(request.url).searchParams.get("path"), "/blog");
 
   (await draftMode()).disable();
-  (await cookies()).delete(PREVIEW_DRAFT_COOKIE);
+  const jar = await cookies();
+  jar.delete(PREVIEW_DRAFT_COOKIE);
+  jar.delete(PREVIEW_CONTENT_COOKIE);
 
   redirect(target);
 }

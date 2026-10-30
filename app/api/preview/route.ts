@@ -1,7 +1,12 @@
 import { cookies, draftMode } from "next/headers";
 import { redirect } from "next/navigation";
 import { isDraftParam } from "@/lib/microcms";
-import { PREVIEW_DRAFT_COOKIE, previewSecretOk, safeInternalPath } from "@/lib/preview";
+import {
+  PREVIEW_CONTENT_COOKIE,
+  PREVIEW_DRAFT_COOKIE,
+  previewSecretOk,
+  safeInternalPath,
+} from "@/lib/preview";
 
 /* ------------------------------------------------------------------
    下書きプレビューの入口。microCMS 管理画面 → API 設定 → 画面プレビューに
@@ -37,14 +42,19 @@ export async function GET(request: Request): Promise<Response> {
   // 3. 転送先。明示が無ければ記事ページ。内部パスだけ通す。
   const target = safeInternalPath(params.get("path"), `/blog/${contentId}`);
 
-  // 4. Draft Mode を立て、draftKey を cookie に預ける（記事ページが読む）。
+  // 4. Draft Mode を立て、draftKey と対象の contentId を cookie に預ける。
+  //    draftKey は一本の記事にしか効かないので、どの記事かも一緒に覚えて、
+  //    記事ページはその一致したページでだけ下書きを取る。
   (await draftMode()).enable();
-  (await cookies()).set(PREVIEW_DRAFT_COOKIE, draftKey, {
+  const cookieOptions = {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
+    sameSite: "lax" as const,
     path: "/",
-  });
+  };
+  const jar = await cookies();
+  jar.set(PREVIEW_DRAFT_COOKIE, draftKey, cookieOptions);
+  jar.set(PREVIEW_CONTENT_COOKIE, contentId, cookieOptions);
 
   redirect(target);
 }

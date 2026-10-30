@@ -14,6 +14,14 @@
 /** draftKey を預ける cookie 名。Draft Mode の間だけ記事ページが読む。 */
 export const PREVIEW_DRAFT_COOKIE = "miroku-draft-key";
 
+/**
+ * 下書きの対象となるコンテンツ ID を預ける cookie 名。draftKey は一本の記事に
+ * しか効かないので、どの記事に効くのかを一緒に覚えておく。記事ページはこの値が
+ * 自分の slug と一致したときだけ下書きを取る（他の /blog/[slug] が draftKey の
+ * 効かない下書き取得で 404 になったり noindex の "Preview" になるのを防ぐ）。
+ */
+export const PREVIEW_CONTENT_COOKIE = "miroku-draft-content";
+
 /** 秘密鍵の環境変数名（値はコードに持たない）。 */
 export const PREVIEW_SECRET_ENV = "MICROCMS_PREVIEW_SECRET";
 
