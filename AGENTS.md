@@ -33,7 +33,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - `components/blog/ArticleToc.tsx` — 記事の目次。版面の右の余白に絶対配置＋sticky、`xl` 以上・**見出し三つ以上**のときだけ。見出しは `[data-article-body]` の `h2` を**描かれた DOM から**拾う（本文は microCMS のリッチエディタ HTML と手書きブロックの二系統で、揃うのは描画後だけ）。id は CMS が振っていればそれを使い、無ければ見出しの文字から作る（`lib/heading-id.ts`）。現在地は `useScrollSpy`（トップの章のレールと共通）、送りは `scrollToChapter()`。
 - `app/(site)/` — 公開サイト。`/` `/collection` `/collection/[slug]` `/about` `/blog` `/blog/[slug]` `/blog/preview` `/faq` `/legal` `/contact`（Server Action）`/checkout/thank-you`。**route group なので URL には `(site)` は出ない** — 外枠を `/studio` と分けるためだけの括り。
 - `app/studio/` — **管理画面**（一般には見えない）。商品の価格・ステータス・文言と、Stripe の注文。手順と設計は `docs/studio.md`。
-- `app/api/` — `revalidate`（microCMS Webhook）と `stripe/webhook`（決済の確定）。
+- `app/api/` — `revalidate`（microCMS Webhook）・`stripe/webhook`（決済の確定）・`preview`（下書きプレビューの入口。秘密鍵を確かめて Draft Mode を立て、内部パスへ転送）・`preview/exit`（Draft Mode を畳む）。
 - `app/layout.tsx` は html / body / フォントだけ。**ヘッダーやフッターをここに戻さない** — 親 layout は子から外せないので、`/studio` にサイトの外枠が付いてくる。公開サイトの外枠は `components/site/SiteChrome.tsx`（`app/(site)/layout.tsx` と `app/not-found.tsx` が共有する。404 は route group の layout を通らない）。
 - `lib/catalog.ts` — **商品の読み口はここ一つ**。`data/products.ts` に DB のオーバーレイを重ねて返す。公開ページで `products` を直接 import しない（管理画面で直した値が反映されなくなる）。`getCatalog()` / `getPiece()` / `getPieces()`。`import "server-only"` 付き（`lib/microcms.ts` / `supabase.ts` / `stripe.ts` / `stripe-config.ts` / `orders.ts` も同じ）— client から import するとビルドで止まる。
 - `proxy.ts` — Next 16 で `middleware.ts` から改名。`/studio/*` の `noindex` ヘッダーと、cookie の無い訪問者をログインへ返す処理。**認可の本体はここではない**（Edge に node:crypto が無い）— 検証は `lib/studio-session.ts` の `requireSession()` で、ページと Server Action が毎回通る。
@@ -105,7 +105,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 - 一覧は 1 リクエスト（最大 100 件）。詳細ページもその一覧から引く（記事ごとに叩かない）。並びは掲載日の新しい順。
 - 本文はリッチエディタの HTML を `.blog-prose`（`app/globals.css`）で組む。手書き記事のブロック（`p` / `h` / `image`）と同じ寸法に合わせてあるので、CMS 側で色や文字サイズを付けない。
 - 反映は Webhook（`/api/revalidate`、`X-MICROCMS-Signature` を検証して `revalidateTag("blog")`）＋ 10 分の定期再検証。
-- 下書きは `/blog/preview?slug=…&draftKey=…`（`force-dynamic`・noindex・画面下に帯）。**コンテンツ ID に `preview` は使えない**。
+- 下書きプレビューは Draft Mode（`docs/microcms.md` の 3 章）。入口は `/api/preview?secret=…&contentId=…&draftKey=…`（`MICROCMS_PREVIEW_SECRET` を確かめ、Draft Mode を立て、`draftKey` を `httpOnly` cookie に預け、内部パスへ転送 — `lib/preview.ts` の `safeInternalPath` でオープンリダイレクトを断つ）。記事ページ `/blog/[slug]` は Draft Mode の間だけ `draftKey` で下書きを取り（`cache: "no-store"`・ISR 無効・noindex・画面下に帯）、「Leave preview」は `/api/preview/exit`。旧 `/blog/preview?slug=…&draftKey=…`（秘密鍵なし）も残してある。**コンテンツ ID に `preview` は使えない**。
 - microCMS の画像は `next.config.ts` の `remotePatterns`（`images.microcms-assets.io`）を通る。
 
 ## 管理画面と決済（詳細は `docs/studio.md`）
