@@ -171,7 +171,7 @@ vercel env pull .env.local --yes    # 逆向き（本番の値を手元へ）
 
 **Webhook** — 開発者 → Webhook → エンドポイントを追加。
 
-- URL: `https://<本番ドメイン>/api/stripe/webhook`
+- URL: `https://<本番ドメイン>/api/stripe/webhook`（**末尾スラッシュなし**で登録する。末尾に `/` を付けると 308 の転送が返るだけで、ハンドラに届かない）
 - イベント: `checkout.session.completed` と `checkout.session.async_payment_succeeded` の二つ（後者は銀行振込のような後払い型の支払い方法の入金。カードだけなら来ないが、ダッシュボードで後払い型を有効にしたときに入金済みの注文が消えないように）
 - API バージョン: Stripe の SDK と同じ（`node_modules/stripe` の `ApiVersion`。2026-10 時点で `2026-08-26.dahlia`）。古いと注文に届け先が入らない
 - 出てくる `whsec_…` を `STRIPE_WEBHOOK_SECRET` へ
