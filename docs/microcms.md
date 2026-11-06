@@ -57,6 +57,7 @@ https://honmyoujifuji.com/api/preview?secret={SECRET}&contentId={CONTENT_ID}&dra
 
 `{SECRET}` は `MICROCMS_PREVIEW_SECRET` の値（`{CONTENT_ID}` `{DRAFT_KEY}` は microCMS
 が差し込む）。本番の秘密は `npx wrangler secret put MICROCMS_PREVIEW_SECRET` で入れる。
+パスは**末尾スラッシュなし**で登録する（`?` の前に `/` を入れると 308 の転送が一段挟まる）。
 
 流れ：
 
@@ -89,7 +90,7 @@ curl -si "http://localhost:3000/api/preview?secret=wrong&contentId=<ID>&draftKey
 
 管理画面 → API 設定 → Webhook → **カスタム通知**
 
-- URL: `https://honmyoujifuji.com/api/revalidate`
+- URL: `https://honmyoujifuji.com/api/revalidate`（**末尾スラッシュなし**で登録する。末尾に `/` を付けると 308 の転送が返るだけで、ハンドラに届かない）
 - シークレット: `MICROCMS_WEBHOOK_SECRET` と同じ文字列
 
 `X-MICROCMS-Signature`（ボディの HMAC-SHA256）を検証してから
